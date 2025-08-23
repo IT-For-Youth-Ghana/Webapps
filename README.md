@@ -1,4 +1,4 @@
-# IT Youth Talent Incubator
+# IT Youth Talent Incubator -CURRENTLY IN PROGRESS 
 
 A comprehensive job application platform connecting Ghanaian IT students with career opportunities, built with Vue.js and modern web technologies.
 
