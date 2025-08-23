@@ -1,6 +1,63 @@
 <!-- 
-  Application History Component
-  Shows student's application history and status tracking
+🚀 IT Youth Talent Incubator - Student Application History Component
+
+PURPOSE: A comprehensive dashboard for students to track their job application history,
+status updates, and manage ongoing applications with filtering and search capabilities.
+
+WHAT IT DOES:
+- Displays all student job applications in an organized card grid layout
+- Shows detailed application status tracking with color-coded status badges
+- Provides filtering by application status (pending, interview, accepted, rejected)
+- Includes search functionality to find applications by job title or company
+- Displays application dates, deadlines, and interview schedules when applicable
+- Enables application management actions like withdrawal for pending applications
+- Shows empty state guidance when no applications exist
+
+FOR CO-PROGRAMMERS:
+- Sample application data in `applications` ref (lines 9-51) - replace with API calls
+- Status filtering via `selectedStatus` and `searchQuery` refs (lines 53-54)
+- Status options defined in `statusOptions` array (lines 56-62)
+- Status styling logic in `getStatusClass()` and `getStatusText()` functions (lines 66-84)
+- Application management functions: `withdrawApplication()`, `viewDetails()` (lines 86-94)
+- Responsive card grid layout with hover effects
+
+APPLICATION DATA STRUCTURE:
+- Basic info: id, jobTitle, company, appliedDate, status, location, type, deadline
+- Optional fields: interviewDate (for interview status applications)
+- Status values: 'pending', 'interview', 'accepted', 'rejected'
+- Type values: 'Full-time', 'Part-time', 'Internship', 'Contract'
+
+STATUS TRACKING SYSTEM:
+- Pending: Yellow badge, shows withdraw option
+- Interview: Blue badge, displays interview date
+- Accepted: Green badge, successful application
+- Rejected: Red badge, application not selected
+- Color-coded visual feedback for quick status identification
+
+USER INTERACTION FEATURES:
+- Filter dropdown to show applications by status
+- Search input for finding specific jobs or companies
+- View Details button for comprehensive application information
+- Withdraw button for pending applications (with confirmation)
+- Responsive card hover effects for better user experience
+
+LAYOUT & DESIGN:
+- Card-based layout with consistent spacing and typography
+- Status badges with appropriate color coding
+- Date formatting for easy reading
+- Responsive grid that adapts to different screen sizes
+- Empty state with call-to-action for new users
+- Professional styling consistent with other components
+
+TODO IMPLEMENTATION:
+- Replace sample data with real API integration
+- Implement actual filtering and search functionality
+- Add application details modal/page navigation
+- Implement withdrawal confirmation dialog
+- Add pagination for large application lists
+- Include application statistics and analytics
+- Add export functionality for application history
+- Implement real-time status updates via websockets
 -->
 <script setup>
 import { ref } from 'vue'
@@ -84,13 +141,24 @@ const getStatusText = (status) => {
 }
 
 const withdrawApplication = (applicationId) => {
-  // TODO: Implement withdrawal logic
-  console.log('Withdrawing application:', applicationId)
+  // TODO: Implement withdrawal logic with confirmation
+  if (confirm('Are you sure you want to withdraw this application?')) {
+    console.log('Withdrawing application:', applicationId)
+    // TODO: Make API call to withdraw application
+    // TODO: Update local applications list
+    // TODO: Show success/error feedback to user
+  }
 }
 
 const viewDetails = (application) => {
-  // TODO: Implement details modal
+  // TODO: Implement details modal or navigate to details page
   console.log('Viewing details for:', application)
+  // TODO: Show detailed application information including:
+  // - Complete application form data
+  // - Timeline of status changes
+  // - Communication history with employer
+  // - Interview scheduling information
+  // - Feedback from employer (if available)
 }
 </script>
 

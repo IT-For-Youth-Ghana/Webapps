@@ -1,6 +1,71 @@
 <!-- 
-  Job Card Component
-  Individual job opportunity card display for students
+🚀 IT Youth Talent Incubator - Job Browse & Discovery Component
+
+PURPOSE: A comprehensive job discovery interface that displays available job opportunities
+in an attractive card-based layout with interactive features for job applications and management.
+
+WHAT IT DOES:
+- Displays available job opportunities in a responsive card grid layout
+- Shows detailed job information including title, company, location, salary, and description
+- Provides job status indicators (active, expiring soon, closed) with color coding
+- Enables job application functionality with visual state feedback
+- Includes job saving/bookmarking feature for later reference
+- Shows required skills as interactive tags for easy scanning
+- Displays application deadlines and posting dates for time-sensitive decisions
+
+FOR CO-PROGRAMMERS:
+- Sample job data in `jobs` ref (lines 9-55) - replace with API calls or props
+- Job status management with `getStatusClass()` and `getStatusText()` functions (lines 57-73)
+- Interactive functions: `applyToJob()`, `toggleSaveJob()`, `viewJobDetails()` (lines 75-92)
+- Each job card includes hover effects and smooth animations
+- Responsive grid layout adapts to different screen sizes
+- Status-based styling and conditional button states
+
+JOB DATA STRUCTURE:
+- Basic info: id, title, company, location, type, salary, description
+- Requirements: array of required skills/technologies
+- Status tracking: posted date, deadline, status (active/expiring/closed)
+- User interaction: applied (boolean), saved (boolean)
+- Job types: 'Full-time', 'Part-time', 'Internship', 'Contract'
+
+INTERACTIVE FEATURES:
+- Apply button with state changes (Apply Now → ✅ Applied)
+- Save/unsave jobs with heart icon animation (🤍 → ❤️)
+- View Details button for comprehensive job information
+- Disabled states for closed jobs or already applied positions
+- Hover effects on cards for enhanced user experience
+
+VISUAL DESIGN:
+- Card-based layout with consistent spacing and typography
+- Status badges with appropriate color coding (green=active, yellow=expiring, red=closed)
+- Skills displayed as clean, scannable tags
+- Salary highlighted in green for emphasis
+- Professional gradient shadows and hover animations
+- Responsive design with mobile-optimized layouts
+
+STATUS SYSTEM:
+- Active: Green badge, full functionality available
+- Expiring Soon: Yellow badge, urgent application recommended
+- Closed: Red badge, no applications accepted
+- Applied: Visual confirmation with checkmark
+- Saved: Heart icon animation and persistent state
+
+USER WORKFLOW:
+1. Browse available jobs in card grid
+2. Filter by status, save interesting positions
+3. Review job details, requirements, and deadlines
+4. Apply directly from the card or view full details
+5. Track application status and saved jobs
+
+TODO IMPLEMENTATION:
+- Replace sample data with real API integration
+- Implement job filtering and search functionality
+- Add pagination for large job datasets
+- Implement actual job application workflow
+- Add job details modal or dedicated page
+- Implement job saving/bookmarking persistence
+- Add email notifications for new matching jobs
+- Include job recommendation algorithm based on student profile
 -->
 <script setup>
 import { ref } from 'vue'
@@ -73,22 +138,41 @@ const getStatusText = (status) => {
 }
 
 const applyToJob = (job) => {
-  if (job.applied) return
+  if (job.applied || job.status === 'closed') return
+  
+  // TODO: Navigate to ApplicationForm component with job pre-filled
+  // TODO: Check if student profile is complete before allowing application
+  // TODO: Show confirmation dialog before applying
   
   job.applied = true
   console.log('Applied to job:', job.title)
-  // TODO: Implement actual application logic
+  
+  // TODO: Make API call to submit application
+  // TODO: Update application history
+  // TODO: Send confirmation email to student
+  // TODO: Notify employer of new application
 }
 
 const toggleSaveJob = (job) => {
   job.saved = !job.saved
   console.log(job.saved ? 'Saved job:' : 'Unsaved job:', job.title)
-  // TODO: Implement save/unsave logic
+  
+  // TODO: Make API call to save/unsave job in user's profile
+  // TODO: Update saved jobs list in user dashboard
+  // TODO: Show feedback message to user
+  // TODO: Consider analytics tracking for job interest
 }
 
 const viewJobDetails = (job) => {
   console.log('View details for:', job.title)
-  // TODO: Navigate to job details page
+  
+  // TODO: Navigate to dedicated job details page with complete information:
+  // - Full job description and responsibilities
+  // - Company information and culture
+  // - Detailed requirements and nice-to-haves
+  // - Application process and timeline
+  // - Benefits and compensation details
+  // - Similar job recommendations
 }
 </script>
 

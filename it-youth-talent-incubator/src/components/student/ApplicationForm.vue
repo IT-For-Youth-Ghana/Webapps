@@ -1,17 +1,72 @@
 <!-- 
-  Application Form Component
-  Student job application form with personal information, education, and experience
-  
-  TODO for co-programmers:
-  - Add form validation for all required fields
-  - Implement form submission to backend API
-  - Add loading state during submission
-  - Implement file upload validation (PDF only, size limits)
-  - Add auto-save functionality (draft saving)
-  - Implement error handling and user feedback
-  - Add progress indicator for multi-step form
-  - Include accessibility improvements (ARIA labels, keyboard navigation)
-  - Add success/confirmation page after submission
+🚀 IT Youth Talent Incubator - Student Job Application Component
+
+PURPOSE: A comprehensive job application form that collects detailed student information
+for job positions, covering personal details, educational background, experience, and motivation.
+
+WHAT IT DOES:
+- Collects complete student profile information for job applications
+- Organizes form data into logical sections: Personal, Education, Experience, Application Details
+- Supports resume upload functionality with file handling
+- Captures motivation letters and cover letters for personalized applications
+- Provides structured data collection for skills, languages, and work experience
+- Handles both full-time and part-time job application scenarios
+- Includes salary expectations and availability preferences
+
+FOR CO-PROGRAMMERS:
+- Form data organized in reactive refs by category (lines 19-53)
+- File upload handling in `handleFileChange()` function (lines 50-52)
+- Four main form sections: Personal Info, Education, Experience, Application Details
+- Resume upload accepts PDF files only (line 218)
+- Form fields include validation attributes (required, min/max, etc.)
+- Responsive design with flexible form layout
+
+FORM SECTIONS:
+1. Personal Information (lines 60-109):
+   - Name, email, phone, address, birth date, location details
+   
+2. Education (lines 112-149):
+   - University, degree, field of study, graduation year, semester, GPA
+   
+3. Experience & Skills (lines 152-186):
+   - Work experience status, previous jobs, technical skills, languages
+   
+4. Application Details (lines 189-237):
+   - Availability, work hours preference, salary expectations
+   - Resume upload, motivation letter, additional comments
+
+DATA COLLECTION:
+- Personal: firstName, lastName, email, phone, address, city, zipCode, birthDate
+- Education: university, degree, fieldOfStudy, graduationYear, currentSemester, gpa
+- Experience: hasWorkExperience, workExperience, skills, languages
+- Application: motivation, availableFrom, expectedSalary, workHours, resume, coverLetter
+
+USER EXPERIENCE:
+- Clean sectioned layout with consistent styling
+- Responsive design adapts to mobile and desktop
+- Clear visual hierarchy with section headers
+- Accessible form labels and input types
+- File upload for resume with PDF restriction
+- Flexible textarea fields for detailed responses
+
+VALIDATION FEATURES:
+- Required field indicators on critical inputs
+- Input type validation (email, tel, date, number)
+- Numeric constraints (GPA range, year limits)
+- File type restriction for resume uploads
+- Form structure supports client-side validation addition
+
+TODO IMPLEMENTATION NOTES:
+- Add comprehensive form validation for all required fields
+- Implement backend API integration for form submission
+- Add loading states and progress indicators during submission
+- Implement file upload validation (PDF only, size limits under 5MB)
+- Add auto-save functionality for draft applications
+- Include error handling with user-friendly feedback messages
+- Add success confirmation page after successful submission
+- Implement accessibility improvements (ARIA labels, keyboard navigation)
+- Add form data persistence in case of page refresh
+- Consider multi-step form approach for better user experience
 -->
 <script setup>
   import { ref } from 'vue'
@@ -48,7 +103,14 @@
   const resume = ref(null)
   
   const handleFileChange = (event) => {
-    resume.value = event.target.files[0]
+    const file = event.target.files[0]
+    // TODO: Add file validation (size, type, etc.)
+    if (file && file.type === 'application/pdf' && file.size <= 5 * 1024 * 1024) {
+      resume.value = file
+    } else {
+      console.error('Invalid file: Must be PDF under 5MB')
+      // TODO: Show error message to user
+    }
   }
   const coverLetter = ref('')
   </script>

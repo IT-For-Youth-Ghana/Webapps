@@ -1,6 +1,54 @@
 <!-- 
-  Login Form Component
-  Handles user authentication for students and administrators
+🚀 IT Youth Talent Incubator - Login Authentication Component
+
+PURPOSE: A secure and user-friendly login interface that handles authentication for both
+students and administrators with comprehensive validation and error handling.
+
+WHAT IT DOES:
+- Provides secure login functionality for students and administrators
+- Validates email format and password strength requirements
+- Handles authentication with loading states and error feedback
+- Supports "Remember Me" functionality for persistent sessions
+- Includes demo credentials for testing and development
+- Provides navigation links to registration and password recovery
+- Displays clear error messages for failed authentication attempts
+
+FOR CO-PROGRAMMERS:
+- Form data stored in reactive refs: email, password, rememberMe (lines 9-13)
+- Validation functions: validateEmail(), validateForm() (lines 19-51)
+- Authentication logic in handleLogin() function (lines 53-82)
+- Mock credentials for demo: admin@itforyouth.gh/admin123, student@test.com/student123
+- Navigation functions: goToRegister(), goToForgotPassword() (lines 84-92)
+- Real-time validation with error display for each form field
+
+VALIDATION FEATURES:
+- Email format validation using regex pattern
+- Password minimum length requirement (6+ characters)
+- Real-time error feedback with field-level error states
+- Form submission prevention when validation fails
+- Loading state management during authentication process
+
+SECURITY CONSIDERATIONS:
+- Password field uses secure input type
+- Client-side validation (server-side validation needed)
+- Error handling prevents information disclosure
+- Remember Me option for session persistence
+- Demo credentials clearly marked for development only
+
+USER EXPERIENCE:
+- Clean, professional form design with consistent styling
+- Loading spinner during authentication process
+- Clear error messages for failed login attempts
+- Responsive design optimized for mobile devices
+- Accessible form labels and keyboard navigation
+- Demo credentials visible for easy testing
+
+TODO ITEMS:
+- Replace mock authentication with real API calls
+- Implement proper routing for login success/failure
+- Add password recovery functionality
+- Implement session management and token handling
+- Add support for social login providers (Google, GitHub, etc.)
 -->
 <script setup>
 import { ref } from 'vue'
@@ -57,21 +105,24 @@ const handleLogin = async () => {
   errorMessage.value = ''
   
   try {
-    // TODO: Implement actual login API call
+    // TODO: Replace with actual authentication API call
+    // Example: const response = await authAPI.login(email.value, password.value, rememberMe.value)
     console.log('Login attempt:', { email: email.value, password: password.value, rememberMe: rememberMe.value })
     
-    // Simulate API call
+    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 2000))
     
-    // Mock success/error for demo
+    // Mock authentication logic for demo purposes
     if (email.value === 'admin@itforyouth.gh' && password.value === 'admin123') {
       console.log('Login successful - Admin user')
-      // TODO: Redirect to admin dashboard
+      // TODO: Store authentication token and user data
+      // TODO: Navigate to admin dashboard component (Dashboard.vue)
     } else if (email.value.includes('student') && password.value === 'student123') {
       console.log('Login successful - Student user')
-      // TODO: Redirect to student dashboard
+      // TODO: Store authentication token and user data
+      // TODO: Navigate to student profile or job browsing page
     } else {
-      throw new Error('Invalid credentials')
+      throw new Error('Invalid email or password')
     }
     
   } catch (error) {

@@ -1,6 +1,58 @@
 <!-- 
-  Profile Card Component
-  Student profile overview card showing key information
+🚀 IT Youth Talent Incubator - Student Profile Overview Component
+
+PURPOSE: A comprehensive profile dashboard that displays student information, statistics,
+and achievements in an organized, professional layout for both personal reference and employer visibility.
+
+WHAT IT DOES:
+- Displays complete student profile information with photo and contact details
+- Shows educational background including university, degree, and graduation timeline
+- Presents technical skills as interactive tags for easy scanning
+- Provides application statistics and profile engagement metrics
+- Includes social media links (LinkedIn, GitHub, Portfolio) for professional networking
+- Shows profile completion percentage to encourage full profile development
+- Enables privacy controls for profile visibility management
+
+FOR CO-PROGRAMMERS:
+- Profile data stored in `profile` ref (lines 9-38) - replace with API/store data
+- Profile completion tracking via `profileCompletionPercentage` ref (line 40)
+- Interactive functions: `editProfile()`, `toggleVisibility()` (lines 42-50)
+- Stats tracking: applications, views, endorsements for engagement metrics
+- Social links integration for professional networking
+- Privacy controls for data visibility management
+
+PROFILE DATA STRUCTURE:
+- Personal: firstName, lastName, email, phone, profilePhoto, location, bio
+- Education: university, degree, fieldOfStudy, currentSemester, graduationYear
+- Professional: skills array, socialLinks object (LinkedIn, GitHub, Portfolio)
+- Engagement: stats object with applications, views, endorsements
+- Settings: profileVisibility, joinedDate for account management
+
+VISUAL COMPONENTS:
+- Profile header with photo placeholder and basic information
+- Educational timeline showing current semester and graduation year
+- Skills displayed as professional tags with hover effects
+- Statistics cards showing application and engagement metrics
+- Social media integration with clickable links
+- Profile completion progress bar with percentage display
+- Privacy toggle for public/private profile visibility
+
+USER EXPERIENCE:
+- Clean, professional layout suitable for employer viewing
+- Interactive elements with hover effects and animations
+- Clear information hierarchy with logical grouping
+- Mobile-responsive design for all device types
+- Quick access to profile editing functionality
+- Visual progress indicators for profile completion
+
+TODO IMPLEMENTATION:
+- Integrate with actual user data from API or state management
+- Implement profile photo upload and management
+- Add skill endorsement system from other users
+- Create profile sharing functionality with unique URLs
+- Implement profile analytics and view tracking
+- Add achievement badges and certifications display
+- Create profile export functionality (PDF resume generation)
 -->
 <script setup>
 import { ref } from 'vue'
@@ -41,12 +93,20 @@ const profileCompletionPercentage = ref(85)
 
 const editProfile = () => {
   console.log('Edit profile clicked')
-  // TODO: Navigate to profile edit form
+  // TODO: Navigate to ProfileForm component
+  // TODO: Pass current profile data for editing
+  // TODO: Consider modal vs separate page navigation
 }
 
 const toggleVisibility = () => {
-  profile.value.profileVisibility = profile.value.profileVisibility === 'public' ? 'private' : 'public'
-  console.log('Profile visibility changed to:', profile.value.profileVisibility)
+  const newVisibility = profile.value.profileVisibility === 'public' ? 'private' : 'public'
+  profile.value.profileVisibility = newVisibility
+  
+  console.log('Profile visibility changed to:', newVisibility)
+  
+  // TODO: Make API call to update visibility setting
+  // TODO: Show confirmation message to user
+  // TODO: Consider implications of private vs public profiles for job matching
 }
 
 const openSocialLink = (platform, url) => {

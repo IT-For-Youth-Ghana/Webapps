@@ -60,7 +60,7 @@ import StudentList from './components/admin/StudentList.vue'
 // 9 = JobForm (Admin)
 // 10 = JobList (Admin)
 // 11 = StudentList (Admin)
-const currentPageIndex = ref(7)
+const currentPageIndex = ref(4)
 
 const pages = [
   // Student Pages
