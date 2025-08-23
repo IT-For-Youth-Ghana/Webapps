@@ -1,3 +1,16 @@
+<!-- 
+  Footer Component
+  Application footer with organization information and social links
+  
+  TODO for co-programmers:
+  - Add additional footer links (Privacy Policy, Terms of Service)
+  - Implement contact information section
+  - Add newsletter subscription functionality
+  - Include additional social media platforms
+  - Add accessibility improvements (ARIA labels)
+  - Implement multi-language support
+  - Add quick links to important pages
+-->
 <script setup>
 // Footer component for IT for Youth Ghana
 </script>

@@ -1,3 +1,18 @@
+<!-- 
+  Application Form Component
+  Student job application form with personal information, education, and experience
+  
+  TODO for co-programmers:
+  - Add form validation for all required fields
+  - Implement form submission to backend API
+  - Add loading state during submission
+  - Implement file upload validation (PDF only, size limits)
+  - Add auto-save functionality (draft saving)
+  - Implement error handling and user feedback
+  - Add progress indicator for multi-step form
+  - Include accessibility improvements (ARIA labels, keyboard navigation)
+  - Add success/confirmation page after submission
+-->
 <script setup>
   import { ref } from 'vue'
 

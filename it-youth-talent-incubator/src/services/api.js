@@ -1,3 +1,17 @@
+// API Service Configuration
+// Centralized API client with interceptors for authentication and error handling
+//
+// TODO for co-programmers:
+// - Add request/response logging for development
+// - Implement retry logic for failed requests
+// - Add request timeout configuration
+// - Implement request caching for GET requests
+// - Add request queue for offline mode
+// - Implement proper error response handling with user-friendly messages
+// - Add API versioning support
+// - Implement request/response transformation if needed
+// - Add performance monitoring for API calls
+
 import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'

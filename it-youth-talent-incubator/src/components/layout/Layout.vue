@@ -1,4 +1,16 @@
-<script setup>
+<!-- 
+  Layout Component
+  Main application layout wrapper with header, main content, and footer
+  
+  TODO for co-programmers:
+  - Implement conditional header display based on authentication
+  - Add sidebar navigation for admin/dashboard pages
+  - Include loading states during page transitions
+  - Add error boundary handling
+  - Implement responsive layout adjustments
+  - Add page transition animations
+  - Include scroll-to-top functionality
+-->\n<script setup>
 import Footer from './Footer.vue';
 import Header from './Header.vue';
 </script>

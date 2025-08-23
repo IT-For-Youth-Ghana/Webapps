@@ -1,3 +1,18 @@
+// Authentication Service
+// Handles all authentication-related API calls and token management
+//
+// TODO for co-programmers:
+// - Add input validation for all authentication methods
+// - Implement secure token storage (consider HttpOnly cookies)
+// - Add user session management
+// - Implement automatic token refresh logic
+// - Add multi-factor authentication support
+// - Implement social login providers (Google, LinkedIn)
+// - Add password strength validation
+// - Implement account lockout after failed attempts
+// - Add email verification flow
+// - Implement remember me functionality with secure tokens
+
 import api from './api'
 
 export const authService = {
