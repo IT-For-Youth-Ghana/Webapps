@@ -1,39 +1,39 @@
-# 🚀 IT Youth Talent Incubator
+# IT Youth Talent Incubator
 
 A comprehensive job application platform connecting Ghanaian IT students with career opportunities, built with Vue.js and modern web technologies.
 
-## 🌟 About
+## About
 
 The IT Youth Talent Incubator is a digital platform developed for [IT for Youth Ghana](https://www.itforyouthghana.org/) to bridge the gap between talented IT students and employers in Ghana. This application provides students with opportunities to discover jobs, manage applications, and build professional profiles while enabling employers to post positions and manage recruitment processes.
 
-### 🎯 Mission
+### Mission
 
 Empowering the next generation of Ghanaian IT professionals by providing seamless access to career opportunities and professional development resources.
 
-## ✨ Key Features
+## Key Features
 
 ### For Students
-- **🔍 Job Discovery**: Browse available IT positions with detailed descriptions and requirements
-- **📝 Application Management**: Track application status and manage job applications
-- **👤 Professional Profiles**: Create comprehensive profiles showcasing skills and experience
-- **🎓 Educational Integration**: Connect academic background with career opportunities
-- **📊 Application Analytics**: Monitor application success rates and profile engagement
+- ** Job Discovery**: Browse available IT positions with detailed descriptions and requirements
+- ** Application Management**: Track application status and manage job applications
+- ** Professional Profiles**: Create comprehensive profiles showcasing skills and experience
+- ** Educational Integration**: Connect academic background with career opportunities
+- ** Application Analytics**: Monitor application success rates and profile engagement
 
 ### For Administrators
-- **💼 Job Management**: Post, edit, and manage job opportunities
-- **👥 Student Oversight**: View and manage student profiles and applications
-- **📈 Dashboard Analytics**: Track platform engagement and recruitment metrics
-- **🔧 Application Processing**: Review, approve, or reject student applications
-- **📊 Reporting Tools**: Generate insights on platform usage and success rates
+- ** Job Management**: Post, edit, and manage job opportunities
+- ** Student Oversight**: View and manage student profiles and applications
+- ** Dashboard Analytics**: Track platform engagement and recruitment metrics
+- ** Application Processing**: Review, approve, or reject student applications
+- ** Reporting Tools**: Generate insights on platform usage and success rates
 
 ### Technical Features
-- **🎨 Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **🚀 Modern Architecture**: Built with Vue.js 3 and Vite for optimal performance
-- **♿ Accessibility**: WCAG-compliant design with proper ARIA labels
-- **🎭 Role-Based Access**: Separate interfaces for students and administrators
-- **💫 Interactive UI**: Smooth animations and intuitive user experience
+- ** Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- ** Modern Architecture**: Built with Vue.js 3 and Vite for optimal performance
+- ** Accessibility**: WCAG-compliant design with proper ARIA labels
+- ** Role-Based Access**: Separate interfaces for students and administrators
+- ** Interactive UI**: Smooth animations and intuitive user experience
 
-## 🏗️ Technology Stack
+## Technology Stack
 
 ### Frontend
 - **Vue.js 3** - Progressive JavaScript framework with Composition API
@@ -47,7 +47,7 @@ Empowering the next generation of Ghanaian IT professionals by providing seamles
 - **Node.js** - Development environment and package management
 - **npm** - Package manager and build scripts
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -85,38 +85,7 @@ Empowering the next generation of Ghanaian IT professionals by providing seamles
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | Run ESLint for code quality checks |
 
-## 📱 Application Structure
 
-### Component Architecture
-
-```
-src/
-├── components/
-│   ├── admin/          # Administrative interfaces
-│   │   ├── Dashboard.vue           # Admin dashboard with metrics
-│   │   ├── JobForm.vue            # Job creation and editing
-│   │   ├── JobList.vue            # Job management interface
-│   │   ├── ApplicationsTable.vue  # Application review system
-│   │   └── StudentList.vue        # Student management
-│   ├── auth/           # Authentication components
-│   │   ├── LoginForm.vue          # User login interface
-│   │   └── RegisterForm.vue       # Student registration
-│   ├── student/        # Student-facing interfaces
-│   │   ├── ApplicationForm.vue    # Job application form
-│   │   ├── ApplicationHistory.vue # Application tracking
-│   │   ├── JobCard.vue           # Job opportunity display
-│   │   ├── ProfileCard.vue       # Profile overview
-│   │   └── ProfileForm.vue       # Profile editing
-│   └── layout/         # Layout and navigation
-│       ├── Header.vue            # Application header
-│       ├── Footer.vue            # Application footer
-│       ├── Navigation.vue        # Main navigation
-│       ├── Sidebar.vue          # Sidebar navigation
-│       └── Layout.vue           # Layout wrapper
-├── assets/             # Static assets (images, styles)
-├── App.vue             # Root application component
-└── main.js             # Application entry point
-```
 
 ### User Roles and Access
 
@@ -176,82 +145,11 @@ src/
 - Directories: kebab-case (e.g., `components/student/`)
 - Assets: kebab-case (e.g., `logo-image.png`)
 
-## 🌐 Demo Credentials
 
-For testing purposes, use these demo accounts:
-
-### Administrator
-- **Email**: admin@itforyouth.gh
-- **Password**: admin123
-
-### Student
-- **Email**: student@test.com
-- **Password**: student123
-
-## 📋 Current Status
-
-### ✅ Completed Features
-- Full component architecture with detailed documentation
-- Responsive design system with consistent styling
-- Mock data and interactive prototypes for all major features
-- Role-based component structure (student/admin/auth)
-- Professional branding integration with IT for Youth Ghana
-
-### 🚧 In Development
-- Backend API integration for data persistence
-- User authentication and session management
-- Real-time notifications and updates
-- File upload functionality for resumes and documents
-- Email notification system
-
-### 🔮 Planned Features
-- Advanced search and filtering capabilities
-- Job recommendation algorithm based on student profiles
-- Integration with university systems for student verification
-- Mobile application for iOS and Android
-- Analytics dashboard for recruitment insights
-- Multi-language support (English, Twi, local languages)
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Please follow these steps:
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/your-feature-name`
-3. **Make your changes** with proper documentation
-4. **Test thoroughly** across different devices and browsers
-5. **Submit a pull request** with detailed description of changes
-
-### Contribution Guidelines
-- Follow existing code style and conventions
-- Add comprehensive comments and documentation
-- Include responsive design considerations
-- Test accessibility features
-- Update README if adding new features
-
-## 📞 Support & Contact
-
-### IT for Youth Ghana
-- **Website**: [www.itforyouthghana.org](https://www.itforyouthghana.org/)
-- **LinkedIn**: [IT for Youth Ghana](https://www.linkedin.com/company/it-for-youth-ghana)
-
-### Technical Support
-- Create issues on GitHub for bug reports
-- Join our community discussions for questions
-- Check documentation for common solutions
-
-## 📄 License
+## License
 
 This project is developed for IT for Youth Ghana as part of their mission to empower Ghanaian youth in technology. Please respect the organizational branding and mission when contributing.
 
-## 🙏 Acknowledgments
-
-- **IT for Youth Ghana** - For their vision and support in youth empowerment
-- **Ghanaian Universities** - Partner institutions supporting student development
-- **Vue.js Community** - For the excellent framework and documentation
-- **Open Source Contributors** - For tools and resources that make this possible
-
----
 
 **Built with ❤️ for the future of Ghana's tech industry**
 
