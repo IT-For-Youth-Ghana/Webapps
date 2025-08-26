@@ -76,57 +76,7 @@ TODO IMPLEMENTATION PRIORITY:
 
 
 <template>
-  <!-- TODO: Implement complete header with the following structure:
-  
-  <header class="header">
-    <div class="header-container">
-      <!-Logo & Branding -->
-      <div class="logo-section">
-        <!--img src="logo.png" alt="IT Youth Talent Incubator" class="logo"/> -->
-        <h1 class="app-title">IT Youth Talent Incubator</h1>
-      </div>
-      
-      <!-- Main Navigation (Desktop) -->
-      <nav class="main-nav">
-        <!-- Role-based navigation items -->
-        <router-link to="/jobs" class="nav-link">Jobs</router-link>
-        <router-link to="/applications" class="nav-link">My Applications</router-link>
-        <router-link to="/profile" class="nav-link">Profile</router-link>
-      </nav>
-      
-      <!-- User Section -->
-      <div class="user-section">
-        <!-- Notifications -->
-        <button class="notification-btn">
-          <span class="notification-icon">🔔</span>
-          <span class="notification-badge">3</span>
-        </button>
-        
-        <!-- User Dropdown -->
-        <div class="user-dropdown">
-          <button class="user-trigger">
-           <!-- <img src="user-avatar.jpg" alt="User" class="user-avatar" />-->
-            <span class="user-name">John Doe</span>
-          </button>
-          <div class="dropdown-menu">
-            <a href="/profile" class="dropdown-item">View Profile</a>
-            <a href="/settings" class="dropdown-item">Settings</a>
-            <button class="dropdown-item" @click="logout">Logout</button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Mobile Menu Toggle -->
-      <button class="mobile-menu-toggle">
-        <span class="hamburger"></span>
-      </button>
-
-    
-    <!-- Mobile Navigation -->
-    <nav class="mobile-nav">
-      <!-- Collapsible mobile menu -->
-    </nav>
- 
+  <!-- Header placeholder - currently empty -->
 </template>
 
 

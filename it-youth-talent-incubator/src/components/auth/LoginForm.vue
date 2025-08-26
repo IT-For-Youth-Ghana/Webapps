@@ -284,6 +284,7 @@ const goToForgotPassword = () => {
   font-size: 16px;
   background-color: white;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .form-input:focus {

@@ -1,0 +1,230 @@
+/* 
+  Global Form Styles for IT Youth Talent Incubator
+  Einheitliches Spacing und Styling für alle Forms
+*/
+
+/* Universal box-sizing für alle Input-Elemente */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Form Container */
+.section-container {
+  background-color: #ffffff;
+  padding: 24px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 77, 197, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 77, 197, 0.08);
+  max-width: 100%;
+  overflow: hidden; /* Verhindert Überlauf */
+}
+
+/* Form Rows */
+.form-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+/* Form Fields */
+.form-field {
+  flex: 1;
+  min-width: 0; /* Wichtig für Flexbox overflow */
+}
+
+.form-field.full-width {
+  flex: 1 1 100%;
+}
+
+/* Labels */
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #003a9b;
+  margin-bottom: 6px;
+}
+
+/* Input Elements - Einheitliches Styling */
+.form-input, 
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 16px;
+  background-color: white;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box; /* Kritisch für korrektes Spacing */
+}
+
+/* Focus States */
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #004dc5;
+  box-shadow: 0 0 0 2px rgba(0, 77, 197, 0.2);
+}
+
+/* Error States */
+.form-input.error,
+.form-textarea.error {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
+
+/* Textarea spezifische Styles */
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* Error Messages */
+.field-error {
+  display: block;
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Success/Error Banners */
+.success-banner {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  color: #166534;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-banner {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  color: #dc2626;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #004dc5;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #003a9b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 77, 197, 0.3);
+}
+
+.btn-primary:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #003a9b;
+  border: 2px solid rgba(0, 77, 197, 0.3);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(0, 77, 197, 0.05);
+  border-color: rgba(0, 77, 197, 0.5);
+  color: #004dc5;
+  transform: translateY(-1px);
+}
+
+/* Checkbox Styling */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+
+.checkbox {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  accent-color: #004dc5;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .section-container {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .form-input,
+  .form-textarea {
+    font-size: 16px; /* Verhindert Zoom auf iOS */
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .section-container {
+    padding: 22px;
+  }
+  
+  .form-row {
+    gap: 20px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1025px) {
+  .section-container {
+    padding: 24px;
+  }
+  
+  .form-row {
+    gap: 24px;
+  }
+}

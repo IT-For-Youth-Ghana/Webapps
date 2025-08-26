@@ -666,6 +666,7 @@ const handleCancel = () => {
   background-color: white;
   transition: all 0.2s ease;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .form-input:focus, .form-textarea:focus {

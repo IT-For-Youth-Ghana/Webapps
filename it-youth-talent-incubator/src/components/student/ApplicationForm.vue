@@ -461,6 +461,7 @@ TODO IMPLEMENTATION NOTES:
     border-radius: 6px;
     font-size: 16px;
     background-color: white;
+    box-sizing: border-box;
   }
 
   /* Textarea Styling */
@@ -473,6 +474,7 @@ TODO IMPLEMENTATION NOTES:
     background-color: white;
     resize: vertical;
     font-family: inherit;
+    box-sizing: border-box;
   }
 
   .form-textarea:focus {

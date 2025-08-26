@@ -298,6 +298,7 @@ const viewDetails = (application) => {
   border-radius: 6px;
   font-size: 16px;
   background-color: white;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
