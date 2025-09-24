@@ -1,11 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
+import ThemeToggle from '../common/ThemeToggle.vue'
 
 const props = defineProps({
   userRole: {
     type: String,
     required: true,
-    validator: (value) => ['student', 'admin'].includes(value)
+    validator: (value) => ['student', 'admin', 'company'].includes(value)
   },
   currentView: {
     type: String,
@@ -28,6 +29,12 @@ const navigationItems = computed(() => {
       { id: 'jobs', label: 'Browse Jobs', path: '/jobs' },
       { id: 'applications', label: 'My Applications', path: '/applications' },
       { id: 'profile', label: 'Profile', path: '/profile' }
+    ]
+  } else if (props.userRole === 'company') {
+    return [
+      { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
+      { id: 'my-jobs', label: 'My Job Posts', path: '/my-jobs' },
+      { id: 'applications', label: 'Applications', path: '/applications' }
     ]
   } else {
     return [
@@ -61,7 +68,7 @@ const toggleMobileMenu = () => {
       <!-- Brand Section -->
       <div class="nav-brand">
         <img src="/logo/logo.png" alt="Logo" class="brand-logo">
-        <span class="brand-subtitle">{{ userRole === 'admin' ? 'Admin Portal' : 'Student Portal' }}</span>
+        <span class="brand-subtitle">{{ userRole === 'admin' ? 'Admin Portal' : userRole === 'company' ? 'Company Portal' : 'Student Portal' }}</span>
       </div>
 
       <!-- Desktop Navigation -->
@@ -82,6 +89,9 @@ const toggleMobileMenu = () => {
 
         <!-- User Menu -->
         <div class="user-menu">
+          <!-- Theme Toggle -->
+          <ThemeToggle />
+          
           <div class="user-info">
             <div class="user-avatar">
               {{ userName.charAt(0).toUpperCase() }}

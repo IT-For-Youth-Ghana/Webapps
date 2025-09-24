@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useTheme } from './composables/useTheme.js'
 import DashboardNavigation from './components/layout/DashboardNavigation.vue'
 import StudentDashboard from './pages/StudentDashboard.vue'
 import AdminDashboard from './pages/AdminDashboard.vue'
+import CompanyDashboard from './pages/CompanyDashboard.vue'
 import StudentJobsPage from './pages/StudentJobsPageComplete.vue'
 import AdminJobsPage from './pages/AdminJobsPageComplete.vue'
 import StudentApplicationsPage from './pages/StudentApplicationsPageComplete.vue'
@@ -10,9 +12,14 @@ import StudentProfilePage from './pages/StudentProfilePage.vue'
 import AdminApplicationsPage from './pages/AdminApplicationsPageComplete.vue'
 import AdminStudentsPage from './pages/AdminStudentsPage.vue'
 import AdminAnalyticsPage from './pages/AdminAnalyticsPage.vue'
+import CompanyMyJobPosts from './pages/company/MyJobPosts.vue'
+import CompanyApplications from './pages/company/Applications.vue'
+
+// Theme management
+const { currentTheme, theme } = useTheme()
 
 // Authentication state - would come from external auth system
-const userRole = ref('student') // 'student' or 'admin'
+const userRole = ref('student') // 'student', 'admin', or 'company'
 const userName = ref('Alex Johnson')
 const isAuthenticated = ref(true)
 const currentView = ref('dashboard')
@@ -50,11 +57,24 @@ onMounted(() => {
   }
 })
 
-// Demo function to switch roles (remove in production)
-const switchRole = () => {
-  userRole.value = userRole.value === 'student' ? 'admin' : 'student'
-  userName.value = userRole.value === 'student' ? 'Alex Johnson' : 'Admin User'
+// Demo functions to switch roles (remove in production)
+const switchToRole = (role) => {
+  userRole.value = role
+  
+  const names = {
+    student: 'Alex Johnson',
+    admin: 'Admin User',
+    company: 'TechCorp Ghana'
+  }
+  userName.value = names[userRole.value]
   currentView.value = 'dashboard'
+}
+
+const switchRole = () => {
+  const roles = ['student', 'admin', 'company']
+  const currentIndex = roles.indexOf(userRole.value)
+  const nextIndex = (currentIndex + 1) % roles.length
+  switchToRole(roles[nextIndex])
 }
 
 // Make demo function available in console
@@ -85,6 +105,13 @@ window.switchRole = switchRole
       <!-- Admin Dashboard -->
       <AdminDashboard
         v-else-if="userRole === 'admin' && currentView === 'dashboard'"
+        :current-view="currentView"
+        @navigate="handleNavigation"
+      />
+
+      <!-- Company Dashboard -->
+      <CompanyDashboard
+        v-else-if="userRole === 'company' && currentView === 'dashboard'"
         :current-view="currentView"
         @navigate="handleNavigation"
       />
@@ -131,6 +158,16 @@ window.switchRole = switchRole
       <AdminAnalyticsPage
         v-else-if="userRole === 'admin' && currentView === 'analytics'"
       />
+
+      <!-- Company My Job Posts Page -->
+      <CompanyMyJobPosts
+        v-else-if="userRole === 'company' && currentView === 'my-jobs'"
+      />
+
+      <!-- Company Applications Page -->
+      <CompanyApplications
+        v-else-if="userRole === 'company' && currentView === 'applications'"
+      />
     </main>
 
     <!-- Demo Mode Indicator -->
@@ -138,9 +175,29 @@ window.switchRole = switchRole
       <div class="demo-indicator">
         Demo Mode - {{ userRole }}
       </div>
-      <button @click="switchRole" class="role-switch-btn">
-        Switch to {{ userRole === 'student' ? 'Admin' : 'Student' }}
-      </button>
+      <div class="demo-buttons">
+        <button 
+          @click="switchToRole('student')" 
+          class="role-switch-btn"
+          :class="{ active: userRole === 'student' }"
+        >
+          Student
+        </button>
+        <button 
+          @click="switchToRole('admin')" 
+          class="role-switch-btn"
+          :class="{ active: userRole === 'admin' }"
+        >
+          Admin
+        </button>
+        <button 
+          @click="switchToRole('company')" 
+          class="role-switch-btn"
+          :class="{ active: userRole === 'company' }"
+        >
+          Company
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -150,8 +207,9 @@ window.switchRole = switchRole
 
 #app {
   min-height: 100vh;
-  background: #0D1117;
-  color: #ffffff;
+  background: var(--bg-primary, #0D1117);
+  color: var(--text-primary, #ffffff);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .main-content {
@@ -172,13 +230,13 @@ window.switchRole = switchRole
 .page-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   margin-bottom: 0.5rem;
 }
 
 .page-subtitle {
   font-size: 1rem;
-  color: #8fb2d6;
+  color: var(--text-secondary, #8fb2d6);
   margin: 0;
 }
 
@@ -192,21 +250,22 @@ window.switchRole = switchRole
 .placeholder-content {
   text-align: center;
   padding: 3rem;
-  background: #161B22;
-  border: 1px solid #30363D;
+  background: var(--bg-secondary, #161B22);
+  border: 1px solid var(--border-primary, #30363D);
   border-radius: 1rem;
   max-width: 32rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .placeholder-content h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   margin-bottom: 1rem;
 }
 
 .placeholder-content p {
-  color: #8fb2d6;
+  color: var(--text-secondary, #8fb2d6);
   font-size: 1rem;
   line-height: 1.6;
   margin: 0;
@@ -218,8 +277,14 @@ window.switchRole = switchRole
   right: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   z-index: 1001;
+}
+
+.demo-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .demo-indicator {
@@ -244,10 +309,19 @@ window.switchRole = switchRole
   cursor: pointer;
   transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(143, 178, 214, 0.25);
+  opacity: 0.7;
 }
 
 .role-switch-btn:hover {
   background: #195aa5;
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+.role-switch-btn.active {
+  background: #1b65b2;
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(27, 101, 178, 0.4);
   transform: translateY(-1px);
 }
 
