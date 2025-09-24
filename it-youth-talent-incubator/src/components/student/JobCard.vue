@@ -1,580 +1,357 @@
-<!-- 
-🚀 IT Youth Talent Incubator - Job Browse & Discovery Component
-
-PURPOSE: A comprehensive job discovery interface that displays available job opportunities
-in an attractive card-based layout with interactive features for job applications and management.
-
-WHAT IT DOES:
-- Displays available job opportunities in a responsive card grid layout
-- Shows detailed job information including title, company, location, salary, and description
-- Provides job status indicators (active, expiring soon, closed) with color coding
-- Enables job application functionality with visual state feedback
-- Includes job saving/bookmarking feature for later reference
-- Shows required skills as interactive tags for easy scanning
-- Displays application deadlines and posting dates for time-sensitive decisions
-
-FOR CO-PROGRAMMERS:
-- Sample job data in `jobs` ref (lines 9-55) - replace with API calls or props
-- Job status management with `getStatusClass()` and `getStatusText()` functions (lines 57-73)
-- Interactive functions: `applyToJob()`, `toggleSaveJob()`, `viewJobDetails()` (lines 75-92)
-- Each job card includes hover effects and smooth animations
-- Responsive grid layout adapts to different screen sizes
-- Status-based styling and conditional button states
-
-JOB DATA STRUCTURE:
-- Basic info: id, title, company, location, type, salary, description
-- Requirements: array of required skills/technologies
-- Status tracking: posted date, deadline, status (active/expiring/closed)
-- User interaction: applied (boolean), saved (boolean)
-- Job types: 'Full-time', 'Part-time', 'Internship', 'Contract'
-
-INTERACTIVE FEATURES:
-- Apply button with state changes (Apply Now → ✅ Applied)
-- Save/unsave jobs with heart icon animation (🤍 → ❤️)
-- View Details button for comprehensive job information
-- Disabled states for closed jobs or already applied positions
-- Hover effects on cards for enhanced user experience
-
-VISUAL DESIGN:
-- Card-based layout with consistent spacing and typography
-- Status badges with appropriate color coding (green=active, yellow=expiring, red=closed)
-- Skills displayed as clean, scannable tags
-- Salary highlighted in green for emphasis
-- Professional gradient shadows and hover animations
-- Responsive design with mobile-optimized layouts
-
-STATUS SYSTEM:
-- Active: Green badge, full functionality available
-- Expiring Soon: Yellow badge, urgent application recommended
-- Closed: Red badge, no applications accepted
-- Applied: Visual confirmation with checkmark
-- Saved: Heart icon animation and persistent state
-
-USER WORKFLOW:
-1. Browse available jobs in card grid
-2. Filter by status, save interesting positions
-3. Review job details, requirements, and deadlines
-4. Apply directly from the card or view full details
-5. Track application status and saved jobs
-
-TODO IMPLEMENTATION:
-- Replace sample data with real API integration
-- Implement job filtering and search functionality
-- Add pagination for large job datasets
-- Implement actual job application workflow
-- Add job details modal or dedicated page
-- Implement job saving/bookmarking persistence
-- Add email notifications for new matching jobs
-- Include job recommendation algorithm based on student profile
--->
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-// Sample job data - in real app this would be passed as props
-const jobs = ref([
-  {
-    id: 1,
-    title: 'Frontend Developer Intern',
-    company: 'TechCorp Ghana',
-    location: 'Accra, Ghana',
-    type: 'Internship',
-    salary: 'GH₵ 1,500 - 2,000',
-    description: 'Join our dynamic team as a Frontend Developer Intern. Work on exciting projects using modern technologies like React, Vue.js, and TypeScript.',
-    requirements: ['JavaScript', 'React/Vue.js', 'HTML/CSS', 'Git'],
-    posted: '2 days ago',
-    deadline: '2025-02-15',
-    status: 'active',
-    applied: false,
-    saved: false
-  },
-  {
-    id: 2,
-    title: 'Junior Web Developer',
-    company: 'Digital Solutions Ltd',
-    location: 'Kumasi, Ghana',
-    type: 'Part-time',
-    salary: 'GH₵ 2,500 - 3,500',
-    description: 'Looking for a motivated Junior Web Developer to help build innovative web applications. Perfect opportunity for recent graduates.',
-    requirements: ['PHP', 'Laravel', 'MySQL', 'JavaScript'],
-    posted: '1 week ago',
-    deadline: '2025-01-30',
-    status: 'expiring',
-    applied: true,
-    saved: true
-  },
-  {
-    id: 3,
-    title: 'Mobile App Developer',
-    company: 'Innovation Hub',
-    location: 'Tamale, Ghana',
-    type: 'Full-time',
-    salary: 'GH₵ 4,000 - 6,000',
-    description: 'Exciting opportunity to develop mobile applications using React Native and Flutter. Join our growing tech team in Northern Ghana.',
-    requirements: ['React Native', 'Flutter', 'Firebase', 'API Integration'],
-    posted: '3 days ago',
-    deadline: '2025-02-20',
-    status: 'active',
-    applied: false,
-    saved: false
+const props = defineProps({
+  job: {
+    type: Object,
+    required: true
   }
-])
+})
 
-const getStatusClass = (status) => {
-  switch (status) {
-    case 'active': return 'status-active'
-    case 'expiring': return 'status-expiring'
-    case 'closed': return 'status-closed'
-    default: return 'status-active'
+const emit = defineEmits(['apply', 'view-details'])
+
+const isLoading = ref(false)
+
+const timeAgo = computed(() => {
+  const now = new Date()
+  const posted = new Date(props.job.postedDate)
+  const diffTime = Math.abs(now - posted)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 1) return '1 day ago'
+  if (diffDays < 7) return `${diffDays} days ago`
+  if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`
+  return `${Math.ceil(diffDays / 30)} months ago`
+})
+
+const daysUntilDeadline = computed(() => {
+  const now = new Date()
+  const deadline = new Date(props.job.deadline)
+  const diffTime = deadline - now
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays
+})
+
+const deadlineStatus = computed(() => {
+  const days = daysUntilDeadline.value
+  if (days < 0) return { text: 'Expired', color: 'red' }
+  if (days <= 3) return { text: `${days} days left`, color: 'orange' }
+  if (days <= 7) return { text: `${days} days left`, color: 'yellow' }
+  return { text: `${days} days left`, color: 'green' }
+})
+
+const handleApply = async () => {
+  isLoading.value = true
+  
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    emit('apply', props.job.id)
+  } catch (error) {
+    console.error('Error applying to job:', error)
+  } finally {
+    isLoading.value = false
   }
 }
 
-const getStatusText = (status) => {
-  switch (status) {
-    case 'active': return 'Active'
-    case 'expiring': return 'Expiring Soon'
-    case 'closed': return 'Closed'
-    default: return 'Active'
-  }
-}
-
-const applyToJob = (job) => {
-  if (job.applied || job.status === 'closed') return
-  
-  // TODO: Navigate to ApplicationForm component with job pre-filled
-  // TODO: Check if student profile is complete before allowing application
-  // TODO: Show confirmation dialog before applying
-  
-  job.applied = true
-  console.log('Applied to job:', job.title)
-  
-  // TODO: Make API call to submit application
-  // TODO: Update application history
-  // TODO: Send confirmation email to student
-  // TODO: Notify employer of new application
-}
-
-const toggleSaveJob = (job) => {
-  job.saved = !job.saved
-  console.log(job.saved ? 'Saved job:' : 'Unsaved job:', job.title)
-  
-  // TODO: Make API call to save/unsave job in user's profile
-  // TODO: Update saved jobs list in user dashboard
-  // TODO: Show feedback message to user
-  // TODO: Consider analytics tracking for job interest
-}
-
-const viewJobDetails = (job) => {
-  console.log('View details for:', job.title)
-  
-  // TODO: Navigate to dedicated job details page with complete information:
-  // - Full job description and responsibilities
-  // - Company information and culture
-  // - Detailed requirements and nice-to-haves
-  // - Application process and timeline
-  // - Benefits and compensation details
-  // - Similar job recommendations
+const handleViewDetails = () => {
+  emit('view-details', props.job.id)
 }
 </script>
 
 <template>
-  <div>
-    <h1>Available Opportunities</h1>
-    <p class="subtitle">Discover exciting IT career opportunities in Ghana</p>
-    
-    <div class="section-container">
-      <h2>Job Opportunities ({{ jobs.length }})</h2>
-      
-      <div class="jobs-grid">
-        <div 
-          v-for="job in jobs" 
-          :key="job.id" 
-          class="job-card"
-        >
-          <!-- Card Header -->
-          <div class="card-header">
-            <div class="status-and-type">
-              <span :class="['status-badge', getStatusClass(job.status)]">
-                {{ getStatusText(job.status) }}
-              </span>
-              <span class="job-type">{{ job.type }}</span>
-            </div>
-            
-            <button 
-              @click="toggleSaveJob(job)" 
-              :class="['save-btn', { saved: job.saved }]"
-              :title="job.saved ? 'Remove from saved' : 'Save job'"
-            >
-              {{ job.saved ? '❤️' : '🤍' }}
-            </button>
-          </div>
-
-          <!-- Job Information -->
-          <div class="card-body">
-            <h3 class="job-title">{{ job.title }}</h3>
-            <p class="company-name">{{ job.company }}</p>
-            <p class="job-location">📍 {{ job.location }}</p>
-            <p class="job-salary">💰 {{ job.salary }}</p>
-            
-            <p class="job-description">{{ job.description }}</p>
-            
-            <!-- Required Skills -->
-            <div class="skills-section">
-              <h4>Required Skills:</h4>
-              <div class="skills-tags">
-                <span 
-                  v-for="skill in job.requirements" 
-                  :key="skill" 
-                  class="skill-tag"
-                >
-                  {{ skill }}
-                </span>
-              </div>
-            </div>
-            
-            <!-- Job Dates -->
-            <div class="job-dates">
-              <div class="date-item">
-                <span class="date-label">Posted:</span>
-                <span class="date-value">{{ job.posted }}</span>
-              </div>
-              <div class="date-item">
-                <span class="date-label">Deadline:</span>
-                <span class="date-value">{{ new Date(job.deadline).toLocaleDateString() }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card Actions -->
-          <div class="card-actions">
-            <button @click="viewJobDetails(job)" class="btn-secondary">
-              View Details
-            </button>
-            
-            <button 
-              @click="applyToJob(job)" 
-              :class="['btn-primary', { applied: job.applied }]"
-              :disabled="job.applied || job.status === 'closed'"
-            >
-              {{ job.applied ? '✅ Applied' : 'Apply Now' }}
-            </button>
-          </div>
+  <div class="job-card">
+    <div class="job-header">
+      <div class="job-info">
+        <h3 class="job-title">{{ job.title }}</h3>
+        <p class="job-company">{{ job.company }}</p>
+        <div class="job-meta">
+          <span class="job-location">{{ job.location }}</span>
+          <span class="job-type">{{ job.type }}</span>
+          <span class="job-posted">{{ timeAgo }}</span>
         </div>
+      </div>
+      <div class="job-actions">
+        <div class="job-salary">{{ job.salary }}</div>
+      </div>
+    </div>
+
+    <div class="job-description">
+      <p>{{ job.description }}</p>
+    </div>
+
+    <div class="job-requirements">
+      <h4 class="requirements-title">Required Skills</h4>
+      <div class="requirements-tags">
+        <span
+          v-for="skill in job.requirements"
+          :key="skill"
+          class="requirement-tag"
+        >
+          {{ skill }}
+        </span>
+      </div>
+    </div>
+
+    <div class="job-footer">
+      <div class="job-deadline">
+        <span 
+          class="deadline-badge"
+          :class="`deadline-${deadlineStatus.color}`"
+        >
+          {{ deadlineStatus.text }}
+        </span>
+      </div>
+      
+      <div class="job-buttons">
+        <button
+          @click="handleViewDetails"
+          class="btn-secondary"
+          type="button"
+        >
+          View Details
+        </button>
+        <button
+          @click="handleApply"
+          :disabled="isLoading || daysUntilDeadline <= 0"
+          class="btn-primary"
+          type="button"
+        >
+          <span v-if="isLoading" class="loading-spinner"></span>
+          <span v-else>{{ daysUntilDeadline <= 0 ? 'Expired' : 'Apply Now' }}</span>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Section Container - same as ApplicationForm */
-.section-container {
-  background-color: #ffffff;
-  padding: 24px;
-  margin-bottom: 32px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 77, 197, 0.1);
-  box-shadow: 0 2px 8px rgba(0, 77, 197, 0.08);
-}
-
-/* Jobs Grid */
-.jobs-grid {
-  display: grid;
-  gap: 24px;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-}
-
 .job-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 77, 197, 0.15);
-  border-radius: 12px;
-  padding: 24px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 77, 197, 0.08);
+  background: #161B22;
+  border: 1px solid #30363D;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+  height: fit-content;
 }
 
 .job-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 77, 197, 0.15);
+  border-color: #484F58;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
 }
 
-/* Card Header */
-.card-header {
+.job-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  gap: 1rem;
 }
 
-.status-and-type {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-active {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-expiring {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.status-closed {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.job-type {
-  background-color: rgba(0, 77, 197, 0.1);
-  color: #003a9b;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.save-btn {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  padding: 4px;
-}
-
-.save-btn:hover {
-  transform: scale(1.1);
-}
-
-.save-btn.saved {
-  animation: pulse 0.3s ease-in-out;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-/* Card Body */
-.card-body {
+.job-info {
   flex: 1;
-  margin-bottom: 20px;
 }
 
 .job-title {
-  color: #003a9b;
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #F0F6FC;
+  margin: 0 0 0.25rem 0;
   line-height: 1.3;
 }
 
-.company-name {
-  color: #1f2937;
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 4px;
+.job-company {
+  font-size: 0.875rem;
+  color: #007AFF;
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
 }
 
-.job-location {
-  color: #6b7280;
-  font-size: 14px;
-  margin-bottom: 4px;
+.job-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: #8B949E;
+}
+
+.job-meta span {
+  position: relative;
+}
+
+.job-meta span:not(:last-child)::after {
+  content: '•';
+  position: absolute;
+  right: -0.5rem;
+  color: #6E7681;
 }
 
 .job-salary {
-  color: #059669;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
-  margin-bottom: 16px;
+  color: #32D74B;
+  background: rgba(50, 215, 75, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(50, 215, 75, 0.2);
+  white-space: nowrap;
 }
 
 .job-description {
-  color: #4b5563;
-  font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 16px;
+  color: #8B949E;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
-/* Skills Section */
-.skills-section {
-  margin-bottom: 16px;
+.job-description p {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.skills-section h4 {
-  color: #374151;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.skills-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.skill-tag {
-  background-color: #f3f4f6;
-  color: #374151;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid #e5e7eb;
-}
-
-/* Job Dates */
-.job-dates {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(0, 77, 197, 0.1);
-}
-
-.date-item {
+.job-requirements {
   display: flex;
   flex-direction: column;
-  font-size: 12px;
+  gap: 0.5rem;
 }
 
-.date-label {
-  color: #6b7280;
+.requirements-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #F0F6FC;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.requirements-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.requirement-tag {
+  background: rgba(255, 255, 255, 0.05);
+  color: #8B949E;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  margin-bottom: 2px;
+  border: 1px solid #30363D;
 }
 
-.date-value {
-  color: #374151;
-  font-weight: 600;
-}
-
-/* Card Actions */
-.card-actions {
+.job-footer {
   display: flex;
-  gap: 12px;
-  justify-content: stretch;
-  padding-top: 16px;
-  border-top: 1px solid rgba(0, 77, 197, 0.1);
-}
-
-.card-actions button {
-  flex: 1;
-}
-
-/* Buttons - same style as ApplicationForm */
-.btn-primary {
-  background-color: #004dc5;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #30363D;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: #003a9b;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 77, 197, 0.3);
+.deadline-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
 }
 
-.btn-primary:disabled, .btn-primary.applied {
-  background-color: #9ca3af;
+.deadline-green {
+  background: rgba(50, 215, 75, 0.1);
+  color: #32D74B;
+  border: 1px solid rgba(50, 215, 75, 0.2);
+}
+
+.deadline-yellow {
+  background: rgba(255, 214, 10, 0.1);
+  color: #FFD60A;
+  border: 1px solid rgba(255, 214, 10, 0.2);
+}
+
+.deadline-orange {
+  background: rgba(255, 159, 10, 0.1);
+  color: #FF9F0A;
+  border: 1px solid rgba(255, 159, 10, 0.2);
+}
+
+.deadline-red {
+  background: rgba(255, 69, 58, 0.1);
+  color: #FF453A;
+  border: 1px solid rgba(255, 69, 58, 0.2);
+}
+
+.job-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-primary:disabled {
+  background: #30363D;
+  color: #6E7681;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-primary.applied {
-  background-color: #059669;
+.btn-primary:disabled:hover {
+  background: #30363D;
+  transform: none;
+  box-shadow: none;
 }
 
-.btn-secondary {
-  background-color: white;
-  color: #003a9b;
-  border: 2px solid rgba(0, 77, 197, 0.3);
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background-color: rgba(0, 77, 197, 0.05);
-  border-color: rgba(0, 77, 197, 0.5);
-  color: #004dc5;
-  transform: translateY(-1px);
-}
-
-/* Title styling - same as ApplicationForm */
-h1 {
-  color: white;
-  margin-bottom: 8px;
-  font-size: 28px;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
-  margin-bottom: 24px;
-  font-size: 16px;
-}
-
-h2 {
-  color: #003a9b;
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #004dc5;
-  padding-bottom: 8px;
-}
-
-/* Mobile Responsive */
 @media (max-width: 768px) {
-  .jobs-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .section-container {
-    padding: 20px;
-    margin-bottom: 24px;
-  }
-  
   .job-card {
-    padding: 20px;
+    padding: 1rem;
   }
-  
-  .job-dates {
+
+  .job-header {
     flex-direction: column;
-    gap: 8px;
+    gap: 0.75rem;
   }
-  
-  .date-item {
-    flex-direction: row;
-    justify-content: space-between;
+
+  .job-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .job-buttons {
+    justify-content: stretch;
+  }
+
+  .job-buttons button {
+    flex: 1;
+  }
+
+  .deadline-badge {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .job-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .job-meta span::after {
+    display: none;
+  }
+
+  .requirements-tags {
+    gap: 0.25rem;
+  }
+
+  .requirement-tag {
+    font-size: 0.6875rem;
   }
 }
 </style>
