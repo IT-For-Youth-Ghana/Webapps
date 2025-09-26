@@ -65,7 +65,7 @@ const handleToggle = () => {
 .toggle-track {
   width: 52px;
   height: 28px;
-  background: linear-gradient(135deg, #1b65b2, #8fb2d6);
+  background: linear-gradient(135deg, var(--interactive-primary, #1b65b2), var(--text-secondary, #8fb2d6));
   border-radius: 24px;
   padding: 2px;
   position: relative;
@@ -76,7 +76,7 @@ const handleToggle = () => {
 }
 
 .theme-toggle.dark .toggle-track {
-  background: linear-gradient(135deg, #30363D, #21262D);
+  background: linear-gradient(135deg, var(--bg-elevated, #30363D), var(--bg-tertiary, #21262D));
   box-shadow: 
     inset 0 2px 4px rgba(0, 0, 0, 0.3),
     0 2px 8px rgba(0, 0, 0, 0.2);
@@ -85,7 +85,7 @@ const handleToggle = () => {
 .toggle-thumb {
   width: 24px;
   height: 24px;
-  background: #ffffff;
+  background: var(--bg-primary, #ffffff);
   border-radius: 50%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(0);
@@ -97,7 +97,7 @@ const handleToggle = () => {
 
 .theme-toggle.dark .toggle-thumb {
   transform: translateX(24px);
-  background: #0D1117;
+  background: var(--bg-primary, #0D1117);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -121,7 +121,7 @@ const handleToggle = () => {
 
 /* Accessibility improvements */
 .theme-toggle:focus {
-  outline: 2px solid #1b65b2;
+  outline: 2px solid var(--interactive-primary, #1b65b2);
   outline-offset: 2px;
 }
 

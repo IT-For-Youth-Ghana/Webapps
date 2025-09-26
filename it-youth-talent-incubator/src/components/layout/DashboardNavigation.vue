@@ -163,13 +163,14 @@ const toggleMobileMenu = () => {
 
 <style scoped>
 .dashboard-nav {
-  background: rgba(22, 27, 34, 0.95);
+  background: var(--bg-secondary, rgba(22, 27, 34, 0.95));
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid #30363D;
+  border-bottom: 1px solid var(--border-primary, #30363D);
   position: sticky;
   top: 0;
   z-index: 1000;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .nav-container {
@@ -196,11 +197,12 @@ const toggleMobileMenu = () => {
 
 .brand-subtitle {
   font-size: 0.6875rem;
-  color: #8fb2d6;
+  color: var(--text-secondary, #8fb2d6);
   font-weight: 500;
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: 0.025em;
+  transition: color 0.3s ease;
 }
 
 .desktop-menu {
@@ -222,20 +224,20 @@ const toggleMobileMenu = () => {
   border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #8B949E;
+  color: var(--text-disabled, #8B949E);
   cursor: pointer;
   transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 .nav-item:hover {
-  background: rgba(143, 178, 214, 0.1);
-  color: #ffffff;
+  background: var(--interactive-secondary-hover, rgba(143, 178, 214, 0.1));
+  color: var(--text-primary, #ffffff);
 }
 
 .nav-item-active {
-  background: rgba(27, 101, 178, 0.1);
-  color: #1b65b2;
+  background: var(--interactive-secondary, rgba(27, 101, 178, 0.1));
+  color: var(--interactive-primary, #1b65b2);
 }
 
 .user-menu {
@@ -256,8 +258,8 @@ const toggleMobileMenu = () => {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1b65b2, #8fb2d6);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--interactive-primary, #1b65b2), var(--text-secondary, #8fb2d6));
+  color: var(--text-inverse, #ffffff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -285,15 +287,17 @@ const toggleMobileMenu = () => {
 .user-name {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   line-height: 1;
+  transition: color 0.3s ease;
 }
 
 .user-role {
   font-size: 0.75rem;
-  color: #8B949E;
+  color: var(--text-disabled, #8B949E);
   text-transform: capitalize;
   line-height: 1;
+  transition: color 0.3s ease;
 }
 
 .user-dropdown {
@@ -301,8 +305,8 @@ const toggleMobileMenu = () => {
   top: 100%;
   right: 0;
   margin-top: 0.5rem;
-  background: #21262D;
-  border: 1px solid #30363D;
+  background: var(--bg-tertiary, #21262D);
+  border: 1px solid var(--border-primary, #30363D);
   border-radius: 0.5rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   min-width: 8rem;
@@ -325,14 +329,14 @@ const toggleMobileMenu = () => {
   padding: 0.75rem 1rem;
   text-align: left;
   font-size: 0.875rem;
-  color: #FF453A;
+  color: var(--status-error-text, #FF453A);
   cursor: pointer;
   border-radius: 0.5rem;
   transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logout-btn:hover {
-  background: rgba(255, 69, 58, 0.1);
+  background: var(--status-error, rgba(255, 69, 58, 0.1));
 }
 
 .mobile-toggle {
@@ -348,7 +352,7 @@ const toggleMobileMenu = () => {
 .hamburger-line {
   width: 1.25rem;
   height: 2px;
-  background: #8B949E;
+  background: var(--text-disabled, #8B949E);
   border-radius: 1px;
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -372,8 +376,8 @@ const toggleMobileMenu = () => {
   width: 20rem;
   max-width: 90vw;
   height: calc(100vh - 4rem);
-  background: #161B22;
-  border-left: 1px solid #30363D;
+  background: var(--bg-secondary, #161B22);
+  border-left: 1px solid var(--border-primary, #30363D);
   transform: translateX(100%);
   transition: transform 350ms cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 999;
@@ -397,9 +401,9 @@ const toggleMobileMenu = () => {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--interactive-tertiary, rgba(255, 255, 255, 0.05));
   border-radius: 0.75rem;
-  border: 1px solid #30363D;
+  border: 1px solid var(--border-primary, #30363D);
 }
 
 .mobile-nav-items {
@@ -415,37 +419,37 @@ const toggleMobileMenu = () => {
   text-align: left;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #8B949E;
+  color: var(--text-disabled, #8B949E);
   cursor: pointer;
   border-radius: 0.5rem;
   transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobile-nav-item:hover {
-  background: rgba(143, 178, 214, 0.1);
-  color: #ffffff;
+  background: var(--interactive-secondary-hover, rgba(143, 178, 214, 0.1));
+  color: var(--text-primary, #ffffff);
 }
 
 .mobile-nav-item-active {
-  background: rgba(27, 101, 178, 0.1);
-  color: #1b65b2;
+  background: var(--interactive-secondary, rgba(27, 101, 178, 0.1));
+  color: var(--interactive-primary, #1b65b2);
 }
 
 .mobile-nav-footer {
   margin-top: auto;
   padding-top: 1rem;
-  border-top: 1px solid #30363D;
+  border-top: 1px solid var(--border-primary, #30363D);
 }
 
 .mobile-logout-btn {
   width: 100%;
-  background: rgba(255, 69, 58, 0.1);
-  border: 1px solid rgba(255, 69, 58, 0.2);
+  background: var(--status-error, rgba(255, 69, 58, 0.1));
+  border: 1px solid var(--status-error-border, rgba(255, 69, 58, 0.2));
   padding: 0.875rem 1rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #FF453A;
+  color: var(--status-error-text, #FF453A);
   cursor: pointer;
   transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }

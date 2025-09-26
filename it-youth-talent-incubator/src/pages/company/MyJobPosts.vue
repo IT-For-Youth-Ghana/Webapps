@@ -338,6 +338,9 @@ onMounted(() => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
+  background: var(--bg-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease;
 }
 
 .page-header {
@@ -358,12 +361,14 @@ onMounted(() => {
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 0.5rem 0;
+  transition: color 0.3s ease;
 }
 
 .page-subtitle {
   color: var(--text-secondary);
   margin: 0;
   font-size: 1rem;
+  transition: color 0.3s ease;
 }
 
 .stats-grid {

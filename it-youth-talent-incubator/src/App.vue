@@ -288,19 +288,20 @@ window.switchRole = switchRole
 }
 
 .demo-indicator {
-  background: #1b65b2;
-  color: #ffffff;
+  background: var(--interactive-primary, #1b65b2);
+  color: var(--text-inverse, #ffffff);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   font-size: 0.75rem;
   font-weight: 600;
   text-align: center;
   box-shadow: 0 4px 12px rgba(27, 101, 178, 0.25);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .role-switch-btn {
-  background: #8fb2d6;
-  color: #ffffff;
+  background: var(--text-secondary, #8fb2d6);
+  color: var(--text-inverse, #ffffff);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
@@ -313,13 +314,13 @@ window.switchRole = switchRole
 }
 
 .role-switch-btn:hover {
-  background: #195aa5;
+  background: var(--interactive-primary-hover, #195aa5);
   transform: translateY(-1px);
   opacity: 1;
 }
 
 .role-switch-btn.active {
-  background: #1b65b2;
+  background: var(--interactive-primary, #1b65b2);
   opacity: 1;
   box-shadow: 0 4px 12px rgba(27, 101, 178, 0.4);
   transform: translateY(-1px);
