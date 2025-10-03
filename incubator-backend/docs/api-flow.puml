@@ -1,0 +1,270 @@
+@startuml IT_Youth_Talent_Incubator_API_Flow
+
+!define CLIENT_COLOR #3498db
+!define MIDDLEWARE_COLOR #2ecc71
+!define CONTROLLER_COLOR #e74c3c
+!define SERVICE_COLOR #f39c12
+!define DATABASE_COLOR #9b59b6
+!define CACHE_COLOR #e67e22
+
+title IT Youth Talent Incubator - API Request Flow
+
+actor "Client" as client CLIENT_COLOR
+participant "Load Balancer" as lb
+participant "Rate Limiter" as rate_limiter MIDDLEWARE_COLOR
+participant "CORS Handler" as cors MIDDLEWARE_COLOR
+participant "Request Logger" as logger MIDDLEWARE_COLOR
+participant "Auth Middleware" as auth_middleware MIDDLEWARE_COLOR
+participant "Validation" as validation MIDDLEWARE_COLOR
+participant "Route Handler" as route_handler
+participant "Controller" as controller CONTROLLER_COLOR
+participant "Service" as service SERVICE_COLOR
+participant "Repository" as repository
+participant "Cache (Redis)" as cache CACHE_COLOR
+participant "Database (PostgreSQL)" as database DATABASE_COLOR
+participant "Firebase Auth" as firebase
+participant "Firebase Storage" as storage
+
+== Authentication Flow ==
+client -> lb : POST /api/auth/login
+activate lb
+lb -> rate_limiter : Forward request
+activate rate_limiter
+rate_limiter -> cors : Check rate limit
+activate cors
+cors -> logger : Apply CORS headers
+activate logger
+logger -> auth_middleware : Log request
+activate auth_middleware
+
+note over auth_middleware
+  Skip auth for login endpoint
+end note
+
+auth_middleware -> validation : Continue
+activate validation
+validation -> route_handler : Validate login data
+activate route_handler
+route_handler -> controller : Route to AuthController
+activate controller
+controller -> service : authService.login()
+activate service
+service -> repository : userRepository.findByEmail()
+activate repository
+repository -> database : SELECT * FROM users WHERE email = ?
+activate database
+database --> repository : User data
+deactivate database
+repository --> service : User object
+deactivate repository
+
+service -> service : Verify password
+service -> firebase : Generate JWT token
+activate firebase
+firebase --> service : JWT token
+deactivate firebase
+
+service -> cache : Store session data
+activate cache
+cache --> service : Session stored
+deactivate cache
+
+service --> controller : { user, token, session }
+deactivate service
+controller --> route_handler : HTTP 200 + user data
+deactivate controller
+route_handler --> validation : Response
+deactivate route_handler
+validation --> auth_middleware : Response
+deactivate validation
+auth_middleware --> logger : Response
+deactivate auth_middleware
+logger --> cors : Response
+deactivate logger
+cors --> rate_limiter : Response
+deactivate cors
+rate_limiter --> lb : Response
+deactivate rate_limiter
+lb --> client : Login successful
+deactivate lb
+
+== Protected Resource Access ==
+client -> lb : GET /api/students/profile
+activate lb
+lb -> rate_limiter : Forward request
+activate rate_limiter
+rate_limiter -> cors : Check rate limit
+activate cors
+cors -> logger : Apply CORS headers
+activate logger
+logger -> auth_middleware : Log request
+activate auth_middleware
+
+note over auth_middleware
+  Extract and verify JWT token
+end note
+
+auth_middleware -> cache : Check session
+activate cache
+cache --> auth_middleware : Session data
+deactivate cache
+
+auth_middleware -> firebase : Verify JWT token
+activate firebase
+firebase --> auth_middleware : Token valid
+deactivate firebase
+
+auth_middleware -> validation : Authenticated user
+activate validation
+validation -> route_handler : Validate request params
+activate route_handler
+route_handler -> controller : Route to StudentController
+activate controller
+controller -> service : studentService.getProfile()
+activate service
+
+service -> cache : Check cache first
+activate cache
+cache --> service : Cache miss
+deactivate cache
+
+service -> repository : studentRepository.findByUserId()
+activate repository
+repository -> database : SELECT * FROM student_profiles WHERE user_id = ?
+activate database
+database --> repository : Student profile data
+deactivate database
+repository --> service : Student object
+deactivate repository
+
+service -> cache : Store in cache
+activate cache
+cache --> service : Cached
+deactivate cache
+
+service --> controller : Student profile
+deactivate service
+controller --> route_handler : HTTP 200 + profile data
+deactivate controller
+route_handler --> validation : Response
+deactivate route_handler
+validation --> auth_middleware : Response
+deactivate validation
+auth_middleware --> logger : Response
+deactivate auth_middleware
+logger --> cors : Response
+deactivate logger
+cors --> rate_limiter : Response
+deactivate cors
+rate_limiter --> lb : Response
+deactivate rate_limiter
+lb --> client : Profile data
+deactivate lb
+
+== File Upload Flow ==
+client -> lb : POST /api/uploads/resume
+activate lb
+lb -> rate_limiter : Forward request with file
+activate rate_limiter
+rate_limiter -> cors : Check rate limit
+activate cors
+cors -> logger : Apply CORS headers
+activate logger
+logger -> auth_middleware : Log request
+activate auth_middleware
+auth_middleware -> validation : Authenticated user
+activate validation
+
+note over validation
+  Validate file type, size, etc.
+end note
+
+validation -> route_handler : File validation passed
+activate route_handler
+route_handler -> controller : Route to UploadController
+activate controller
+controller -> service : fileService.uploadResume()
+activate service
+
+service -> storage : Upload to Firebase Storage
+activate storage
+storage --> service : File URL
+deactivate storage
+
+service -> repository : fileRepository.create()
+activate repository
+repository -> database : INSERT INTO file_uploads
+activate database
+database --> repository : File record created
+deactivate database
+repository --> service : File object
+deactivate repository
+
+service --> controller : Upload successful
+deactivate service
+controller --> route_handler : HTTP 201 + file data
+deactivate controller
+route_handler --> validation : Response
+deactivate route_handler
+validation --> auth_middleware : Response
+deactivate validation
+auth_middleware --> logger : Response
+deactivate auth_middleware
+logger --> cors : Response
+deactivate logger
+cors --> rate_limiter : Response
+deactivate cors
+rate_limiter --> lb : Response
+deactivate rate_limiter
+lb --> client : File uploaded
+deactivate lb
+
+== Error Handling Flow ==
+client -> lb : POST /api/jobs (invalid data)
+activate lb
+lb -> rate_limiter : Forward request
+activate rate_limiter
+rate_limiter -> cors : Check rate limit
+activate cors
+cors -> logger : Apply CORS headers
+activate logger
+logger -> auth_middleware : Log request
+activate auth_middleware
+auth_middleware -> validation : Authenticated user
+activate validation
+
+note over validation : Validation fails
+validation -> validation : Throw ValidationError
+
+validation --> auth_middleware : ValidationError
+deactivate validation
+auth_middleware --> logger : Error
+deactivate auth_middleware
+
+note over logger
+  Error middleware catches
+  and formats error response
+end note
+
+logger --> cors : HTTP 400 + error details
+deactivate logger
+cors --> rate_limiter : Error response
+deactivate cors
+rate_limiter --> lb : Error response
+deactivate rate_limiter
+lb --> client : Validation error
+deactivate lb
+
+note over client, database
+  **Key Features:**
+  - JWT-based authentication
+  - Redis session management
+  - Request rate limiting
+  - Comprehensive validation
+  - File upload to Firebase
+  - Database caching
+  - Structured error handling
+  - Request/response logging
+end note
+
+@enduml

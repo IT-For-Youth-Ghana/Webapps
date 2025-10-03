@@ -1,0 +1,230 @@
+@startuml IT_Youth_Talent_Incubator_MVP_Backend_Directory_Structure
+
+!define FOLDER_COLOR #f39c12
+!define FILE_COLOR #3498db
+!define CONFIG_COLOR #e74c3c
+!define TEST_COLOR #2ecc71
+
+title IT Youth Talent Incubator - MVP Backend Directory Structure
+
+package "incubator-backend" as root FOLDER_COLOR {
+
+  file "package.json" as package_json FILE_COLOR
+  file "README.md" as readme FILE_COLOR
+  file ".env.example" as env_example CONFIG_COLOR
+  file ".env" as env CONFIG_COLOR
+  file ".gitignore" as gitignore FILE_COLOR
+  file "jest.config.js" as jest_config CONFIG_COLOR
+  file ".eslintrc.js" as eslint_config CONFIG_COLOR
+  file "Dockerfile" as dockerfile FILE_COLOR
+  file "docker-compose.yml" as docker_compose CONFIG_COLOR
+
+  package "src" as src_folder FOLDER_COLOR {
+    
+    file "app.js" as app_js FILE_COLOR
+    file "server.js" as server_js FILE_COLOR
+    
+    package "config" as config_folder FOLDER_COLOR {
+      file "database.js" as db_config FILE_COLOR
+      file "mongodb.js" as mongodb_config FILE_COLOR
+      file "jwt.js" as jwt_config FILE_COLOR
+      file "environment.js" as env_config FILE_COLOR
+      file "agenda.js" as agenda_config FILE_COLOR
+    }
+    
+    package "modules" as modules_folder FOLDER_COLOR {
+      package "auth" as auth_folder FOLDER_COLOR {
+        file "auth.routes.js" as auth_routes FILE_COLOR
+        file "auth.controller.js" as auth_controller FILE_COLOR
+        file "auth.service.js" as auth_service FILE_COLOR
+        file "auth.repository.js" as auth_repository FILE_COLOR
+        file "auth.validation.js" as auth_validator FILE_COLOR
+        file "auth.middleware.js" as auth_middleware FILE_COLOR
+      }
+      
+      package "user" as user_folder FOLDER_COLOR {
+        file "user.routes.js" as user_routes FILE_COLOR
+        file "user.controller.js" as user_controller FILE_COLOR
+        file "user.service.js" as user_service FILE_COLOR
+        file "user.repository.js" as user_repository FILE_COLOR
+        file "user.validation.js" as user_validator FILE_COLOR
+        file "user.model.js" as user_model FILE_COLOR
+      }
+      
+      package "student" as student_folder FOLDER_COLOR {
+        file "student.routes.js" as student_routes FILE_COLOR
+        file "student.controller.js" as student_controller FILE_COLOR
+        file "student.service.js" as student_service FILE_COLOR
+        file "student.repository.js" as student_repository FILE_COLOR
+        file "student.validation.js" as student_validator FILE_COLOR
+        file "student.model.js" as student_model FILE_COLOR
+      }
+      
+      package "job" as job_folder FOLDER_COLOR {
+        file "job.routes.js" as job_routes FILE_COLOR
+        file "job.controller.js" as job_controller FILE_COLOR
+        file "job.service.js" as job_service FILE_COLOR
+        file "job.repository.js" as job_repository FILE_COLOR
+        file "job.validation.js" as job_validator FILE_COLOR
+        file "job.model.js" as job_model FILE_COLOR
+      }
+      
+      package "application" as application_folder FOLDER_COLOR {
+        file "application.routes.js" as application_routes FILE_COLOR
+        file "application.controller.js" as application_controller FILE_COLOR
+        file "application.service.js" as application_service FILE_COLOR
+        file "application.repository.js" as application_repository FILE_COLOR
+        file "application.validation.js" as application_validator FILE_COLOR
+        file "application.model.js" as application_model FILE_COLOR
+        file "application.commands.js" as application_commands FILE_COLOR
+        file "application.queries.js" as application_queries FILE_COLOR
+      }
+    }
+    
+    package "middleware" as middleware_folder FOLDER_COLOR {
+      file "auth.js" as auth_middleware FILE_COLOR
+      file "validation.js" as validation_middleware FILE_COLOR
+      file "errorHandler.js" as error_middleware FILE_COLOR
+      file "rateLimiter.js" as rate_limiter FILE_COLOR
+      file "cors.js" as cors_middleware FILE_COLOR
+      file "logger.js" as logger_middleware FILE_COLOR
+    }
+    
+    package "utils" as utils_folder FOLDER_COLOR {
+      file "jwtHelper.js" as jwt_helper FILE_COLOR
+      file "validationHelper.js" as validation_helper FILE_COLOR
+      file "responseHelper.js" as response_helper FILE_COLOR
+      file "logger.js" as logger_util FILE_COLOR
+    }
+    
+    package "database" as database_folder FOLDER_COLOR {
+      file "connection.js" as db_connection FILE_COLOR
+      file "mongoose.js" as mongoose_config FILE_COLOR
+      file "migrate.js" as migrate FILE_COLOR
+      file "seed.js" as seed FILE_COLOR
+      
+      package "migrations" as migrations_folder FOLDER_COLOR {
+        file "001-create-users.js" as migration_users FILE_COLOR
+        file "002-create-student-profiles.js" as migration_students FILE_COLOR
+        file "003-create-jobs.js" as migration_jobs FILE_COLOR
+        file "004-create-applications.js" as migration_applications FILE_COLOR
+      }
+      
+      package "seeders" as seeders_folder FOLDER_COLOR {
+        file "001-demo-users.js" as seed_users FILE_COLOR
+        file "002-demo-jobs.js" as seed_jobs FILE_COLOR
+      }
+    }
+  }
+  
+  package "tests" as tests_folder TEST_COLOR {
+    
+    package "unit" as unit_tests_folder TEST_COLOR {
+      package "modules" as test_modules_folder TEST_COLOR {
+        file "auth.test.js" as test_auth TEST_COLOR
+        file "user.test.js" as test_user TEST_COLOR
+        file "student.test.js" as test_student TEST_COLOR
+        file "job.test.js" as test_job TEST_COLOR
+        file "application.test.js" as test_application TEST_COLOR
+      }
+      
+      package "utils" as test_utils_folder TEST_COLOR {
+        file "jwtHelper.test.js" as test_jwt_helper TEST_COLOR
+        file "validationHelper.test.js" as test_validation_helper TEST_COLOR
+      }
+    }
+    
+    package "integration" as integration_tests_folder TEST_COLOR {
+      file "auth.integration.test.js" as test_auth_integration TEST_COLOR
+      file "users.integration.test.js" as test_users_integration TEST_COLOR
+      file "students.integration.test.js" as test_students_integration TEST_COLOR
+      file "jobs.integration.test.js" as test_jobs_integration TEST_COLOR
+      file "applications.integration.test.js" as test_apps_integration TEST_COLOR
+    }
+    
+    package "fixtures" as fixtures_folder TEST_COLOR {
+      file "users.json" as user_fixtures TEST_COLOR
+      file "students.json" as student_fixtures TEST_COLOR
+      file "jobs.json" as job_fixtures TEST_COLOR
+      file "applications.json" as application_fixtures TEST_COLOR
+    }
+    
+    file "setup.js" as test_setup TEST_COLOR
+    file "teardown.js" as test_teardown TEST_COLOR
+  }
+  
+  package "logs" as logs_folder FOLDER_COLOR {
+    file "app.log" as app_log FILE_COLOR
+    file "error.log" as error_log FILE_COLOR
+    file "access.log" as access_log FILE_COLOR
+  }
+  
+  package "docs" as docs_folder FOLDER_COLOR {
+    file "backend-architecture-mvp.puml" as arch_puml FILE_COLOR
+    file "backend-directory-structure-mvp.puml" as dir_puml FILE_COLOR
+    file "API.md" as api_docs FILE_COLOR
+    file "SETUP.md" as setup_docs FILE_COLOR
+  }
+}
+
+' Key Components Description
+note right of src_folder
+  **MVP Application Structure**
+  - Modular monolith design
+  - Core features only
+  - CQRS for Application module
+end note
+
+note left of config_folder
+  **Configuration Management**
+  - MongoDB connection
+  - JWT settings
+  - Agenda.js for async jobs
+  - Environment variables
+end note
+
+note top of modules_folder
+  **Feature Modules**
+  - Independent modules
+  - Routes, controllers, services
+  - Repositories, models
+  - CQRS in Application
+end note
+
+note bottom of application_folder
+  **CQRS Implementation**
+  - Commands: Async writes via Agenda.js
+  - Queries: Direct MongoDB reads
+  - Eventual consistency
+end note
+
+note left of middleware_folder
+  **Request Processing**
+  - JWT authentication
+  - Input validation
+  - Rate limiting
+  - CORS handling
+  - Error handling
+end note
+
+note bottom of tests_folder
+  **Testing Strategy**
+  - Unit tests for modules/utils
+  - Integration tests for APIs
+  - Minimal fixtures for MVP
+end note
+
+' Technology Stack
+legend top left
+  |= Technology |= Usage |
+  | Express.js | Web framework |
+  | MongoDB Atlas | Primary database |
+  | Mongoose | ODM |
+  | Agenda.js | Async job queue |
+  | JWT | Authentication |
+  | Winston | Logging |
+  | Jest | Testing framework |
+  | Joi | Validation |
+endlegend
+
+@enduml

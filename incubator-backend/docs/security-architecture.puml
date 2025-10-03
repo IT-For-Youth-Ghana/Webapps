@@ -1,0 +1,93 @@
+@startuml IT_Youth_Talent_Incubator_MVP_Security_Architecture
+
+!define CLOUD_COLOR #3498db
+!define SERVER_COLOR #2ecc71
+!define DATABASE_COLOR #9b59b6
+!define SECURITY_COLOR #e74c3c
+!define MONITORING_COLOR #f39c12
+
+title IT Youth Talent Incubator - MVP Security Architecture (Digital Ocean)
+
+' Internet
+cloud "Internet" as internet CLOUD_COLOR
+
+' Network Security Layer
+package "Network Security" as network_security SECURITY_COLOR {
+  component "Digital Ocean Cloud Firewall" as firewall SECURITY_COLOR
+  component "Nginx (Reverse Proxy)" as nginx SERVER_COLOR {
+    component "SSL (Let's Encrypt)" as ssl
+  }
+}
+
+' Application Security Layer
+package "Application Security" as app_security SECURITY_COLOR {
+  node "Digital Ocean Droplet (Node.js + Express)" as droplet SERVER_COLOR {
+    component "JWT Authentication" as jwt
+    component "Role-Based Authorization" as rbac
+    component "Input Validation (Joi)" as validation
+    component "Secure File Upload (Multer)" as multer
+    component "Agenda.js (CQRS)" as agenda
+    storage "Local File Storage (CVs, Profile Photos)" as local_storage
+  }
+}
+
+' Data Security Layer
+package "Data Security" as data_security SECURITY_COLOR {
+  node "Digital Ocean Managed MongoDB (M2 Tier)" as mongo DATABASE_COLOR {
+    component "Encryption at Rest" as mongo_encrypt
+    component "Access Control" as mongo_access
+  }
+  file "Environment Variables (.env)" as env_vars SECURITY_COLOR
+}
+
+' Monitoring & Logging
+package "Monitoring & Logging" as monitoring SECURITY_COLOR {
+  node "Winston (Error Logs)" as winston MONITORING_COLOR 
+  node "Digital Ocean Monitoring (Alerts)" as do_monitoring MONITORING_COLOR 
+}
+
+
+' =============== CONNECTIONS ===============
+
+' Client to Network
+internet --> firewall : Filter Traffic
+firewall --> nginx : Allow Ports 80/443
+nginx --> ssl : HTTPS Encryption
+ssl --> droplet : Secure API Requests
+
+' Application Security
+droplet --> jwt : Authenticate Users
+droplet --> rbac : Restrict Access
+droplet --> validation : Validate Inputs
+droplet --> multer : Secure CV Uploads
+droplet --> agenda : Secure CQRS Jobs
+multer --> local_storage : Store CVs
+
+' Data Security
+droplet --> mongo : Secure DB Access
+mongo --> mongo_encrypt : Data Protection
+mongo --> mongo_access : User Authentication
+droplet --> env_vars : Secure Config
+
+' Monitoring
+droplet --> winston : Log Errors/Critical Events
+droplet --> do_monitoring : Trigger Alerts
+
+' Notes
+note right of network_security
+  Network Security: Firewall restricts to ports 22, 80, 443; SSL uses free Let's Encrypt certificates
+end note
+
+note right of app_security
+  Application Security: JWT authenticates users (students, companies); RBAC restricts endpoints by role; Joi validates inputs; Multer restricts CV uploads and Profile Photos [(PDF, 5MB), (PNG/JPG, 5MB)]
+end note
+
+note left of data_security
+  Data Security: MongoDB encrypted at rest; Access uses IP whitelisting and credentials; Env Vars secure JWT_SECRET, MONGO_URI
+end note
+
+note bottom of monitoring
+  Monitoring: Winston logs errors, auth failures; DO Alerts monitor CPU, memory spikes
+end note
+
+@enduml

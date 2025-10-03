@@ -1,0 +1,259 @@
+@startuml IT_Youth_Talent_Incubator_MVP_Modular_Backend_Architecture
+
+skinparam componentStyle rectangle
+
+!define PRIMARY_COLOR #3498db
+!define SECONDARY_COLOR #2ecc71
+!define WARNING_COLOR #f39c12
+!define MODULE_COLOR #8e44ad
+!define PROVIDER_COLOR #e67e22
+!define MONITORING_COLOR #16a085
+
+title IT Youth Talent Incubator - MVP Modular Backend Architecture
+
+' External Services
+cloud "External Services" as external {
+    component "MongoDB Atlas" as mongodb #f39c12
+}
+
+' Providers Layer
+package "Providers Layer" as providers_layer #e67e22 {
+    component "Database Provider" as db_provider #e67e22
+}
+
+' API Gateway & Security Layer
+package "API Gateway & Security" as gateway {
+    component "Rate Limiting" as rate_limit
+    component "CORS Handler" as cors
+    component "Request Logger" as logger
+}
+
+' Core Application
+package "Core Application" as core_app #2ecc71 {
+    component "Express App" as express_app #2ecc71
+    component "Module Registry" as module_registry #2ecc71
+
+    ' Global Middleware
+    package "Global Middleware" as global_middleware {
+        component "Authentication" as global_auth
+        component "Error Handler" as global_error
+        component "Request Parser" as request_parser
+    }
+}
+
+' Feature Modules
+package "Feature Modules" as feature_modules #8e44ad {
+    package "Auth Module" as auth_module #8e44ad {
+        component "auth.routes.js" as auth_routes <<Route>>
+        component "auth.controller.js" as auth_controller <<Controller>>
+        component "auth.service.js" as auth_service <<Service>>
+        component "auth.repository.js" as auth_repository <<Repository>>
+        component "auth.validation.js" as auth_validation <<Validation>>
+        component "auth.middleware.js" as auth_middleware <<Middleware>>
+    }
+
+    package "User Module" as user_module #8e44ad {
+        component "user.routes.js" as user_routes <<Route>>
+        component "user.controller.js" as user_controller <<Controller>>
+        component "user.service.js" as user_service <<Service>>
+        component "user.repository.js" as user_repository <<Repository>>
+        component "user.validation.js" as user_validation <<Validation>>
+        component "user.model.js" as user_model <<Model>>
+    }
+
+    package "Student Module" as student_module #8e44ad {
+        component "student.routes.js" as student_routes <<Route>>
+        component "student.controller.js" as student_controller <<Controller>>
+        component "student.service.js" as student_service <<Service>>
+        component "student.repository.js" as student_repository <<Repository>> 
+        component "student.validation.js" as student_validation <<Validation>>
+        component "student.model.js" as student_model <<Model>>
+    }
+
+    package "Job Module" as job_module #8e44ad {
+        component "job.routes.js" as job_routes <<Route>>
+        component "job.controller.js" as job_controller <<Controller>>
+        component "job.service.js" as job_service <<Service>>
+        component "job.repository.js" as job_repository <<Repository>>
+        component "job.validation.js" as job_validation <<Validation>>
+        component "job.model.js" as job_model <<Model>>
+    }
+
+    package "Application Module" as application_module #8e44ad {
+        component "application.routes.js" as app_routes <<Route>>
+        component "application.controller.js" as app_controller <<Controller>>
+        component "application.service.js" as app_service <<Service>>
+        component "application.repository.js" as app_repository <<Repository>>
+        component "application.validation.js" as app_validation <<Validation>>
+        component "application.model.js" as app_model <<Model>>
+        component "application.commands.js" as app_commands <<CQRS Commands>>
+        component "application.queries.js" as app_queries <<CQRS Queries>>
+    }
+}
+
+' Shared Layer
+package "Shared Layer" as shared_layer {
+    package "Database Layer" as db_layer #f39c12 {
+        component "Mongoose ODM" as mongoose #f39c12
+        component "Connection Pool" as connection_pool
+    }
+
+    package "Utilities & Helpers" as utilities {
+        component "JWT Helper" as jwt_helper
+        component "Validation Helper" as validation_helper
+        component "Response Helper" as response_helper
+        component "Logger" as logger_util
+    }
+
+    package "Asynchronous Processing" as async_processing {
+        component "Agenda.js Queue" as agenda_queue
+    }
+}
+
+' Monitoring & Logging
+package "Monitoring & Logging" as monitoring_layer #16a085 {
+    component "Winston Logger" as winston #16a085
+}
+
+' Configuration Layer
+package "Configuration" as config_layer {
+    component "Environment Config" as env_config
+    component "Database Config" as db_config
+    component "MongoDB Config" as mongodb_config
+    component "JWT Config" as jwt_config
+}
+
+' Client Applications
+actor "Frontend App" as frontend
+actor "Mobile App" as mobile
+
+' =============== RELATIONSHIPS ===============
+
+' Client to API Gateway
+frontend --> rate_limit : HTTP/HTTPS Requests
+mobile --> rate_limit : HTTP/HTTPS Requests
+
+' API Gateway Flow
+rate_limit --> cors
+cors --> logger
+logger --> express_app
+
+' Express App to Global Middleware
+express_app --> global_auth
+global_auth --> request_parser
+request_parser --> module_registry
+
+' Module Registry to Feature Modules
+module_registry --> auth_module : Route /auth/*
+module_registry --> user_module : Route /users/*
+module_registry --> student_module : Route /students/*
+module_registry --> job_module : Route /jobs/*
+module_registry --> application_module : Route /applications/*
+
+' Module Internal Flow (Example: Auth Module)
+auth_routes --> auth_controller
+auth_controller --> auth_validation
+auth_validation --> auth_service
+auth_service --> auth_repository
+
+' Module Internal Flow (Example: Application Module with CQRS)
+app_routes --> app_controller
+app_controller --> app_validation
+app_validation --> app_service
+app_service --> app_commands : Create/Update Application
+app_service --> app_queries : Fetch Application
+app_commands --> agenda_queue : Queue Commands
+app_commands --> app_repository
+app_queries --> app_repository
+app_repository --> app_model
+
+' Cross-Module Dependencies
+auth_service ..> user_repository : User Authentication
+app_service ..> student_repository : Application Student
+app_service ..> job_repository : Application Job
+
+' Modules to Providers
+auth_service --> db_provider
+user_service --> db_provider
+student_service --> db_provider
+job_service --> db_provider
+app_service --> db_provider
+
+' Providers to External Services
+db_provider --> mongodb
+
+' Shared Layer Usage
+auth_service --> jwt_helper
+user_service --> validation_helper
+app_service --> response_helper
+app_service --> agenda_queue : Async Command Processing
+app_controller --> logger_util
+
+' Database Layer
+user_model --> mongoose
+student_model --> mongoose
+job_model --> mongoose
+app_model --> mongoose
+mongoose --> connection_pool
+connection_pool --> db_provider
+mongoose ..> db_config : Uses Config
+mongoose ..> mongodb_config : Uses Config
+
+' Monitoring and Logging
+express_app --> winston : Log Requests/Errors
+
+' Configuration
+express_app ..> env_config : Uses Config
+db_provider ..> mongodb_config : Uses Config
+auth_service ..> jwt_config : Uses Config
+
+' Notes
+note right of mongodb
+    - Primary document storage
+    - User, Student, Job, Application data
+    - Flexible schema design
+end note
+
+note bottom of mongoose
+    - MongoDB object modeling
+    - Schema validation
+    - Query building
+end note
+
+note left of global_middleware
+    Authentication Flow:
+    - JWT validation
+    - Request parsing
+    - Error handling
+end note
+
+note bottom of app_service
+    CQRS Implementation:
+    - Commands: Async creation/update via Agenda.js
+    - Queries: Direct reads for fast retrieval
+    - Eventual consistency for writes
+end note
+
+note right of agenda_queue
+    - Handles async commands (e.g., application creation)
+    - Uses MongoDB for job storage
+    - Lightweight for MVP
+end note
+
+note right of monitoring_layer
+    Observability:
+    - Basic logging with Winston
+    - Request/error tracking
+end note
+
+' Legend
+legend bottom right
+|= Color |= Component Type |
+| #SECONDARY_COLOR | Core Application |
+| #WARNING_COLOR | MongoDB Database |
+| #MODULE_COLOR | Feature Modules |
+| #PROVIDER_COLOR | Service Providers |
+| #MONITORING_COLOR | Monitoring & Logging |
+end legend
+
+@enduml

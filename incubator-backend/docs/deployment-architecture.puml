@@ -1,0 +1,108 @@
+@startuml IT_Youth_Talent_Incubator_MVP_Deployment_Architecture
+
+!define CLOUD_COLOR #3498db
+!define SERVER_COLOR #2ecc71
+!define DATABASE_COLOR #9b59b6
+!define MONITORING_COLOR #f39c12
+
+title IT Youth Talent Incubator - MVP Deployment Architecture (Digital Ocean)
+
+' Internet
+cloud "Internet" as internet CLOUD_COLOR
+
+' Reverse Proxy
+node "Nginx\n(Reverse Proxy)" as nginx SERVER_COLOR {
+  component "SSL\n(Let's Encrypt)" as ssl
+}
+
+' Application Tier
+node "Digital Ocean Droplet\n(Node.js + Express)" as droplet SERVER_COLOR {
+  component "API\n(Express)" as api
+  component "Agenda.js\n(Job Queue)" as agenda
+  storage "Local File Storage\n(CVs)" as local_storage
+}
+
+' Database Tier
+package "Database Tier" as db_tier DATABASE_COLOR {
+  node "Digital Ocean Managed MongoDB\n(M2 Tier)" as mongo DATABASE_COLOR
+  storage "Backup Storage\n(MongoDB Snapshots)" as backup_storage DATABASE_COLOR
+}
+
+' Development & CI/CD
+package "Development Pipeline" as dev_pipeline {
+  node "Git Repository\n(GitHub)" as git_repo
+  node "CI/CD Pipeline\n(GitHub Actions)" as cicd
+  node "Container Registry\n(Docker Hub)" as container_registry
+}
+
+' Monitoring & Logging
+package "Monitoring & Logging" as monitoring_tier MONITORING_COLOR {
+  node "Winston\n(Local Logs)" as winston MONITORING_COLOR
+  node "Digital Ocean Monitoring\n(Logs/Alerts)" as do_monitoring MONITORING_COLOR
+}
+
+' =============== CONNECTIONS ===============
+
+' Client to Application
+internet --> nginx : HTTPS Traffic
+nginx --> ssl : SSL Termination
+ssl --> droplet : API Requests
+
+' Application Internal Components
+api --> agenda : Async Jobs (CQRS)
+api --> local_storage : CV Uploads (Multer)
+
+' Application to Database
+droplet --> mongo : Read/Write Operations
+mongo --> backup_storage : Automated Snapshots
+
+' Development Pipeline
+git_repo --> cicd : Code Push
+cicd --> container_registry : Build Docker Image
+container_registry --> droplet : Deploy via Docker
+
+' Monitoring Integration
+droplet --> winston : Application Logs
+droplet --> do_monitoring : Runtime Logs/Alerts
+
+' Notes
+note right of droplet
+  **Droplet Setup:**
+  - 1 CPU, 1GB RAM, $5/month
+  - Node.js/Express with Multer
+  - Agenda.js for CQRS (applications)
+  - Local storage for CVs
+end note
+
+note left of db_tier
+  **Database Setup:**
+  - Managed MongoDB M2 ($15/month)
+  - 1GB storage, single node
+  - Automated backups
+  - No replica set for MVP
+end note
+
+note top of dev_pipeline
+  **CI/CD Setup:**
+  - GitHub Actions for testing
+  - Automated deployment to Droplet
+  - Dockerized app for portability
+end note
+
+note bottom of monitoring_tier
+  **Monitoring Setup:**
+  - Winston for local logs
+  - Digital Ocean logs/alerts
+  - Minimal setup for MVP
+end note
+
+' Infrastructure Specifications
+legend bottom left
+  |= Component |= Specifications |
+  | Droplet | 1 CPU, 1GB RAM, 25GB SSD |
+  | Managed MongoDB | M2, 1GB storage |
+  | Local Storage | Disk-based, CV uploads |
+  | GitHub Actions | Free tier, CI/CD |
+endlegend
+
+@enduml
