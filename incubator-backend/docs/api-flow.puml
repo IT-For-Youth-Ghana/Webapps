@@ -1,270 +1,133 @@
-@startuml IT_Youth_Talent_Incubator_API_Flow
+@startuml IT_Youth_Talent_Incubator_MVP_API_Flows
 
-!define CLIENT_COLOR #3498db
-!define MIDDLEWARE_COLOR #2ecc71
-!define CONTROLLER_COLOR #e74c3c
-!define SERVICE_COLOR #f39c12
-!define DATABASE_COLOR #9b59b6
-!define CACHE_COLOR #e67e22
+actor "Student" as student
+actor "Company" as company
+participant "Nginx" as nginx
+participant "Express API" as api
+participant "Auth Middleware" as auth
+participant "Joi Validation" as validation
+participant "MongoDB" as mongo
+participant "Agenda.js" as agenda
+participant "File Storage" as storage
 
-title IT Youth Talent Incubator - API Request Flow
+' === Flow 1: Student Registration and CV Upload ===
+group Student Registration
+  student -> nginx: POST /auth/register\n{email, password, role: "student"}
+  nginx -> api: Forward HTTPS request
+  api -> validation: Validate input
+  validation --> api: Valid
+  api -> mongo: Create user
+  mongo --> api: User ID
+  api -> student: 200 {token: JWT}
+  note right: JWT contains {_id, role: "student"}
+end group
 
-actor "Client" as client CLIENT_COLOR
-participant "Load Balancer" as lb
-participant "Rate Limiter" as rate_limiter MIDDLEWARE_COLOR
-participant "CORS Handler" as cors MIDDLEWARE_COLOR
-participant "Request Logger" as logger MIDDLEWARE_COLOR
-participant "Auth Middleware" as auth_middleware MIDDLEWARE_COLOR
-participant "Validation" as validation MIDDLEWARE_COLOR
-participant "Route Handler" as route_handler
-participant "Controller" as controller CONTROLLER_COLOR
-participant "Service" as service SERVICE_COLOR
-participant "Repository" as repository
-participant "Cache (Redis)" as cache CACHE_COLOR
-participant "Database (PostgreSQL)" as database DATABASE_COLOR
-participant "Firebase Auth" as firebase
-participant "Firebase Storage" as storage
+group Student Profile Creation
+  student -> nginx: POST /students\n{first_name, last_name, bio, skills, education, work_experience}\nHeader: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, check role: "student"
+  auth --> api: Valid
+  api -> validation: Validate input
+  validation --> api: Valid
+  api -> mongo: Create student_profile\n{user_id, ...}
+  mongo --> api: Student Profile
+  api -> student: 200 {student_profile}
+end group
 
-== Authentication Flow ==
-client -> lb : POST /api/auth/login
-activate lb
-lb -> rate_limiter : Forward request
-activate rate_limiter
-rate_limiter -> cors : Check rate limit
-activate cors
-cors -> logger : Apply CORS headers
-activate logger
-logger -> auth_middleware : Log request
-activate auth_middleware
+group Student CV Upload
+  student -> nginx: POST /students/cv\nForm-data: cv (PDF file)\nHeader: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, check role: "student"
+  auth --> api: Valid
+  api -> validation: Validate file (PDF, <5MB)
+  validation --> api: Valid
+  api -> storage: Save PDF to /app/uploads/resumes/
+  storage --> api: Filename
+  api -> mongo: Update student_profile\n{cv_url: "https://domain/uploads/resumes/filename"}
+  mongo --> api: Updated Profile
+  api -> student: 200 {cv_url}
+end group
 
-note over auth_middleware
-  Skip auth for login endpoint
+' === Flow 2: Job Posting and Application ===
+group Company Registration
+  company -> nginx: POST /auth/register\n{email, password, role: "company"}
+  nginx -> api: Forward HTTPS request
+  api -> validation: Validate input
+  validation --> api: Valid
+  api -> mongo: Create user
+  mongo --> api: User ID
+  api -> company: 200 {token: JWT}
+  note right: JWT contains {_id, role: "company"}
+end group
+
+group Company Profile Creation
+  company -> nginx: POST /companies\n{name, description, industry, website}\nHeader: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, check role: "company"
+  auth --> api: Valid
+  api -> validation: Validate input
+  validation --> api: Valid
+  api -> mongo: Create company_profile\n{user_id, ...}
+  mongo --> api: Company Profile
+  api -> company: 200 {company_profile}
+end group
+
+group Job Posting
+  company -> nginx: POST /jobs\n{title, description, location, job_type, requirements, application_deadline}\nHeader: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, check role: "company"
+  auth --> api: Valid
+  api -> validation: Validate input
+  validation --> api: Valid
+  api -> mongo: Create job\n{company_id, ...}
+  mongo --> api: Job ID
+  api -> company: 200 {job}
+end group
+
+group Job Application (CQRS)
+  student -> nginx: POST /applications\n{job_id, cover_letter}\nHeader: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, check role: "student"
+  auth --> api: Valid
+  api -> validation: Validate input
+  validation --> api: Valid
+  api -> agenda: Queue application job\n{job_id, student_id, cover_letter}
+  agenda --> mongo: Create application\n{job_id, student_id, ...}
+  mongo --> agenda: Application ID
+  agenda --> api: Job completed
+  api -> student: 202 {message: "Application submitted"}
+end group
+
+group Retrieve Applications
+  company -> nginx: GET /applications?job_id=<id>\nHeader: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, check role: "company"
+  auth --> api: Valid
+  api -> mongo: Query applications\n{job_id, company_id match}
+  mongo --> api: Application list
+  api -> company: 200 {applications}
+end group
+
+' Notes
+note left of nginx
+  HTTPS enforced via Let's Encrypt
+  Redirects HTTP to HTTPS
 end note
 
-auth_middleware -> validation : Continue
-activate validation
-validation -> route_handler : Validate login data
-activate route_handler
-route_handler -> controller : Route to AuthController
-activate controller
-controller -> service : authService.login()
-activate service
-service -> repository : userRepository.findByEmail()
-activate repository
-repository -> database : SELECT * FROM users WHERE email = ?
-activate database
-database --> repository : User data
-deactivate database
-repository --> service : User object
-deactivate repository
-
-service -> service : Verify password
-service -> firebase : Generate JWT token
-activate firebase
-firebase --> service : JWT token
-deactivate firebase
-
-service -> cache : Store session data
-activate cache
-cache --> service : Session stored
-deactivate cache
-
-service --> controller : { user, token, session }
-deactivate service
-controller --> route_handler : HTTP 200 + user data
-deactivate controller
-route_handler --> validation : Response
-deactivate route_handler
-validation --> auth_middleware : Response
-deactivate validation
-auth_middleware --> logger : Response
-deactivate auth_middleware
-logger --> cors : Response
-deactivate logger
-cors --> rate_limiter : Response
-deactivate cors
-rate_limiter --> lb : Response
-deactivate rate_limiter
-lb --> client : Login successful
-deactivate lb
-
-== Protected Resource Access ==
-client -> lb : GET /api/students/profile
-activate lb
-lb -> rate_limiter : Forward request
-activate rate_limiter
-rate_limiter -> cors : Check rate limit
-activate cors
-cors -> logger : Apply CORS headers
-activate logger
-logger -> auth_middleware : Log request
-activate auth_middleware
-
-note over auth_middleware
-  Extract and verify JWT token
+note right of api
+  All endpoints protected by JWT
+  Role-based access control (RBAC)
 end note
 
-auth_middleware -> cache : Check session
-activate cache
-cache --> auth_middleware : Session data
-deactivate cache
-
-auth_middleware -> firebase : Verify JWT token
-activate firebase
-firebase --> auth_middleware : Token valid
-deactivate firebase
-
-auth_middleware -> validation : Authenticated user
-activate validation
-validation -> route_handler : Validate request params
-activate route_handler
-route_handler -> controller : Route to StudentController
-activate controller
-controller -> service : studentService.getProfile()
-activate service
-
-service -> cache : Check cache first
-activate cache
-cache --> service : Cache miss
-deactivate cache
-
-service -> repository : studentRepository.findByUserId()
-activate repository
-repository -> database : SELECT * FROM student_profiles WHERE user_id = ?
-activate database
-database --> repository : Student profile data
-deactivate database
-repository --> service : Student object
-deactivate repository
-
-service -> cache : Store in cache
-activate cache
-cache --> service : Cached
-deactivate cache
-
-service --> controller : Student profile
-deactivate service
-controller --> route_handler : HTTP 200 + profile data
-deactivate controller
-route_handler --> validation : Response
-deactivate route_handler
-validation --> auth_middleware : Response
-deactivate validation
-auth_middleware --> logger : Response
-deactivate auth_middleware
-logger --> cors : Response
-deactivate logger
-cors --> rate_limiter : Response
-deactivate cors
-rate_limiter --> lb : Response
-deactivate rate_limiter
-lb --> client : Profile data
-deactivate lb
-
-== File Upload Flow ==
-client -> lb : POST /api/uploads/resume
-activate lb
-lb -> rate_limiter : Forward request with file
-activate rate_limiter
-rate_limiter -> cors : Check rate limit
-activate cors
-cors -> logger : Apply CORS headers
-activate logger
-logger -> auth_middleware : Log request
-activate auth_middleware
-auth_middleware -> validation : Authenticated user
-activate validation
-
-note over validation
-  Validate file type, size, etc.
+note left of mongo
+  MongoDB M2 tier
+  Encrypted at rest
+  IP whitelisted (Droplet IP)
 end note
 
-validation -> route_handler : File validation passed
-activate route_handler
-route_handler -> controller : Route to UploadController
-activate controller
-controller -> service : fileService.uploadResume()
-activate service
-
-service -> storage : Upload to Firebase Storage
-activate storage
-storage --> service : File URL
-deactivate storage
-
-service -> repository : fileRepository.create()
-activate repository
-repository -> database : INSERT INTO file_uploads
-activate database
-database --> repository : File record created
-deactivate database
-repository --> service : File object
-deactivate repository
-
-service --> controller : Upload successful
-deactivate service
-controller --> route_handler : HTTP 201 + file data
-deactivate controller
-route_handler --> validation : Response
-deactivate route_handler
-validation --> auth_middleware : Response
-deactivate validation
-auth_middleware --> logger : Response
-deactivate auth_middleware
-logger --> cors : Response
-deactivate logger
-cors --> rate_limiter : Response
-deactivate cors
-rate_limiter --> lb : Response
-deactivate rate_limiter
-lb --> client : File uploaded
-deactivate lb
-
-== Error Handling Flow ==
-client -> lb : POST /api/jobs (invalid data)
-activate lb
-lb -> rate_limiter : Forward request
-activate rate_limiter
-rate_limiter -> cors : Check rate limit
-activate cors
-cors -> logger : Apply CORS headers
-activate logger
-logger -> auth_middleware : Log request
-activate auth_middleware
-auth_middleware -> validation : Authenticated user
-activate validation
-
-note over validation : Validation fails
-validation -> validation : Throw ValidationError
-
-validation --> auth_middleware : ValidationError
-deactivate validation
-auth_middleware --> logger : Error
-deactivate auth_middleware
-
-note over logger
-  Error middleware catches
-  and formats error response
-end note
-
-logger --> cors : HTTP 400 + error details
-deactivate logger
-cors --> rate_limiter : Error response
-deactivate cors
-rate_limiter --> lb : Error response
-deactivate rate_limiter
-lb --> client : Validation error
-deactivate lb
-
-note over client, database
-  **Key Features:**
-  - JWT-based authentication
-  - Redis session management
-  - Request rate limiting
-  - Comprehensive validation
-  - File upload to Firebase
-  - Database caching
-  - Structured error handling
-  - Request/response logging
+note right of agenda
+  CQRS for applications
+  Async job processing
 end note
 
 @enduml
