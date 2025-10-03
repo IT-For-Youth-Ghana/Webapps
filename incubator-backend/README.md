@@ -476,9 +476,9 @@ curl -X POST https://api.incubator.com/applications \
 
 ### 📊 **API Flow Documentation**
 For detailed sequence diagrams and flow visualizations, see:
-- 📄 [API Flow Diagrams](./incubator-backend/docs/api-flow.puml)
-- 🏗️ [Backend Architecture](./incubator-backend/docs/backend-architecture.puml)
-- 🔒 [Security Architecture](./incubator-backend/docs/security-architecture.puml)
+- 📄 [API Flow Diagrams](./docs/api-flow.puml)
+- 🏗️ [Backend Architecture](./docs/backend-architecture.puml)
+- 🔒 [Security Architecture](./docs/security-architecture.puml)
 
 ## 🚀 Setup Instructions
 
@@ -498,7 +498,7 @@ For detailed sequence diagrams and flow visualizations, see:
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/TalentIncubatorITForYouthGhana.git
-cd TalentIncubatorITForYouthGhana/incubator-backend
+cd TalentIncubatorITForYouthGhana
 
 # Install dependencies
 npm install
@@ -597,7 +597,7 @@ apt install -y docker.io docker-compose nginx certbot python3-certbot-nginx git
 
 # 4. Clone repository
 git clone https://github.com/yourusername/TalentIncubatorITForYouthGhana.git /app
-cd /app/incubator-backend
+cd /app
 ```
 
 ### 🔧 **Production Configuration**
@@ -968,13 +968,13 @@ const messagingModule = {
 ## 📚 Documentation References
 
 For detailed technical documentation, see:
-- 📊 [API Flow Diagrams](./incubator-backend/docs/api-flow.puml)
-- 🏗️ [Backend Architecture](./incubator-backend/docs/backend-architecture.puml)
-- 🗄️ [Database Schema](./incubator-backend/docs/database-schema.puml)
-- 🔒 [Security Architecture](./incubator-backend/docs/security-architecture.puml)
-- 🚀 [Deployment Architecture](./incubator-backend/docs/deployment-architecture.puml)
-- 🔗 [Entity Relations](./incubator-backend/docs/entity-relations.puml)
-- 📁 [Directory Structure](./incubator-backend/docs/backend-directory-structure.puml)
+- 📊 [API Flow Diagrams](./docs/api-flow.puml)
+- 🏗️ [Backend Architecture](./docs/backend-architecture.puml)
+- 🗄️ [Database Schema](./docs/database-schema.puml)
+- 🔒 [Security Architecture](./docs/security-architecture.puml)
+- 🚀 [Deployment Architecture](./docs/deployment-architecture.puml)
+- 🔗 [Entity Relations](./docs/entity-relations.puml)
+- 📁 [Directory Structure](./docs/backend-directory-structure.puml)
 
 ---
 
