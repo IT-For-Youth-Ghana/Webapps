@@ -1,7 +1,8 @@
-@startuml IT_Youth_Talent_Incubator_MVP_API_Flows
+@startuml IT_Youth_Talent_Incubator_MVP_API_Flows_Redesign
 
 actor "Student" as student
 actor "Company" as company
+actor "Admin" as admin
 participant "Nginx" as nginx
 participant "Express API" as api
 participant "Auth Middleware" as auth
@@ -10,124 +11,344 @@ participant "MongoDB" as mongo
 participant "Agenda.js" as agenda
 participant "File Storage" as storage
 
-' === Flow 1: Student Registration and CV Upload ===
-group Student Registration
-  student -> nginx: POST /auth/register\n{email, password, role: "student"}
+' === Redesigned API flows to match all frontend-expected endpoints from constants.js ===
+' Ensured coverage for all ENDPOINTS: Auth, Users (profiles, lists), Jobs, Applications, Analytics
+' Unified profiles under /users (no separate /students or /companies resources)
+' Soft delete via DEACTIVATE_PROFILE (DELETE /users/{id})
+' Job and application lists use filters (no /jobs/student/{id} or /jobs/company/{id}; use query params instead)
+' Added missing flows: GET_COMPANIES, GET_ADMINS, UPDATE_APPLICATION, GET_USER_STATS, GET_JOB_STATS
+' Assumed roles: 'student', 'company', 'admin' (extend USER_ROLES if needed)
+' File Storage for uploads (e.g., resumes in applications, profiles)
+
+group Auth: Register / Login / Logout / Current User
+  student -> nginx: POST /api/auth/register {email, password, role: 'student'}
+  company -> nginx: POST /api/auth/register {email, password, role: 'company'}
+  admin -> nginx: POST /api/auth/register {email, password, role: 'admin'} ' (if self-registration allowed)
   nginx -> api: Forward HTTPS request
   api -> validation: Validate input
   validation --> api: Valid
-  api -> mongo: Create user
+  api -> mongo: Create user {hashed_password, role}
   mongo --> api: User ID
-  api -> student: 200 {token: JWT}
-  note right: JWT contains {_id, role: "student"}
-end group
+  api -> agenda: Queue welcome email
+  agenda --> api: Job queued
+  api -> student: 200 {access_token: JWT, refresh_token}
 
-group Student Profile Creation
-  student -> nginx: POST /students\n{first_name, last_name, bio, skills, education, work_experience}\nHeader: Bearer <JWT>
+  student -> nginx: POST /api/auth/login {email, password}
   nginx -> api: Forward HTTPS request
-  api -> auth: Verify JWT, check role: "student"
+  api -> validation: Validate credentials
+  validation --> api: Valid
+  api -> mongo: Verify credentials (hash compare)
+  mongo --> api: User valid
+  api -> mongo: Insert refresh_token {user_id, token_hash, expires_at, user_agent}
+  mongo --> api: Refresh token stored
+  api -> student: 200 {access_token: JWT, refresh_token}
+
+  student -> nginx: POST /api/auth/logout
+  nginx -> api: Forward HTTPS request (Bearer JWT optional)
+  api -> auth: Verify JWT (if present)
   auth --> api: Valid
-  api -> validation: Validate input
-  validation --> api: Valid
-  api -> mongo: Create student_profile\n{user_id, ...}
-  mongo --> api: Student Profile
-  api -> student: 200 {student_profile}
-end group
+  api -> mongo: Revoke refresh tokens for user (set revoked: true)
+  mongo --> api: Tokens revoked
+  api -> student: 200 {message: "Logged out"}
 
-group Student CV Upload
-  student -> nginx: POST /students/cv\nForm-data: cv (PDF file)\nHeader: Bearer <JWT>
+  student -> nginx: GET /api/auth/me Header: Bearer <JWT>
   nginx -> api: Forward HTTPS request
-  api -> auth: Verify JWT, check role: "student"
+  api -> auth: Verify JWT
   auth --> api: Valid
-  api -> validation: Validate file (PDF, <5MB)
-  validation --> api: Valid
-  api -> storage: Save PDF to /app/uploads/resumes/
-  storage --> api: Filename
-  api -> mongo: Update student_profile\n{cv_url: "https://domain/uploads/resumes/filename"}
-  mongo --> api: Updated Profile
-  api -> student: 200 {cv_url}
+  api -> mongo: Find user by id (from JWT)
+  mongo --> api: User data
+  api -> student: 200 {user}
 end group
 
-' === Flow 2: Job Posting and Application ===
-group Company Registration
-  company -> nginx: POST /auth/register\n{email, password, role: "company"}
+group Tokens: Refresh
+  student -> nginx: POST /api/auth/token/refresh {refresh_token}
   nginx -> api: Forward HTTPS request
-  api -> validation: Validate input
+  api -> validation: Validate token
   validation --> api: Valid
-  api -> mongo: Create user
-  mongo --> api: User ID
-  api -> company: 200 {token: JWT}
-  note right: JWT contains {_id, role: "company"}
+  api -> mongo: Verify refresh_token (exists, not revoked, not expired, matches user_agent)
+  mongo --> api: Token valid
+  api -> mongo: Rotate refresh token (delete old, insert new)
+  mongo --> api: New token stored
+  api -> student: 200 {access_token: JWT, refresh_token: new}
 end group
 
-group Company Profile Creation
-  company -> nginx: POST /companies\n{name, description, industry, website}\nHeader: Bearer <JWT>
+group Password Reset (Forgot + Reset)
+  student -> nginx: POST /api/auth/forgot-password {email}
   nginx -> api: Forward HTTPS request
-  api -> auth: Verify JWT, check role: "company"
+  api -> validation: Validate email
+  validation --> api: Valid
+  api -> mongo: Lookup user by email
+  mongo --> api: User found / not found
+  alt user exists
+    api -> mongo: Insert password_reset_tokens {user_id, token_hash, expires_at, used: false}
+    mongo --> api: Token stored
+    api -> agenda: Queue email job {to: email, template: password_reset, token}
+    agenda --> api: Job queued
+  end
+  api -> student: 200 {message: "Password reset email sent if account exists"} ' (no leak existence)
+
+  student -> nginx: POST /api/auth/reset-password {token, new_password}
+  nginx -> api: Forward HTTPS request
+  api -> validation: Validate token and password
+  validation --> api: Valid
+  api -> mongo: Verify password_reset_tokens (exists, not expired, not used)
+  mongo --> api: Token valid
+  api -> mongo: Update user.password (hashed), mark token used
+  mongo --> api: User updated
+  api -> student: 200 {message: "Password reset successful"}
+end group
+
+group Users Resource (Profiles, Lists, Deactivation)
+  ' Get current profile
+  student -> nginx: GET /api/users/me Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, extract user_id
   auth --> api: Valid
-  api -> validation: Validate input
+  api -> mongo: Find user by id (include profile fields)
+  mongo --> api: User profile
+  api -> student: 200 {profile}
+
+  ' Update profile (student, company, admin)
+  student -> nginx: PUT /api/users/{id} {profile_data} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, check ownership or admin
+  auth --> api: Valid
+  api -> validation: Validate profile data
   validation --> api: Valid
-  api -> mongo: Create company_profile\n{user_id, ...}
-  mongo --> api: Company Profile
-  api -> company: 200 {company_profile}
+  alt if upload (e.g., resume, logo)
+    api -> storage: Upload file
+    storage --> api: File URL
+  end
+  api -> mongo: Update user {profile fields}
+  mongo --> api: Updated user
+  api -> student: 200 {profile}
+
+  ' Deactivate profile (soft delete)
+  admin -> nginx: DELETE /api/users/{id} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: admin
+  auth --> api: Valid
+  api -> mongo: Update user {deleted_at: now, deleted_by: admin_id}
+  mongo --> api: User soft-deleted
+  api -> admin: 200 {message: "User deactivated"}
+
+  ' Get single user
+  admin -> nginx: GET /api/users/{id} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: admin
+  auth --> api: Valid
+  api -> mongo: Find user by id (with ?with_deleted=true optional)
+  mongo --> api: User data
+  api -> admin: 200 {user}
+
+  ' List students
+  admin -> nginx: GET /api/users/students?filters... Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: admin
+  auth --> api: Valid
+  api -> validation: Validate query params
+  validation --> api: Valid
+  api -> mongo: Query users {role: 'student', filters, with_deleted?}
+  mongo --> api: Student list
+  api -> admin: 200 {students}
+
+  ' List companies (similar to students)
+  admin -> nginx: GET /api/users/companies?filters... Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: admin
+  auth --> api: Valid
+  api -> mongo: Query users {role: 'company', filters}
+  mongo --> api: Company list
+  api -> admin: 200 {companies}
+
+  ' List admins (similar)
+  admin -> nginx: GET /api/users/admins?filters... Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: admin
+  auth --> api: Valid
+  api -> mongo: Query users {role: 'admin', filters}
+  mongo --> api: Admin list
+  api -> admin: 200 {admins}
 end group
 
-group Job Posting
-  company -> nginx: POST /jobs\n{title, description, location, job_type, requirements, application_deadline}\nHeader: Bearer <JWT>
+group Jobs Resource
+  ' Create job (company)
+  company -> nginx: POST /api/jobs {title, description, ...} Header: Bearer <JWT>
   nginx -> api: Forward HTTPS request
-  api -> auth: Verify JWT, check role: "company"
+  api -> auth: Verify JWT, role: 'company'
   auth --> api: Valid
-  api -> validation: Validate input
+  api -> validation: Validate job data
   validation --> api: Valid
-  api -> mongo: Create job\n{company_id, ...}
-  mongo --> api: Job ID
+  api -> mongo: Create job {company_id from JWT, ...}
+  mongo --> api: Job created
+  api -> agenda: Queue notification job (optional)
+  agenda --> api: Job queued
+  api -> company: 201 {job}
+
+  ' List jobs (public or filtered)
+  student -> nginx: GET /api/jobs?filters... (e.g., region, type, with_deleted=true for admin)
+  nginx -> api: Forward HTTPS request
+  alt authenticated
+    api -> auth: Verify JWT (optional for public)
+    auth --> api: Valid (student/company/admin)
+  end
+  api -> validation: Validate query params
+  validation --> api: Valid
+  api -> mongo: Query jobs {filters, status: 'published' for public, all for admin}
+  mongo --> api: Job list
+  api -> student: 200 {jobs}
+
+  ' Get single job
+  student -> nginx: GET /api/jobs/{id}
+  nginx -> api: Forward HTTPS request
+  api -> mongo: Find job by id (with_deleted? for admin)
+  mongo --> api: Job
+  api -> student: 200 {job}
+
+  ' Update job
+  company -> nginx: PUT /api/jobs/{id} {updates} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'company', ownership
+  auth --> api: Valid
+  api -> validation: Validate updates
+  validation --> api: Valid
+  api -> mongo: Update job
+  mongo --> api: Updated job
   api -> company: 200 {job}
+
+  ' Delete job (soft)
+  company -> nginx: DELETE /api/jobs/{id} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'company' or 'admin', ownership
+  auth --> api: Valid
+  api -> mongo: Update job {deleted_at: now, deleted_by: user_id}
+  mongo --> api: Job soft-deleted
+  api -> company: 200 {message: "Job deleted"}
 end group
 
-group Job Application (CQRS)
-  student -> nginx: POST /applications\n{job_id, cover_letter}\nHeader: Bearer <JWT>
+group Applications Resource
+  ' Apply for job
+  student -> nginx: POST /api/applications/{jobId}/apply {cover_letter, resume?} Header: Bearer <JWT>
   nginx -> api: Forward HTTPS request
-  api -> auth: Verify JWT, check role: "student"
+  api -> auth: Verify JWT, role: 'student'
   auth --> api: Valid
-  api -> validation: Validate input
+  api -> validation: Validate application data
   validation --> api: Valid
-  api -> agenda: Queue application job\n{job_id, student_id, cover_letter}
-  agenda --> mongo: Create application\n{job_id, student_id, ...}
-  mongo --> agenda: Application ID
-  agenda --> api: Job completed
-  api -> student: 202 {message: "Application submitted"}
-end group
+  alt if resume upload
+    api -> storage: Upload resume
+    storage --> api: Resume URL
+  end
+  api -> mongo: Create application {student_id, job_id, ...}
+  mongo --> api: Application created
+  api -> agenda: Queue email to company/student
+  agenda --> api: Job queued
+  api -> student: 201 {application}
 
-group Retrieve Applications
-  company -> nginx: GET /applications?job_id=<id>\nHeader: Bearer <JWT>
+  ' List applications (for company/admin with filters)
+  company -> nginx: GET /api/applications?filters... (e.g., job_id) Header: Bearer <JWT>
   nginx -> api: Forward HTTPS request
-  api -> auth: Verify JWT, check role: "company"
+  api -> auth: Verify JWT, role: 'company' or 'admin'
   auth --> api: Valid
-  api -> mongo: Query applications\n{job_id, company_id match}
+  api -> validation: Validate query params
+  validation --> api: Valid
+  api -> mongo: Query applications {filters, company ownership if company}
   mongo --> api: Application list
   api -> company: 200 {applications}
+
+  ' Get student applications
+  student -> nginx: GET /api/applications/student/{studentId} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'student', ownership
+  auth --> api: Valid
+  api -> mongo: Query applications {student_id}
+  mongo --> api: Application list
+  api -> student: 200 {applications}
+
+  ' Get single application
+  company -> nginx: GET /api/applications/{id} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'company' or 'student' or 'admin', ownership
+  auth --> api: Valid
+  api -> mongo: Find application by id
+  mongo --> api: Application
+  api -> company: 200 {application}
+
+  ' Update application (e.g., edit by student if pending)
+  student -> nginx: PUT /api/applications/{id} {updates} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'student', ownership
+  auth --> api: Valid
+  api -> validation: Validate updates
+  validation --> api: Valid
+  api -> mongo: Update application
+  mongo --> api: Updated application
+  api -> student: 200 {application}
+
+  ' Update application status (company)
+  company -> nginx: PUT /api/applications/{id}/status {status} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'company', ownership (job's company)
+  auth --> api: Valid
+  api -> validation: Validate status
+  validation --> api: Valid
+  api -> mongo: Update application {status}
+  mongo --> api: Updated
+  api -> agenda: Queue status change email to student
+  agenda --> api: Job queued
+  api -> company: 200 {application}
+end group
+
+group Analytics Resource (Admin/Company Insights)
+  admin -> nginx: GET /api/analytics/dashboard Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'admin'
+  auth --> api: Valid
+  api -> mongo: Aggregate stats (users count by role, jobs, applications, active tokens)
+  mongo --> api: Stats
+  api -> admin: 200 {dashboard_stats}
+
+  admin -> nginx: GET /api/analytics/users/{userId} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'admin'
+  auth --> api: Valid
+  api -> mongo: Aggregate user stats (applications, jobs posted, etc.)
+  mongo --> api: Stats
+  api -> admin: 200 {user_stats}
+
+  company -> nginx: GET /api/analytics/jobs/{jobId} Header: Bearer <JWT>
+  nginx -> api: Forward HTTPS request
+  api -> auth: Verify JWT, role: 'company' or 'admin', ownership
+  auth --> api: Valid
+  api -> mongo: Aggregate job stats (applications count, views, etc.)
+  mongo --> api: Stats
+  api -> company: 200 {job_stats}
 end group
 
 ' Notes
 note left of nginx
   HTTPS enforced via Let's Encrypt
-  Redirects HTTP to HTTPS
+  Nginx terminates TLS and forwards to Express
 end note
 
 note right of api
-  All endpoints protected by JWT
-  Role-based access control (RBAC)
+  Modular routes: /api/auth, /api/users, /api/jobs, /api/applications, /api/analytics
+  Middleware: auth (JWT + RBAC), validation (Joi), rate limiting
+  Error handling: standardized responses
 end note
 
 note left of mongo
-  MongoDB M2 tier
-  Encrypted at rest
-  IP whitelisted (Droplet IP)
+  Collections: users (with profiles), jobs, applications, refresh_tokens, password_reset_tokens
+  Soft delete: deleted_at, deleted_by on users, jobs, applications
+  Indexes: email, role, job_id, student_id
 end note
 
 note right of agenda
-  CQRS for applications
-  Async job processing
+  Jobs: emails (welcome, reset, application, status), background processing
+end note
+
+note right of storage
+  Used for file uploads: resumes, company logos, student photos
+  e.g., AWS S3 or local filesystem
 end note
 
 @enduml

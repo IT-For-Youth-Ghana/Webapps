@@ -14,12 +14,17 @@ package "User Management" {
     --
     UNIQUE(email) : String
     password_hash : String
-    ENUM(role) : ('student', 'company')
-    is_active : Boolean DEFAULT true
     photo_url: String
+    ENUM(role) : ('student', 'company', 'admin')
+    is_active : Boolean DEFAULT true
+    ENUM(status) : String ('approved', 'pending', 'deleted', 'rejected')
+    email_verified : Boolean DEFAULT false
     --
     created_at : Date
     updated_at : Date
+    deleted_at : Date
+    last_login : Date
+    email_verified_at : Date
   }
 }
 
@@ -90,11 +95,13 @@ package "Job Management" {
     location : String
     ENUM(job_type) : ('full-time', 'part-time', 'internship', 'remote')
     requirements : [String]
-    ENUM(status) : ('active', 'closed')
+    ENUM(status) : ('active', 'closed', 'draft', 'deleted')
     application_deadline : Date
     --
     created_at : Date
     updated_at : Date
+    deleted_at : Date
+    deleted_by(user_id[Company or Admin]) : ObjectId
   }
 }
 
@@ -107,10 +114,11 @@ package "Application Management" {
     FOREIGN_KEY(student_id) : ObjectId
     --
     cover_letter : String
-    ENUM(status) : ('pending', 'reviewing', 'approved', 'rejected')
+    ENUM(status) : ('pending', 'reviewing', 'approved', 'rejected', 'deleted')
     --
     applied_date : Date
     updated_at : Date
+    deleted_at : Date
   }
 
   note bottom of applications
@@ -121,11 +129,52 @@ package "Application Management" {
   end note
 }
 
+
+' Password Reset Tokens
+  entity "password_reset_tokens" as password_reset_tokens {
+    PRIMARY_KEY(_id) : ObjectId
+    --
+    FOREIGN_KEY(user_id) : ObjectId
+    token : String
+    expires_at : Date
+    -- 
+    created_at : Date
+    used_at : Date
+    is_used : Boolean DEFAULT false
+  }
+
+  note bottom of password_reset_tokens
+    Stores tokens for password reset functionality
+    with expiration and usage tracking
+  end note
+
+' Refresh Tokens
+  entity "refresh_tokens" as refresh_tokens {
+    PRIMARY_KEY(_id) : ObjectId
+    --
+    FOREIGN_KEY(user_id) : ObjectId
+    token : String
+    user_agent : String
+    ip_address : String
+    expires_at : Date
+    --
+    created_at : Date
+    revoked_at : Date
+    is_revoked : Boolean DEFAULT false
+  }
+
+  note bottom of refresh_tokens
+    Stores refresh tokens for session management
+    with expiration and revocation tracking
+  end note
+
 ' ========== RELATIONSHIPS ==========
 
 ' User relationships (One-to-One)
 users ||--o| students : "user_id"
 users ||--o| companies : "user_id"
+users ||--o{ password_reset_tokens : "user_id"
+users ||--o{ refresh_tokens : "user_id"
 
 ' Student relationships
 students ||--o{ applications : "student_id"
