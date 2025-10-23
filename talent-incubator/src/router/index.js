@@ -71,25 +71,6 @@ const router = createRouter({
           meta: { requiresAuth: true, role: 'company' }
         }
       ]
-    },
-
-    // COURSE MANAGEMENT ROUTES (Learning Platform)
-    {
-      path: '/courses',
-      children: [
-        {
-          path: '',
-          name: 'Courses',
-          component: () => import('../pages/course-management/CoursesPage.vue'),
-          meta: { requiresAuth: false }
-        },
-        {
-          path: 'dashboard',
-          name: 'CoursesDashboard',
-          component: () => import('../pages/course-management/CoursesDashboard.vue'),
-          meta: { requiresAuth: true }
-        }
-      ]
     }
   ],
 })

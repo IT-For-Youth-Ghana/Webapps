@@ -1,7 +1,7 @@
 {
-  "name": "IT Youth Talent Incubator & Learning Platform",
-  "short_name": "IT Platform",
-  "description": "Komplette Platform für IT-Nachwuchstalente und Kursverwaltung in Ghana",
+  "name": "IT Youth Talent Incubator",
+  "short_name": "IT Incubator",
+  "description": "Platform für IT-Nachwuchstalente in Ghana - Jobs & Bewerbungen",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0D1117",
@@ -53,20 +53,6 @@
       "short_name": "Jobs",
       "description": "Verfügbare Jobs anzeigen",
       "url": "/talent/student/jobs",
-      "icons": [{"src": "/logo/logo.png", "sizes": "96x96"}]
-    },
-    {
-      "name": "Kurse",
-      "short_name": "Kurse",
-      "description": "Verfügbare Kurse anzeigen",
-      "url": "/courses",
-      "icons": [{"src": "/logo/logo.png", "sizes": "96x96"}]
-    },
-    {
-      "name": "Kurs Dashboard",
-      "short_name": "Learning",
-      "description": "Lern-Dashboard öffnen",
-      "url": "/courses/dashboard",
       "icons": [{"src": "/logo/logo.png", "sizes": "96x96"}]
     }
   ],
