@@ -17,35 +17,80 @@ import { createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // Routes will be defined here
-    // Example structure:
-    // {
-    //   path: '/',
-    //   name: 'Home',
-    //   component: () => import('../views/Home.vue'),
-    //   meta: { requiresAuth: false }
-    // },
-    // {
-    //   path: '/login',
-    //   name: 'Login',
-    //   component: () => import('../views/auth/Login.vue')
-    // },
-    // {
-    //   path: '/student',
-    //   component: () => import('../views/student/StudentLayout.vue'),
-    //   meta: { requiresAuth: true, role: 'student' },
-    //   children: [
-    //     // Student routes
-    //   ]
-    // },
-    // {
-    //   path: '/admin',
-    //   component: () => import('../views/admin/AdminLayout.vue'),
-    //   meta: { requiresAuth: true, role: 'admin' },
-    //   children: [
-    //     // Admin routes
-    //   ]
-    // }
+    {
+      path: '/',
+      name: 'Home',
+      component: () => import('../pages/HomePage.vue'),
+      meta: { requiresAuth: false }
+    },
+    
+    // TALENT INCUBATOR ROUTES (Jobs & Applications)
+    {
+      path: '/talent',
+      children: [
+        {
+          path: 'student/dashboard',
+          name: 'StudentDashboard',
+          component: () => import('../pages/StudentDashboard.vue'),
+          meta: { requiresAuth: true, role: 'student' }
+        },
+        {
+          path: 'student/jobs',
+          name: 'StudentJobs',
+          component: () => import('../pages/StudentJobsPage.vue'),
+          meta: { requiresAuth: true, role: 'student' }
+        },
+        {
+          path: 'student/applications',
+          name: 'StudentApplications',
+          component: () => import('../pages/StudentApplicationsPage.vue'),
+          meta: { requiresAuth: true, role: 'student' }
+        },
+        {
+          path: 'admin/dashboard',
+          name: 'AdminDashboard',
+          component: () => import('../pages/AdminDashboard.vue'),
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'admin/jobs',
+          name: 'AdminJobs',
+          component: () => import('../pages/AdminJobsPage.vue'),
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'admin/students',
+          name: 'AdminStudents',
+          component: () => import('../pages/AdminStudentsPage.vue'),
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'company/dashboard',
+          name: 'CompanyDashboard',
+          component: () => import('../pages/CompanyDashboard.vue'),
+          meta: { requiresAuth: true, role: 'company' }
+        }
+      ]
+    },
+
+    // COURSE MANAGEMENT ROUTES (Learning Platform)
+    {
+      path: '/courses',
+      children: [
+        {
+          path: '',
+          name: 'Courses',
+          component: () => import('../pages/course-management/CoursesPage.vue'),
+          meta: { requiresAuth: false }
+        },
+        {
+          path: 'dashboard',
+          name: 'CoursesDashboard',
+          component: () => import('../pages/course-management/CoursesDashboard.vue'),
+          meta: { requiresAuth: true }
+        }
+      ]
+    }
   ],
 })
 
