@@ -1,0 +1,61 @@
+{
+  "name": "Course Management Platform",
+  "short_name": "Courses",
+  "description": "Kursmanagement-Platform für IT Youth Incubator",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D1117",
+  "theme_color": "#1b65b2",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "de",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/logo/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Course Dashboard View"
+    },
+    {
+      "src": "/screenshots/mobile.jpg",
+      "sizes": "375x667",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Mobile Course View"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Kurse",
+      "short_name": "Kurse",
+      "description": "Verfügbare Kurse anzeigen",
+      "url": "/courses",
+      "icons": [{"src": "/logo/logo.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Dashboard öffnen",
+      "url": "/dashboard",
+      "icons": [{"src": "/logo/logo.png", "sizes": "96x96"}]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
