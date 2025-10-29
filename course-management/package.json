@@ -21,8 +21,10 @@
     "axios": "^1.11.0",
     "pinia": "^3.0.3",
     "uuid": "^11.1.0",
+    "vite-plugin-pwa": "^1.1.0",
     "vue": "^3.5.18",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "workbox-window": "^7.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",

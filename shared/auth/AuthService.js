@@ -136,10 +136,15 @@ class AuthService {
         throw new Error('Failed to fetch profile');
       }
 
-      const data = await response.json();
-      this.saveUser(data.user);
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response format from server');
+      }
 
-      return data.user;
+      const data = await response.json();
+      this.saveUser(data.user || data);
+
+      return data.user || data;
     } catch (error) {
       console.error('Get profile error:', error);
       throw error;

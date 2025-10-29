@@ -9,6 +9,7 @@ export const BRAND_COLORS = {
   SECONDARY: '#195aa5', 
   ACCENT: '#8fb2d6',
   WHITE: '#ffffff'
+  
 }
 
 // Background Colors (keep existing dark theme)
