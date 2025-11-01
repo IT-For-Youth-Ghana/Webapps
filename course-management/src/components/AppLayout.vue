@@ -135,6 +135,13 @@
                     >
                       Assignments
                     </router-link>
+                      <router-link 
+                      to="/teacher/schedule" 
+                      class="dropdown-link"
+                      :class="{ active: $route.name === 'TeacherSchedule' }"
+                    >
+                      Schedule
+                    </router-link>
                   </div>
                 </div>
               </div>
@@ -236,6 +243,19 @@
                   </svg>
                   Assignments
                 </router-link>
+                  <router-link 
+                  to="/teacher/schedule" 
+                  class="nav-link"
+                  :class="{ active: $route.name === 'TeacherSchedule' }"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Schedule
+                </router-link>
               </div>
             </div>
           </div>
@@ -300,26 +320,6 @@
         </svg>
       </button>
       
-      <button 
-        @click="toggleTheme" 
-        class="quick-action-btn theme-toggle"
-        title="Toggle theme"
-      >
-        <svg v-if="isDarkTheme" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="5"/>
-          <line x1="12" y1="1" x2="12" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/>
-          <line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </svg>
-        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
     </div>
   </div>
 </template>
@@ -336,7 +336,6 @@ const userStore = useUserStore()
 // Reactive state
 const mobileMenuOpen = ref(false)
 const showScrollTop = ref(false)
-const isDarkTheme = ref(true)
 const showStudentMenu = ref(false)
 const showTeacherMenu = ref(false)
 
@@ -356,17 +355,6 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-const toggleTheme = () => {
-  const newTheme = isDarkTheme.value ? 'light' : 'dark'
-  isDarkTheme.value = !isDarkTheme.value
-  document.documentElement.setAttribute('data-theme', newTheme)
-  localStorage.setItem('theme', newTheme)
-  
-  // Dispatch custom event
-  window.dispatchEvent(new CustomEvent('theme-changed', {
-    detail: { theme: newTheme }
-  }))
-}
 
 const logout = async () => {
   await userStore.logout()
@@ -382,9 +370,6 @@ onMounted(() => {
   
   window.addEventListener('scroll', handleScroll)
   
-  // Initialize theme
-  const savedTheme = localStorage.getItem('theme') || 'dark'
-  isDarkTheme.value = savedTheme === 'dark'
   
   onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll)

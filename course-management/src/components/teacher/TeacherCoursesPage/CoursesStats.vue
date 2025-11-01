@@ -1,148 +1,122 @@
 <template>
-  <div class="stats-grid">
-    <div class="dashboard-stat">
-      <div class="stat-icon courses">
-        <BookOpenIcon class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ totalCourses }}</div>
-        <div class="stat-label">Total Courses</div>
-        <div class="stat-change positive">+{{ Math.floor(Math.random() * 3) + 1 }} this month</div>
-      </div>
+  <div class="courses-header">
+    <div class="header-content">
+      <h2 class="section-title">My Courses</h2>
+      <p class="section-subtitle">Manage and monitor your course content</p>
     </div>
-    
-    <div class="dashboard-stat">
-      <div class="stat-icon students">
-        <UserGroupIcon class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ totalStudents }}</div>
-        <div class="stat-label">Total Students</div>
-        <div class="stat-change positive">+{{ Math.floor(Math.random() * 20) + 10 }} this week</div>
-      </div>
-    </div>
-    
-    <div class="dashboard-stat">
-      <div class="stat-icon assignments">
-        <CheckCircleIcon class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ activeCourses }}</div>
-        <div class="stat-label">Active Courses</div>
-        <div class="stat-change positive">{{ Math.floor(Math.random() * 5) + 1 }} running now</div>
-      </div>
-    </div>
-    
-    <div class="dashboard-stat">
-      <div class="stat-icon rating">
-        <StarIcon class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ averageRating }}</div>
-        <div class="stat-label">Average Rating</div>
-        <div class="stat-change positive">+0.{{ Math.floor(Math.random() * 5) + 1 }} this month</div>
-      </div>
+    <div class="header-actions">
+      <router-link to="/teacher/create-course" class="quick-action-btn primary">
+        <!-- Plus Icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        Create Course
+      </router-link>
     </div>
   </div>
 </template>
 
 <script>
-import { BookOpenIcon, UserGroupIcon, CheckCircleIcon, StarIcon } from '@heroicons/vue/24/outline'
 
 export default {
-  name: 'CoursesStats',
-  components: {
-    BookOpenIcon,
-    UserGroupIcon,
-    CheckCircleIcon,
-    StarIcon
-  },
-  props: {
-    totalCourses: {
-      type: Number,
-      default: 0
-    },
-    totalStudents: {
-      type: Number,
-      default: 0
-    },
-    activeCourses: {
-      type: Number,
-      default: 0
-    },
-    averageRating: {
-      type: String,
-      default: '0.0'
-    }
-  }
+  name: 'CoursesStats'
 }
 </script>
 
 <style scoped>
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+.courses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
-.dashboard-stat {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-icon {
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-icon.courses {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
-}
-
-.stat-icon.students {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10B981;
-}
-
-.stat-icon.assignments {
-  background: rgba(245, 158, 11, 0.1);
-  color: #F59E0B;
-}
-
-.stat-icon.rating {
-  background: rgba(139, 92, 246, 0.1);
-  color: #8B5CF6;
-}
-
-.stat-content {
+.header-content {
   flex: 1;
 }
 
-.stat-number {
+.section-title {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
-  line-height: 1;
+  margin: 0 0 0.5rem 0;
 }
 
-.stat-label {
+.section-subtitle {
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin: 0.25rem 0;
+  margin: 0;
 }
 
-.stat-change {
-  font-size: 0.75rem;
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
   font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
 }
 
-.stat-change.positive {
-  color: var(--status-success-text);
+.quick-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.quick-action-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.quick-action-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.quick-action-btn.admin {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.quick-action-btn.admin:hover {
+  background: #8b5cf6;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .courses-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    justify-content: stretch;
+  }
+  
+  .quick-action-btn {
+    justify-content: center;
+  }
 }
 </style>

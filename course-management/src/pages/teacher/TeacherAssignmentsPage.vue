@@ -1,11 +1,5 @@
 <template>
   <div class="teacher-assignments fade-in">
-    <TeacherHeader 
-      :show-create-button="true"
-      :create-button-text="'Create Assignment'"
-      @create-new="showCreateModal = true"
-    />
-
     <div class="content-wrapper">
       <AssignmentsStats 
         :total-assignments="totalAssignments"
@@ -40,7 +34,6 @@
 <script>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import TeacherHeader from '@/components/teacher/TeacherHeader.vue'
 import AssignmentsStats from '@/components/teacher/TeacherAssignmentPages/AssignmentsStats.vue'
 import AssignmentTabs from '@/components/teacher/TeacherAssignmentPages/AssignmentTabs.vue'
 import AssignmentFilters from '@/components/teacher/TeacherAssignmentPages/AssignmentFilters.vue'
@@ -49,7 +42,6 @@ import AssignmentsList from '@/components/teacher/TeacherAssignmentPages/Assignm
 export default {
   name: 'TeacherAssignmentsPage',
   components: {
-    TeacherHeader,
     AssignmentsStats,
     AssignmentTabs,
     AssignmentFilters,

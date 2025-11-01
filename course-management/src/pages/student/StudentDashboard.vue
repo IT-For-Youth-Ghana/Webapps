@@ -1,131 +1,133 @@
 <template>
-  <DashboardLayout>
-    <div class="dashboard fade-in">
-      <!-- Dashboard Header -->
+  <div class="student-dashboard fade-in">
+    <div class="content-wrapper">
       <DashboardHeader 
         :title="`Welcome back, ${user?.name}!`"
         subtitle="Continue your learning journey and track your progress"
-      >
-        <template #actions>
-          <button class="btn btn-primary" @click="browseCourses">
-            Browse Courses
-          </button>
-        </template>
-      </DashboardHeader>
+        @browse-courses="browseCourses"
+      />
       
-      <!-- Quick Stats -->
-      <div class="stats-grid">
-        <StatCard 
-          icon="Courses" 
-          :value="enrolledCourses.length" 
-          label="Enrolled Courses"
-        />
-        <StatCard 
-          icon="Progress" 
-          :value="`${averageProgress}%`" 
-          label="Average Progress"
-        />
-        <StatCard 
-          icon="Time" 
-          :value="`${totalStudyTime}h`" 
-          label="Study Time"
-        />
-        <StatCard 
-          icon="Complete" 
-          :value="completedCourses.length" 
-          label="Completed"
-        />
-      </div>
+      <QuickStats 
+        :enrolled-courses="enrolledCourses"
+        :completed-courses="completedCourses"
+        :average-progress="averageProgress"
+        :total-study-time="totalStudyTime"
+      />
       
-      <!-- Continue Learning -->
-      <DashboardSection title="Continue Learning">
-        <div class="courses-grid">
-          <CourseCard 
-            v-for="course in activeCourses"
-            :key="course.id"
-            :course="course"
-            @click="continueCourse(course.id)"
-          >
-            <template #action>
-              <button class="btn btn-primary">
-                Continue Learning
-              </button>
-            </template>
-          </CourseCard>
-        </div>
-      </DashboardSection>
+      <ContinueLearning 
+        :active-courses="activeCourses"
+        @continue-course="continueCourse"
+      />
       
-      <!-- Recent Activity -->
-      <DashboardSection title="Recent Activity">
-        <div class="activity-list">
-          <ActivityCard 
-            v-for="activity in recentActivities"
-            :key="activity.id"
-            :icon="activity.icon"
-            :title="activity.title"
-            :description="activity.description"
-            :timestamp="activity.timestamp"
-          />
-        </div>
-      </DashboardSection>
+      <RecentActivity :recent-activities="recentActivities" />
       
-      <!-- Recommended Courses -->
-      <DashboardSection title="Recommended Courses">
-        <div class="courses-grid">
-          <CourseCard 
-            v-for="course in recommendedCourses"
-            :key="course.id"
-            :course="course"
-            @click="viewCourse(course.id)"
-          >
-            <template #action>
-              <button class="btn btn-secondary">
-                View Details
-              </button>
-            </template>
-          </CourseCard>
-        </div>
-      </DashboardSection>
+      <RecommendedCourses 
+        :recommended-courses="recommendedCourses"
+        @view-course="viewCourse"
+      />
     </div>
-  </DashboardLayout>
+  </div>
 </template>
 
 <script>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@shared/stores/user.store.js'
-import DashboardLayout from '../../components/layout/DashboardLayout.vue'
-import DashboardHeader from '../../components/common/DashboardHeader.vue'
-import DashboardSection from '../../components/common/DashboardSection.vue'
-import StatCard from '@shared/ui-components/components/StatCard.vue'
-import ActivityCard from '@shared/ui-components/components/ActivityCard.vue'
-import CourseCard from '@shared/ui-components/components/CourseCard.vue'
-import { useStudentData } from '../../composables/useStudentData.js'
+import DashboardHeader from '../StudentDashboard/DashboardHeader.vue'
+import QuickStats from '../StudentDashboard/QuickStats.vue'
+import ContinueLearning from '../StudentDashboard/ContinueLearning.vue'
+import RecentActivity from '../StudentDashboard/RecentActivity.vue'
+import RecommendedCourses from '../StudentDashboard/RecommendedCourses.vue'
 
 export default {
   name: 'StudentDashboard',
   components: {
-    DashboardLayout,
     DashboardHeader,
-    DashboardSection,
-    StatCard,
-    ActivityCard,
-    CourseCard
+    QuickStats,
+    ContinueLearning,
+    RecentActivity,
+    RecommendedCourses
   },
   setup() {
     const router = useRouter()
     const userStore = useUserStore()
     const user = computed(() => userStore.currentUser)
     
-    const {
-      enrolledCourses,
-      activeCourses,
-      completedCourses,
-      recentActivities,
-      recommendedCourses,
-      averageProgress,
-      totalStudyTime
-    } = useStudentData()
+    // Mock data
+    const enrolledCourses = ref([
+      { id: 1, title: 'Web Development Fundamentals', progress: 75 },
+      { id: 2, title: 'Vue.js Complete Guide', progress: 45 },
+      { id: 3, title: 'Mobile App Development', progress: 100 },
+      { id: 4, title: 'Database Design', progress: 20 }
+    ])
+    
+    const activeCourses = computed(() => 
+      enrolledCourses.value.filter(c => c.progress < 100)
+    )
+    
+    const completedCourses = computed(() => 
+      enrolledCourses.value.filter(c => c.progress === 100)
+    )
+    
+    const averageProgress = computed(() => {
+      if (enrolledCourses.value.length === 0) return 0
+      const total = enrolledCourses.value.reduce((sum, course) => sum + course.progress, 0)
+      return Math.round(total / enrolledCourses.value.length)
+    })
+    
+    const totalStudyTime = computed(() => 45)
+    
+    const recentActivities = ref([
+      {
+        id: 1,
+        icon: 'assignment',
+        title: 'Assignment Submitted',
+        description: 'JavaScript Fundamentals Quiz',
+        timestamp: '2 hours ago'
+      },
+      {
+        id: 2,
+        icon: 'course',
+        title: 'Course Completed',
+        description: 'Mobile App Development',
+        timestamp: '1 day ago'
+      },
+      {
+        id: 3,
+        icon: 'quiz',
+        title: 'Quiz Passed',
+        description: 'Vue.js Components Assessment',
+        timestamp: '2 days ago'
+      },
+      {
+        id: 4,
+        icon: 'achievement',
+        title: 'Achievement Unlocked',
+        description: 'First Course Completed',
+        timestamp: '3 days ago'
+      }
+    ])
+    
+    const recommendedCourses = ref([
+      {
+        id: 5,
+        title: 'React Native Development',
+        description: 'Build mobile apps with React Native',
+        level: 'intermediate',
+        image: 'https://picsum.photos/seed/reactnative/400/250.jpg',
+        featured: true,
+        progress: undefined
+      },
+      {
+        id: 6,
+        title: 'Node.js Backend',
+        description: 'Server-side JavaScript development',
+        level: 'advanced',
+        image: 'https://picsum.photos/seed/nodejs/400/250.jpg',
+        featured: false,
+        progress: undefined
+      }
+    ])
     
     const continueCourse = (courseId) => {
       router.push(`/courses/course/${courseId}`)
@@ -144,10 +146,10 @@ export default {
       enrolledCourses,
       activeCourses,
       completedCourses,
-      recentActivities,
-      recommendedCourses,
       averageProgress,
       totalStudyTime,
+      recentActivities,
+      recommendedCourses,
       continueCourse,
       viewCourse,
       browseCourses
@@ -157,5 +159,19 @@ export default {
 </script>
 
 <style scoped>
-@import '@shared/styles/dashboard.css';
+.student-dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.content-wrapper {
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+}
 </style>

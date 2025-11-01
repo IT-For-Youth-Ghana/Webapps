@@ -1,19 +1,6 @@
 <template>
   <div class="teacher-courses fade-in">
-    <TeacherHeader 
-      :show-create-button="true"
-      :create-button-text="'Create Course'"
-      @create-new="createNewCourse"
-    />
-
     <div class="content-wrapper">
-      <CoursesStats 
-        :total-courses="totalCourses"
-        :total-students="totalStudents"
-        :active-courses="activeCourses"
-        :average-rating="averageRating"
-      />
-
       <CoursesFilters
         v-model:search-query="searchQuery"
         v-model:status-filter="statusFilter"
@@ -32,16 +19,12 @@
 <script>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import TeacherHeader from '@/components/teacher/TeacherHeader.vue'
-import CoursesStats from '@/components/teacher/TeacherCoursesPage/CoursesStats.vue'
 import CoursesFilters from '@/components/teacher/TeacherCoursesPage/CoursesFilters.vue'
 import CoursesList from '@/components/teacher/TeacherCoursesPage/CoursesList.vue'
 
 export default {
   name: 'TeacherCoursesPage',
   components: {
-    TeacherHeader,
-    CoursesStats,
     CoursesFilters,
     CoursesList
   },

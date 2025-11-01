@@ -6,38 +6,38 @@
 
 /* Professional LMS Design System - Inherited from Talent Incubator */
 :root {
-  /* Brand Colors */
-  --bg-primary: #0D1117;
-  --bg-secondary: #161B22;
-  --bg-tertiary: #21262D;
-  --bg-elevated: #30363D;
-  --bg-overlay: rgba(0, 0, 0, 0.7);
+  /* Brand Colors - Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
   
-  --text-primary: #ffffff;
-  --text-secondary: #8fb2d6;
-  --text-tertiary: #6E7681;
-  --text-disabled: #8B949E;
-  --text-inverse: #0D1117;
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-tertiary: #6c757d;
+  --text-disabled: #adb5bd;
+  --text-inverse: #ffffff;
   
-  --border-primary: #30363D;
-  --border-secondary: #21262D;
-  --border-tertiary: #161B22;
+  --border-primary: #dee2e6;
+  --border-secondary: #e9ecef;
+  --border-tertiary: #f8f9fa;
   --border-focus: #1b65b2;
-  --border-hover: #484F58;
+  --border-hover: #ced4da;
   
   --interactive-primary: #1b65b2;
   --interactive-primary-hover: #195aa5;
-  --interactive-secondary: rgba(143, 178, 214, 0.1);
-  --interactive-secondary-hover: rgba(143, 178, 214, 0.2);
-  --interactive-tertiary: rgba(255, 255, 255, 0.05);
-  --interactive-tertiary-hover: rgba(255, 255, 255, 0.1);
+  --interactive-secondary: rgba(27, 101, 178, 0.1);
+  --interactive-secondary-hover: rgba(27, 101, 178, 0.2);
+  --interactive-tertiary: rgba(0, 0, 0, 0.03);
+  --interactive-tertiary-hover: rgba(0, 0, 0, 0.06);
   
-  --form-bg: #21262d;
-  --form-border: #30363d;
+  --form-bg: #ffffff;
+  --form-border: #ced4da;
   --form-border-focus: #1b65b2;
-  --form-text: #ffffff;
-  --form-placeholder: #6e7681;
-  --form-disabled: #161b22;
+  --form-text: #212529;
+  --form-placeholder: #6c757d;
+  --form-disabled: #f8f9fa;
   
   --status-success: rgba(50, 215, 75, 0.1);
   --status-success-border: rgba(50, 215, 75, 0.3);
@@ -75,13 +75,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #app {
   min-height: 100vh;
   background: var(--bg-primary);
-  transition: background-color 0.3s ease;
 }
 
 /* Scrollbar Styling */
@@ -231,13 +229,13 @@ body {
 }
 
 .glass-surface {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .glass-surface:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 /* Professional Form System */

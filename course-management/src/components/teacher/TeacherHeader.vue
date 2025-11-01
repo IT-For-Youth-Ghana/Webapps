@@ -34,14 +34,6 @@
         </router-link>
         
         <router-link 
-          to="/teacher/analytics" 
-          class="nav-link"
-          :class="{ active: isActiveRoute('/teacher/analytics') }"
-        >
-          Analytics
-        </router-link>
-        
-        <router-link 
           to="/teacher/schedule" 
           class="nav-link"
           :class="{ active: isActiveRoute('/teacher/schedule') }"

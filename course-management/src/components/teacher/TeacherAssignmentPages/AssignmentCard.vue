@@ -2,10 +2,23 @@
   <div class="assignment-card card" :class="{ 'overdue': isOverdue(assignment.dueDate) }">
     <div class="assignment-header">
       <div class="assignment-type" :class="assignment.type">
-        <DocumentTextIcon v-if="assignment.type === 'essay'" class="w-5 h-5" />
-        <ChartBarIcon v-else-if="assignment.type === 'quiz'" class="w-5 h-5" />
-        <AcademicCapIcon v-else-if="assignment.type === 'project'" class="w-5 h-5" />
-        <PencilIcon v-else class="w-5 h-5" />
+        <!-- Assignment Type Icons -->
+        <svg v-if="assignment.type === 'essay'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/>
+        </svg>
+        <svg v-else-if="assignment.type === 'quiz'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <svg v-else-if="assignment.type === 'project'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22,4 12,14.01 9,11.01"/>
+        </svg>
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/>
+        </svg>
       </div>
       <div class="assignment-status" :class="assignment.status">
         {{ formatStatus(assignment.status) }}
@@ -20,21 +33,40 @@
       <div class="assignment-meta">
         <div class="meta-row">
           <span class="meta-item">
-            <ClockIcon class="w-4 h-4" />
+            <!-- Calendar Icon -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
             Due: {{ formatDate(assignment.dueDate) }}
           </span>
           <span class="meta-item">
-            <ClockIcon class="w-4 h-4" />
+            <!-- Clock Icon -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 12"/>
+            </svg>
             {{ assignment.duration }} min
           </span>
         </div>
         <div class="meta-row">
           <span class="meta-item">
-            <UserGroupIcon class="w-4 h-4" />
+            <!-- Users Icon -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
             {{ assignment.submissions }}/{{ assignment.totalStudents }} submitted
           </span>
           <span class="meta-item">
-            <StarIcon class="w-4 h-4" />
+            <!-- Star Icon -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"/>
+            </svg>
             {{ assignment.maxPoints }} points
           </span>
         </div>
@@ -55,16 +87,31 @@
     </div>
     
     <div class="assignment-actions">
-      <button class="btn-secondary btn-sm" @click="$emit('view-submissions', assignment.id)">
-        <UserGroupIcon class="w-4 h-4" />
+      <button class="quick-action-btn btn-sm" @click="$emit('view-submissions', assignment.id)">
+        <!-- Users Icon -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
         View Submissions
       </button>
-      <button class="btn-secondary btn-sm" @click="$emit('edit', assignment.id)">
-        <PencilIcon class="w-4 h-4" />
+      <button class="quick-action-btn btn-sm" @click="$emit('edit', assignment.id)">
+        <!-- Pencil Icon -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+          <path d="m15 5 4 4"/>
+        </svg>
         Edit
       </button>
-      <button class="btn-primary btn-sm" @click="$emit('grade', assignment.id)">
-        <ChartBarIcon class="w-4 h-4" />
+      <button class="quick-action-btn primary btn-sm" @click="$emit('grade', assignment.id)">
+        <!-- Chart Bar Icon -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
         Grade
       </button>
     </div>
@@ -72,27 +119,9 @@
 </template>
 
 <script>
-import { 
-  DocumentTextIcon, 
-  ChartBarIcon, 
-  AcademicCapIcon, 
-  PencilIcon,
-  ClockIcon,
-  UserGroupIcon,
-  StarIcon
-} from '@heroicons/vue/24/outline'
 
 export default {
   name: 'AssignmentCard',
-  components: {
-    DocumentTextIcon,
-    ChartBarIcon,
-    AcademicCapIcon,
-    PencilIcon,
-    ClockIcon,
-    UserGroupIcon,
-    StarIcon
-  },
   props: {
     assignment: {
       type: Object,
@@ -135,6 +164,15 @@ export default {
     },
     getSubmissionPercentage(assignment) {
       return Math.round((assignment.submissions / assignment.totalStudents) * 100)
+    },
+    getAssignmentEmoji(type) {
+      const emojiMap = {
+        'essay': '📝',
+        'quiz': '📊',
+        'project': '🎓',
+        'exercise': '✏️'
+      }
+      return emojiMap[type] || '📋'
     }
   }
 }
@@ -145,13 +183,13 @@ export default {
   overflow: hidden;
   transition: all 0.2s ease;
   background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
 }
 
 .assignment-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: var(--border-hover);
 }
 
@@ -174,8 +212,9 @@ export default {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  background: var(--bg-tertiary);
-  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
   color: var(--text-secondary);
 }
 
@@ -221,8 +260,9 @@ export default {
   gap: 0.5rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: var(--bg-tertiary);
-  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
 }
 
 .meta-row {
@@ -242,8 +282,9 @@ export default {
 .progress-section {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: var(--bg-tertiary);
-  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
 }
 
 .progress-header {
@@ -284,44 +325,49 @@ export default {
   padding: 0 1.5rem 1.5rem;
 }
 
-.btn-primary {
+.quick-action-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  background: var(--interactive-primary);
-  color: var(--text-inverse);
-  font-weight: 500;
-  font-size: 0.75rem;
-  border: none;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background: var(--interactive-primary-hover);
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  background: var(--interactive-tertiary);
+  font-size: 0.875rem;
+  font-weight: 500;
   color: var(--text-primary);
-  font-weight: 500;
-  font-size: 0.75rem;
-  border: 1px solid var(--border-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  text-decoration: none;
 }
 
-.btn-secondary:hover {
-  background: var(--interactive-tertiary-hover);
-  transform: translateY(-1px);
+.quick-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.quick-action-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.quick-action-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.quick-action-btn.admin {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.quick-action-btn.admin:hover {
+  background: #8b5cf6;
+  color: white;
 }
 
 .btn-sm {

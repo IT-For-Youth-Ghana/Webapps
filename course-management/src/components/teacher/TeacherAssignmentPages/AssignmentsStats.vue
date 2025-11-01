@@ -1,152 +1,125 @@
 <template>
-  <div class="stats-grid">
-    <div class="dashboard-stat">
-      <div class="stat-icon assignments">
-        <DocumentTextIcon class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ totalAssignments }}</div>
-        <div class="stat-label">Total Assignments</div>
-        <div class="stat-change positive">+{{ Math.floor(Math.random() * 5) + 1 }} this month</div>
-      </div>
+  <div class="assignments-header">
+    <div class="header-content">
+      <h2 class="section-title">My Assignments</h2>
+      <p class="section-subtitle">Create and manage student assignments and grading</p>
     </div>
-    
-    <div class="dashboard-stat">
-      <div class="stat-icon pending">
-        <ClockIcon class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ pendingSubmissions }}</div>
-        <div class="stat-label">Pending Submissions</div>
-        <div class="stat-change warning">{{ Math.floor(Math.random() * 3) + 1 }} urgent</div>
-      </div>
-    </div>
-    
-    <div class="dashboard-stat">
-      <div class="stat-icon graded">
-        <CheckCircleIcon class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ gradedAssignments }}</div>
-        <div class="stat-label">Graded</div>
-        <div class="stat-change positive">{{ Math.floor(Math.random() * 10) + 5 }} today</div>
-      </div>
-    </div>
-    
-    <div class="dashboard-stat">
-      <div class="stat-icon score">
-        <ChartBarIcon class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ averageScore }}%</div>
-        <div class="stat-label">Average Score</div>
-        <div class="stat-change positive">+{{ Math.floor(Math.random() * 3) + 1 }}% this week</div>
-      </div>
+    <div class="header-actions">
+      <button @click="$emit('create-assignment')" class="quick-action-btn primary">
+        <!-- Plus Icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        Create Assignment
+      </button>
     </div>
   </div>
 </template>
 
 <script>
-import { DocumentTextIcon, ClockIcon, CheckCircleIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 export default {
   name: 'AssignmentsStats',
-  components: {
-    DocumentTextIcon,
-    ClockIcon,
-    CheckCircleIcon,
-    ChartBarIcon
-  },
-  props: {
-    totalAssignments: {
-      type: Number,
-      default: 24
-    },
-    pendingSubmissions: {
-      type: Number,
-      default: 12
-    },
-    gradedAssignments: {
-      type: Number,
-      default: 18
-    },
-    averageScore: {
-      type: Number,
-      default: 85
-    }
-  }
+  emits: ['create-assignment']
 }
 </script>
 
 <style scoped>
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+.assignments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
-.dashboard-stat {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-icon {
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-icon.assignments {
-  background: rgba(245, 158, 11, 0.1);
-  color: #F59E0B;
-}
-
-.stat-icon.pending {
-  background: rgba(239, 68, 68, 0.1);
-  color: #EF4444;
-}
-
-.stat-icon.graded {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10B981;
-}
-
-.stat-icon.score {
-  background: rgba(139, 92, 246, 0.1);
-  color: #8B5CF6;
-}
-
-.stat-content {
+.header-content {
   flex: 1;
 }
 
-.stat-number {
+.section-title {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
-  line-height: 1;
+  margin: 0 0 0.5rem 0;
 }
 
-.stat-label {
+.section-subtitle {
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin: 0.25rem 0;
+  margin: 0;
 }
 
-.stat-change {
-  font-size: 0.75rem;
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
   font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
 }
 
-.stat-change.positive {
-  color: var(--status-success-text);
+.quick-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.stat-change.warning {
-  color: var(--status-warning-text);
+.quick-action-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.quick-action-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.quick-action-btn.admin {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.quick-action-btn.admin:hover {
+  background: #8b5cf6;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .assignments-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    justify-content: stretch;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    flex: 1;
+    justify-content: center;
+  }
 }
 </style>

@@ -28,7 +28,7 @@ const routes = [
       {
         path: 'dashboard',
         name: 'StudentDashboard',
-        component: () => import('../pages/UnifiedDashboard.vue'),
+        component: () => import('../pages/teacher/TeacherDashboard.vue'),
         meta: { 
           title: 'Student Dashboard'
         }
@@ -70,7 +70,7 @@ const routes = [
       {
         path: 'dashboard',
         name: 'TeacherDashboard',
-        component: () => import('../pages/UnifiedDashboard.vue'),
+        component: () => import('../pages/teacher/TeacherDashboard.vue'),
         meta: { 
           title: 'Teacher Dashboard'
         }
@@ -124,14 +124,6 @@ const routes = [
         }
       },
       {
-        path: 'analytics',
-        name: 'TeacherAnalytics',
-        component: () => import('../pages/teacher/TeacherAnalyticsPage.vue'),
-        meta: { 
-          title: 'Class Analytics'
-        }
-      },
-      {
         path: 'schedule',
         name: 'TeacherSchedule',
         component: () => import('../pages/teacher/TeacherSchedulePage.vue'),
@@ -160,7 +152,7 @@ const routes = [
       {
         path: 'dashboard',
         name: 'AdminDashboard',
-        component: () => import('../pages/UnifiedDashboard.vue'),
+        component: () => import('../pages/teacher/TeacherDashboard.vue'),
         meta: { 
           title: 'Admin Dashboard'
         }

@@ -1,28 +1,18 @@
 <template>
-  <div class="edit-course">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">✏️ Edit Course</h1>
-        <p class="page-subtitle">Update course information, content, and settings</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn btn-secondary" @click="previewCourse">
-          <span class="btn-icon">👁️</span>
-          Preview
-        </button>
-        <button class="btn btn-primary" @click="saveCourse" :disabled="!isFormValid">
-          <span class="btn-icon">💾</span>
-          Save Changes
-        </button>
-      </div>
-    </div>
+  <div class="edit-course fade-in">
+    <TeacherHeader 
+      :show-create-button="true"
+      :create-button-text="'Preview'"
+      @create-new="previewCourse"
+    />
+
+    <div class="content-wrapper">
 
     <!-- Course Edit Form -->
     <div class="course-form">
       <!-- Basic Information -->
-      <div class="form-section glass-card">
-        <h2 class="section-title">📋 Basic Information</h2>
+      <div class="form-section card">
+        <h2 class="section-title">Basic Information</h2>
         
         <div class="form-grid">
           <div class="form-group full-width">
@@ -31,7 +21,7 @@
               id="courseTitle"
               v-model="course.title"
               type="text"
-              class="form-input"
+              class="input-field"
               placeholder="Enter course title"
               required
             />
@@ -39,7 +29,7 @@
           
           <div class="form-group">
             <label for="courseCategory" class="form-label">Category *</label>
-            <select id="courseCategory" v-model="course.category" class="form-select" required>
+            <select id="courseCategory" v-model="course.category" class="input-field" required>
               <option value="">Select Category</option>
               <option value="web-development">Web Development</option>
               <option value="mobile-development">Mobile Development</option>

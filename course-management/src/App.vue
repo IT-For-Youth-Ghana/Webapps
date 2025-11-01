@@ -40,10 +40,9 @@ export default {
     
     onMounted(() => {
       console.log('App.vue mounted')
-      // Load theme and shared styles
-      const savedTheme = localStorage.getItem('theme') || 'dark'
-      theme.value = savedTheme
-      document.documentElement.setAttribute('data-theme', savedTheme)
+      // Load theme and shared styles - always use light theme
+      theme.value = 'light'
+      document.documentElement.setAttribute('data-theme', 'light')
       
       // Initialize user store
       userStore.initializeUser()
@@ -54,12 +53,6 @@ export default {
           .then(registration => console.log('SW registered'))
           .catch(error => console.log('SW registration failed'))
       }
-      
-      // Listen for theme changes
-      window.addEventListener('theme-changed', (event) => {
-        theme.value = event.detail.theme
-        document.documentElement.setAttribute('data-theme', event.detail.theme)
-      })
     })
     
     return {
@@ -95,11 +88,7 @@ export default {
   }
 }
 
-/* Dark mode transitions */
-[data-theme="dark"] {
-  color-scheme: dark;
-}
-
+/* Light mode only */
 [data-theme="light"] {
   color-scheme: light;
 }

@@ -1,16 +1,23 @@
 <template>
-  <DashboardLayout>
-    <div class="dashboard fade-in">
-      <DashboardHeader 
-        title="Announcements"
-        subtitle="Create and manage course announcements"
-      >
-        <template #actions>
-          <button class="btn btn-primary" @click="showCreateModal = true">
-            Create Announcement
-          </button>
-        </template>
-      </DashboardHeader>
+  <div class="teacher-announcements fade-in">
+    <TeacherHeader />
+    
+    <div class="content-wrapper">
+      <!-- Page Actions -->
+      <div class="quick-actions-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Announcements</h2>
+            <p class="section-subtitle">Create and manage course announcements</p>
+          </div>
+          <div class="actions">
+            <button class="quick-action-btn primary" @click="showCreateModal = true">
+              <BellIcon class="w-4 h-4" />
+              Create Announcement
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div class="announcements-content">
         <div class="announcements-filters">
@@ -19,7 +26,7 @@
               v-model="searchQuery" 
               type="text" 
               placeholder="Search announcements..."
-              class="search-input"
+              class="search-input input-field"
             />
           </div>
           <div class="filter-buttons">
@@ -35,18 +42,15 @@
         </div>
 
         <div class="announcements-list">
-          <div v-if="filteredAnnouncements.length === 0" class="empty-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-5"/>
-            </svg>
+          <div v-if="filteredAnnouncements.length === 0" class="empty-state card">
+            <BellIcon class="empty-icon" />
             <p>No announcements found</p>
           </div>
 
           <div 
             v-for="announcement in filteredAnnouncements" 
             :key="announcement.id"
-            class="announcement-card"
+            class="announcement-card card"
           >
             <div class="announcement-header">
               <div class="announcement-title">
@@ -62,16 +66,10 @@
               </div>
               <div class="announcement-actions">
                 <button @click="editAnnouncement(announcement)" class="action-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
+                  <PencilIcon class="w-4 h-4" />
                 </button>
                 <button @click="deleteAnnouncement(announcement)" class="action-btn danger">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3,6 5,6 21,6"/>
-                    <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                  </svg>
+                  <TrashIcon class="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -87,16 +85,11 @@
               </div>
               <div class="announcement-stats">
                 <span class="stat">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
+                  <EyeIcon class="w-3.5 h-3.5" />
                   {{ announcement.views }} views
                 </span>
                 <span class="stat">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
-                  </svg>
+                  <BellIcon class="w-3.5 h-3.5" />
                   {{ announcement.comments.length }} comments
                 </span>
               </div>
@@ -110,23 +103,25 @@
         <div class="modal" @click.stop>
           <div class="modal-header">
             <h3>{{ editingAnnouncement ? 'Edit Announcement' : 'Create Announcement' }}</h3>
-            <button @click="showCreateModal = false" class="close-btn">×</button>
+            <button @click="showCreateModal = false" class="close-btn">
+              <XMarkIcon class="w-5 h-5" />
+            </button>
           </div>
           
           <div class="modal-body">
             <div class="form-group">
               <label>Title</label>
-              <input v-model="formData.title" type="text" class="form-input" placeholder="Enter announcement title" />
+              <input v-model="formData.title" type="text" class="form-input input-field" placeholder="Enter announcement title" />
             </div>
 
             <div class="form-group">
               <label>Content</label>
-              <textarea v-model="formData.content" class="form-textarea" rows="6" placeholder="Enter announcement content"></textarea>
+              <textarea v-model="formData.content" class="form-textarea input-field" rows="6" placeholder="Enter announcement content"></textarea>
             </div>
 
             <div class="form-group">
               <label>Priority</label>
-              <select v-model="formData.priority" class="form-select">
+              <select v-model="formData.priority" class="form-select input-field">
                 <option value="normal">Normal</option>
                 <option value="high">High</option>
                 <option value="urgent">Urgent</option>
@@ -135,7 +130,7 @@
 
             <div class="form-group">
               <label>Status</label>
-              <select v-model="formData.status" class="form-select">
+              <select v-model="formData.status" class="form-select input-field">
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
                 <option value="scheduled">Scheduled</option>
@@ -152,19 +147,30 @@
         </div>
       </div>
     </div>
-  </DashboardLayout>
+    </div>
+
 </template>
 
 <script>
 import { ref, computed } from 'vue'
-import DashboardLayout from '@shared/ui-components/layouts/DashboardLayout.vue'
-import DashboardHeader from '@shared/ui-components/components/DashboardHeader.vue'
+import TeacherHeader from '@/components/teacher/TeacherHeader.vue'
+import {
+  PencilIcon,
+  TrashIcon,
+  EyeIcon,
+  BellIcon,
+  XMarkIcon
+} from '@heroicons/vue/24/outline'
 
 export default {
   name: 'TeacherAnnouncementsPage',
   components: {
-    DashboardLayout,
-    DashboardHeader
+    TeacherHeader,
+    PencilIcon,
+    TrashIcon,
+    EyeIcon,
+    BellIcon,
+    XMarkIcon
   },
   setup() {
     const searchQuery = ref('')
@@ -332,6 +338,38 @@ export default {
 </script>
 
 <style scoped>
+.announcements-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.content-wrapper {
+  padding: 2rem;
+}
+
+.page-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
 .announcements-content {
   display: flex;
   flex-direction: column;
@@ -408,8 +446,11 @@ export default {
   text-align: center;
 }
 
-.empty-state svg {
+.empty-icon {
+  width: 3rem;
+  height: 3rem;
   margin-bottom: 1rem;
+  color: var(--text-secondary);
   opacity: 0.5;
 }
 
@@ -481,7 +522,7 @@ export default {
 .action-btn {
   padding: 0.5rem;
   background: transparent;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -492,7 +533,7 @@ export default {
 }
 
 .action-btn:hover {
-  background: var(--bg-primary);
+  background: var(--bg-tertiary);
   border-color: var(--border-hover);
   color: var(--text-primary);
 }
@@ -563,6 +604,7 @@ export default {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-primary);
 }
 
 .modal-header {
@@ -583,14 +625,18 @@ export default {
 .close-btn {
   background: transparent;
   border: none;
-  font-size: 1.5rem;
   cursor: pointer;
   color: var(--text-secondary);
   padding: 0.25rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
+  background: var(--bg-tertiary);
   color: var(--text-primary);
 }
 
@@ -670,6 +716,15 @@ export default {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+  
+  .page-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
   .announcements-filters {
     flex-direction: column;
   }

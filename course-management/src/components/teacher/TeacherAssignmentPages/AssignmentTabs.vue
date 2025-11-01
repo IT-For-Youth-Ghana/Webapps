@@ -3,11 +3,29 @@
     <button 
       v-for="tab in tabs"
       :key="tab.id"
-      class="tab-button"
+      class="quick-action-btn"
       :class="{ active: activeTab === tab.id }"
       @click="$emit('tab-change', tab.id)"
     >
-      <component :is="tab.icon" class="w-5 h-5" />
+      <!-- Tab Icons -->
+      <svg v-if="tab.id === 'all'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <svg v-else-if="tab.id === 'active'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14,2 14,8 20,8"/>
+      </svg>
+      <svg v-else-if="tab.id === 'pending'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 12"/>
+      </svg>
+      <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"/>
+        <path d="M9 22l3-9a3 3 0 0 1 3-3v-4a3 3 0 0 1 3-3h4"/>
+        <path d="M20 13l-3 3"/>
+      </svg>
+      
       <span class="tab-label">{{ tab.label }}</span>
       <span class="tab-count">{{ tab.count }}</span>
     </button>
@@ -15,16 +33,9 @@
 </template>
 
 <script>
-import { BookOpenIcon, DocumentTextIcon, ClockIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 
 export default {
   name: 'AssignmentTabs',
-  components: {
-    BookOpenIcon,
-    DocumentTextIcon,
-    ClockIcon,
-    CheckCircleIcon
-  },
   props: {
     activeTab: {
       type: String,
@@ -37,29 +48,36 @@ export default {
       tabs: [
         {
           id: 'all',
-          icon: 'BookOpenIcon',
           label: 'All Assignments',
           count: 24
         },
         {
           id: 'active',
-          icon: 'DocumentTextIcon',
           label: 'Active',
           count: 12
         },
         {
           id: 'pending',
-          icon: 'ClockIcon',
           label: 'Pending Review',
           count: 8
         },
         {
           id: 'completed',
-          icon: 'CheckCircleIcon',
           label: 'Completed',
           count: 4
         }
       ]
+    }
+  },
+  methods: {
+    getTabEmoji(tabId) {
+      const emojiMap = {
+        'all': '📚',
+        'active': '📝',
+        'pending': '⏰',
+        'completed': '✅'
+      }
+      return emojiMap[tabId] || '📋'
     }
   }
 }
@@ -68,41 +86,75 @@ export default {
 <style scoped>
 .assignment-tabs {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-bottom: 2rem;
-  padding: 0.5rem;
-  background: var(--bg-tertiary);
-  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
 }
 
-.tab-button {
+.quick-action-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 0.875rem;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
   flex: 1;
   justify-content: center;
 }
 
-.tab-button:hover {
-  background: var(--bg-primary);
-  color: var(--text-primary);
+.quick-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.tab-button.active {
-  background: var(--interactive-primary);
-  color: var(--text-inverse);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.quick-action-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
 }
 
+.quick-action-btn.active:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.quick-action-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.quick-action-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.quick-action-btn.admin {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.quick-action-btn.admin:hover {
+  background: #8b5cf6;
+  color: white;
+}
+
+.tab-label {
+  font-weight: 500;
+}
 
 .tab-count {
   background: rgba(255, 255, 255, 0.1);
@@ -110,11 +162,11 @@ export default {
   border-radius: 0.25rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
-.tab-button.active .tab-count {
+.quick-action-btn.active .tab-count {
   background: rgba(255, 255, 255, 0.2);
-  color: var(--text-inverse);
+  color: white;
 }
 </style>

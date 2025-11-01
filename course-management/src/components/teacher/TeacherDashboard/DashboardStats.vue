@@ -1,14 +1,17 @@
 <template>
-  <div class="stats-grid">
-    <div class="dashboard-stat" v-for="stat in stats" :key="stat.label">
-      <div class="stat-icon" :class="stat.iconClass">
-        <component :is="stat.icon" class="w-8 h-8" />
-      </div>
-      <div class="stat-content">
-        <div class="stat-number">{{ stat.value }}</div>
-        <div class="stat-label">{{ stat.label }}</div>
-        <div class="stat-change" :class="stat.changeClass">
-          {{ stat.change }}
+  <div class="welcome-section">
+    <div class="welcome-card card">
+      <div class="welcome-content">
+        <div class="welcome-icon">
+          <AcademicCapIcon class="w-16 h-16" />
+        </div>
+        <h2 class="welcome-title">Welcome to Teacher Portal</h2>
+        <p class="welcome-subtitle">Manage your courses, assignments, and track student progress</p>
+        <div class="welcome-actions">
+          <router-link to="/teacher/create-course" class="btn-primary">
+            <PlusIcon class="w-5 h-5" />
+            Create New Course
+          </router-link>
         </div>
       </div>
     </div>
@@ -16,126 +19,127 @@
 </template>
 
 <script>
-import { BookOpenIcon, UserGroupIcon, DocumentTextIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
+import { AcademicCapIcon, ChartBarIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 export default {
   name: 'DashboardStats',
   components: {
-    BookOpenIcon,
-    UserGroupIcon,
-    DocumentTextIcon,
-    ChartBarIcon
-  },
-  data() {
-    return {
-      stats: [
-        {
-          label: 'Active Courses',
-          value: '8',
-          change: '+2 this month',
-          changeClass: 'positive',
-          icon: 'BookOpenIcon',
-          iconClass: 'courses'
-        },
-        {
-          label: 'Total Students',
-          value: '247',
-          change: '+18 this week',
-          changeClass: 'positive',
-          icon: 'UserGroupIcon',
-          iconClass: 'students'
-        },
-        {
-          label: 'Pending Reviews',
-          value: '12',
-          change: '3 urgent',
-          changeClass: 'warning',
-          icon: 'DocumentTextIcon',
-          iconClass: 'assignments'
-        },
-        {
-          label: 'Course Rating',
-          value: '4.9',
-          change: '+0.2 this month',
-          changeClass: 'positive',
-          icon: 'ChartBarIcon',
-          iconClass: 'rating'
-        }
-      ]
-    }
+    AcademicCapIcon,
+    ChartBarIcon,
+    PlusIcon
   }
 }
 </script>
 
 <style scoped>
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+.welcome-section {
   margin-bottom: 2rem;
 }
 
-.dashboard-stat {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.welcome-card {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, var(--interactive-primary), var(--brand-accent));
+  color: white;
+  border: none;
 }
 
-.stat-icon {
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.welcome-content {
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.stat-icon.courses {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+.welcome-icon {
+  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.stat-icon.students {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10B981;
-}
-
-.stat-icon.assignments {
-  background: rgba(245, 158, 11, 0.1);
-  color: #F59E0B;
-}
-
-.stat-icon.rating {
-  background: rgba(139, 92, 246, 0.1);
-  color: #8B5CF6;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 1.5rem;
+.welcome-title {
+  font-size: 2rem;
   font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
+  margin: 0 0 1rem 0;
+  color: white;
 }
 
-.stat-label {
+.welcome-subtitle {
+  font-size: 1.1rem;
+  margin: 0 0 2rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 600;
   font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0.25rem 0;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
 }
 
-.stat-change {
-  font-size: 0.75rem;
-  font-weight: 500;
+.btn-primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
-.stat-change.positive {
-  color: var(--status-success-text);
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
 }
 
-.stat-change.warning {
-  color: var(--status-warning-text);
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .welcome-card {
+    padding: 2rem 1rem;
+  }
+  
+  .welcome-title {
+    font-size: 1.5rem;
+  }
+  
+  .welcome-subtitle {
+    font-size: 1rem;
+  }
+  
+  .welcome-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    max-width: 250px;
+    justify-content: center;
+  }
 }
 </style>
