@@ -37,11 +37,11 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@shared/stores/user.store.js'
-import ProgressHeader from '../StudentDashboard/DashboardHeader.vue'
-import ProgressOverview from '../StudentProgress/ProgressOverview.vue'
-import CourseProgressList from '../StudentProgress/CourseProgressList.vue'
-import LearningStreak from '../StudentProgress/LearningStreak.vue'
-import Achievements from '../StudentProgress/Achievements.vue'
+import ProgressHeader from '@/components/student/StudentDashboard/DashboardHeader.vue'
+import ProgressOverview from '@/components/student/StudentProgress/ProgressOverview.vue'
+import CourseProgressList from '@/components/student/StudentProgress/CourseProgressList.vue'
+import LearningStreak from '@/components/student/StudentProgress/LearningStreak.vue'
+import Achievements from '@/components/student/StudentProgress/Achievements.vue'
 
 export default {
   name: 'StudentProgressPage',

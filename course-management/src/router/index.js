@@ -84,6 +84,14 @@ const routes = [
         }
       },
       {
+        path: 'courses/:id',
+        name: 'CourseDetail',
+        component: () => import('../pages/teacher/CourseDetailPage.vue'),
+        meta: { 
+          title: 'Course Details'
+        }
+      },
+      {
         path: 'create-course',
         name: 'CreateCourse',
         component: () => import('../pages/teacher/CreateCoursePage.vue'),
@@ -129,6 +137,14 @@ const routes = [
         component: () => import('../pages/teacher/TeacherSchedulePage.vue'),
         meta: { 
           title: 'Schedule & Office Hours'
+        }
+      },
+      {
+        path: 'students',
+        name: 'TeacherStudents',
+        component: () => import('../pages/teacher/TeacherStudentsPage.vue'),
+        meta: { 
+          title: 'Manage Students'
         }
       },
       {

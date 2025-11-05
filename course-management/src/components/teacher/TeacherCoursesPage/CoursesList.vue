@@ -2,14 +2,6 @@
   <div class="quick-actions-section">
     <div class="section-header">
       <h2 class="section-title">Your Courses ({{ courses.length }})</h2>
-      <router-link to="/teacher/courses" class="quick-action-btn">
-        <!-- Arrow Icon -->
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M5 12h14"/>
-          <path d="m12 5 7 7-7 7"/>
-        </svg>
-        View All
-      </router-link>
     </div>
     
     <div 
@@ -40,18 +32,31 @@
     
     <div 
       v-else
-      class="course-grid"
+      class="courses-container"
     >
-      <CourseCard 
-        v-for="course in courses" 
-        :key="course.id"
-        :course="course"
-      />
+      <div class="course-grid">
+        <CourseCard 
+          v-for="course in displayedCourses" 
+          :key="course.id"
+          :course="course"
+        />
+      </div>
+      
+      <div v-if="courses.length > coursesLimit" class="view-all-section">
+        <button @click="toggleViewAll" class="btn-secondary view-all-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path v-if="!showAll" d="M6 9l6 6 6-6"/>
+            <path v-else d="M18 15l-6-6-6 6"/>
+          </svg>
+          {{ showAll ? 'Weniger anzeigen' : `Alle ${courses.length} Kurse anzeigen` }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import { ref, computed } from 'vue'
 import CourseCard from './CourseCard.vue'
 
 export default {
@@ -65,7 +70,26 @@ export default {
       default: () => []
     }
   },
-  emits: ['create-course']
+  emits: ['create-course'],
+  setup(props) {
+    const showAll = ref(false)
+    const coursesLimit = 6 // Show 6 courses initially
+    
+    const displayedCourses = computed(() => {
+      return showAll.value ? props.courses : props.courses.slice(0, coursesLimit)
+    })
+    
+    const toggleViewAll = () => {
+      showAll.value = !showAll.value
+    }
+    
+    return {
+      showAll,
+      coursesLimit,
+      displayedCourses,
+      toggleViewAll
+    }
+  }
 }
 </script>
 
@@ -160,5 +184,15 @@ export default {
 .quick-action-btn.primary:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
+}
+
+.view-all-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.view-all-btn {
+  gap: 0.5rem;
 }
 </style>

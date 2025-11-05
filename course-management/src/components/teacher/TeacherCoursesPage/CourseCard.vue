@@ -1,9 +1,9 @@
 <template>
   <div class="course-card card" @click="viewCourseDetails(course.id)">
-    <div class="course-header">
+    <div class="course-header" :class="{ 'has-background': course.backgroundImage }" :style="getBackgroundStyle()">
       <div class="course-image">
-        <!-- Book Icon -->
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Book Icon (only show if no background) -->
+        <svg v-if="!course.backgroundImage" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
         </svg>
@@ -18,7 +18,7 @@
       <p class="course-description">{{ course.description }}</p>
       
       <div class="course-stats">
-<div class="stat-item">
+        <div class="stat-item">
           <!-- Users Icon -->
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -26,53 +26,46 @@
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
-          <span>{{ course.enrolledStudents }}</span>
+          <span>{{ course.enrolledStudents }} Studierende</span>
         </div>
-<div class="stat-item">
+        <div class="stat-item">
           <!-- Document Icon -->
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14,2 14,8 20,8"/>
           </svg>
-          <span>{{ course.totalLessons }}</span>
-        </div>
-<div class="stat-item">
-          <!-- Clock Icon -->
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 12"/>
-          </svg>
-          <span>{{ course.duration || 'Self-paced' }}</span>
+          <span>{{ course.totalLessons }} Lektionen</span>
         </div>
       </div>
       
-      <div class="progress-section">
-        <div class="progress-header">
-          <span class="progress-label">Course Progress</span>
-          <span class="progress-value">{{ course.avgProgress }}%</span>
+      <div v-if="course.schedule" class="schedule-section">
+        <div class="schedule-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span class="schedule-label">Unterrichtszeiten</span>
         </div>
-        <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: course.avgProgress + '%' }"></div>
-        </div>
+        <div class="schedule-time">{{ course.schedule }}</div>
       </div>
+      
       
       <div class="course-actions">
-<router-link :to="`/teacher/courses/${course.id}/edit`" class="quick-action-btn btn-sm" @click.stop>
-          <!-- Pencil Icon -->
+        <router-link :to="`/teacher/courses/${course.id}`" class="btn-primary course-action-btn" @click.stop>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Kurs verwalten
+        </router-link>
+        <router-link :to="`/teacher/edit-course/${course.id}`" class="btn-secondary course-action-btn" @click.stop>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
             <path d="m15 5 4 4"/>
           </svg>
-          Edit
-        </router-link>
-<router-link :to="`/teacher/courses/${course.id}/analytics`" class="quick-action-btn primary btn-sm" @click.stop>
-          <!-- Chart Icon -->
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="20" x2="18" y2="10"/>
-            <line x1="12" y1="20" x2="12" y2="4"/>
-            <line x1="6" y1="20" x2="6" y2="14"/>
-          </svg>
-          Analytics
+          Bearbeiten
         </router-link>
       </div>
     </div>
@@ -98,6 +91,14 @@ export default {
         archived: 'Archived'
       }
       return statusMap[status] || status
+    },
+    getBackgroundStyle() {
+      if (this.course.backgroundImage) {
+        return {
+          backgroundImage: `url(${this.course.backgroundImage})`
+        }
+      }
+      return {}
     },
     viewCourseDetails(courseId) {
       this.$router.push(`/teacher/courses/${courseId}`)
@@ -130,6 +131,13 @@ export default {
   align-items: center;
   justify-content: center;
   color: white;
+  overflow: hidden;
+}
+
+.course-header.has-background {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .course-image {
@@ -139,6 +147,23 @@ export default {
   width: 100%;
   height: 100%;
   color: white;
+  position: relative;
+  z-index: 2;
+}
+
+.course-header.has-background .course-image {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.course-header.has-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
 
 .course-status {
@@ -194,61 +219,60 @@ export default {
   margin-bottom: 1rem;
   padding: 1rem;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: 0.5rem;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-}
-
-.progress-section {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.progress-label {
-  font-size: 0.75rem;
+  gap: 0.5rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
   font-weight: 500;
 }
 
-.progress-value {
-  font-size: 0.75rem;
-  color: var(--text-primary);
+.schedule-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--status-info);
+  border: 1px solid var(--status-info-border);
+  border-radius: 0.5rem;
+}
+
+.schedule-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.schedule-label {
+  font-size: 0.875rem;
   font-weight: 600;
+  color: var(--status-info-text);
 }
 
-.progress-bar {
-  height: 0.5rem;
-  background: var(--bg-tertiary);
-  border-radius: 0.25rem;
-  overflow: hidden;
+.schedule-time {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--status-info-text);
+  margin-left: 1.5rem;
 }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--interactive-primary), var(--brand-accent));
-  transition: width 0.3s ease;
-}
 
 .course-actions {
   display: flex;
   gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.course-action-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  gap: 0.5rem;
 }
 
 .quick-action-btn {

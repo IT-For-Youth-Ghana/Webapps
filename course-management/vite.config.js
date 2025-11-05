@@ -16,9 +16,11 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: [],
+      external: ['pinia'],
       output: {
-        globals: {}
+        globals: {
+          'pinia': 'Pinia'
+        }
       }
     }
   }

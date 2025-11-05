@@ -1,162 +1,144 @@
 <template>
-  <section class="content-section">
+  <div class="quick-actions-section">
     <div class="section-header">
-      <h2 class="section-title">Active Courses</h2>
-      <router-link to="/teacher/courses" class="view-all-link">
+      <h2 class="section-title">Active Courses ({{ courses.length }})</h2>
+      <router-link to="/teacher/courses" class="quick-action-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14"/>
+          <path d="m12 5 7 7-7 7"/>
+        </svg>
         View All
       </router-link>
     </div>
     
-    <div class="course-grid">
-      <div v-for="course in courses" :key="course.id" class="course-card card">
+    <div v-if="courses.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      </div>
+      <h3 class="empty-title">No active courses</h3>
+      <p class="empty-description">Create your first course to start teaching</p>
+      <button class="quick-action-btn primary" @click="$emit('create-course')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        Create Your First Course
+      </button>
+    </div>
+    
+    <div v-else class="course-grid">
+      <div v-for="course in courses.slice(0, 3)" :key="course.id" class="course-card">
         <div class="course-header">
-          <div class="course-image">
-            <component :is="course.icon" class="w-12 h-12" />
+          <h3 class="course-title">{{ course.title }}</h3>
+          <span class="course-status" :class="course.status">{{ course.status }}</span>
+        </div>
+        <p class="course-description">{{ course.description }}</p>
+        <div class="course-stats">
+          <div class="stat">
+            <span class="stat-value">{{ course.enrolledStudents }}</span>
+            <span class="stat-label">Students</span>
           </div>
-          <div class="course-status" :class="course.status">
-            {{ formatStatus(course.status) }}
+          <div class="stat">
+            <span class="stat-value">{{ course.avgProgress }}%</span>
+            <span class="stat-label">Progress</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ course.totalLessons }}</span>
+            <span class="stat-label">Lessons</span>
           </div>
         </div>
-        
-        <div class="course-content">
-          <h3 class="course-title">{{ course.title }}</h3>
-          <p class="course-description">{{ course.description }}</p>
-          
-          <div class="course-stats">
-            <div class="stat-item">
-              <UserGroupIcon class="w-4 h-4" />
-              <span>{{ course.enrolledStudents }}</span>
-            </div>
-            <div class="stat-item">
-              <DocumentTextIcon class="w-4 h-4" />
-              <span>{{ course.assignments }}</span>
-            </div>
-            <div class="stat-item">
-              <ClockIcon class="w-4 h-4" />
-              <span>{{ course.duration }}</span>
-            </div>
-          </div>
-          
-          <div class="progress-section">
-            <div class="progress-header">
-              <span class="progress-label">Course Progress</span>
-              <span class="progress-value">{{ course.progress }}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: course.progress + '%' }"></div>
-            </div>
-          </div>
-          
-          <div class="course-actions">
-            <router-link :to="`/teacher/edit-course/${course.id}`" class="btn-secondary btn-sm">
-              <PencilIcon class="w-4 h-4" />
-              Edit
-            </router-link>
-            <router-link :to="`/teacher/analytics/${course.id}`" class="btn-primary btn-sm">
-              <ChartBarIcon class="w-4 h-4" />
-              Analytics
-            </router-link>
-          </div>
+        <div class="course-actions">
+          <button @click="$emit('manage-course', course.id)" class="quick-action-btn primary">
+            Manage Course
+          </button>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 </template>
 
 <script>
-import { BookOpenIcon, UserGroupIcon, DocumentTextIcon, ChartBarIcon, ClockIcon, PencilIcon } from '@heroicons/vue/24/outline'
-
 export default {
   name: 'ActiveCourses',
-  components: {
-    BookOpenIcon,
-    UserGroupIcon,
-    DocumentTextIcon,
-    ChartBarIcon,
-    ClockIcon,
-    PencilIcon
-  },
-  data() {
-    return {
-      courses: [
-        {
-          id: 1,
-          title: 'Web Development Fundamentals',
-          description: 'Complete guide to HTML, CSS, JavaScript and modern web development',
-          status: 'active',
-          enrolledStudents: 45,
-          assignments: 8,
-          duration: '12 weeks',
-          progress: 75,
-          icon: 'BookOpenIcon'
-        },
-        {
-          id: 2,
-          title: 'Advanced Vue.js',
-          description: 'Master Vue.js with composition API, state management and testing',
-          status: 'active',
-          enrolledStudents: 32,
-          assignments: 6,
-          duration: '10 weeks',
-          progress: 60,
-          icon: 'BookOpenIcon'
-        },
-        {
-          id: 3,
-          title: 'Database Design',
-          description: 'Learn database modeling, SQL optimization and best practices',
-          status: 'draft',
-          enrolledStudents: 0,
-          assignments: 3,
-          duration: '8 weeks',
-          progress: 30,
-          icon: 'BookOpenIcon'
-        }
-      ]
+  props: {
+    courses: {
+      type: Array,
+      required: true
     }
   },
-  methods: {
-    formatStatus(status) {
-      const statusMap = {
-        'active': 'Active',
-        'draft': 'Draft',
-        'archived': 'Archived'
-      }
-      return statusMap[status] || status
-    }
-  }
+  emits: ['create-course', 'manage-course']
 }
 </script>
 
 <style scoped>
-.content-section {
+.quick-actions-section {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-light);
   margin-bottom: 2rem;
 }
 
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 1.5rem;
 }
 
 .section-title {
+  margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0;
 }
 
-.view-all-link {
-  color: var(--brand-primary);
-  text-decoration: none;
-  font-weight: 500;
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   font-size: 0.875rem;
-  transition: color 0.2s ease;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+  justify-content: center;
 }
 
-.view-all-link:hover {
-  color: var(--brand-accent);
+.quick-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.quick-action-btn.primary {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+  justify-content: center;
+}
+
+.quick-action-btn.primary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .course-grid {
@@ -166,48 +148,55 @@ export default {
 }
 
 .course-card {
-  overflow: hidden;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.course-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .course-header {
-  position: relative;
-  height: 120px;
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.course-image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-.course-status {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-}
-
-.course-content {
-  padding: 1.5rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
 }
 
 .course-title {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
+  margin: 0;
+  flex: 1;
+}
+
+.course-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.course-status.active {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.course-status.completed {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .course-description {
-  font-size: 0.875rem;
   color: var(--text-secondary);
-  margin: 0 0 1rem 0;
+  margin-bottom: 1rem;
   line-height: 1.4;
 }
 
@@ -217,97 +206,74 @@ export default {
   margin-bottom: 1rem;
 }
 
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
+.stat {
+  text-align: center;
 }
 
-.progress-section {
-  margin-bottom: 1.5rem;
+.stat-value {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.progress-label {
+.stat-label {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.progress-value {
-  font-size: 0.75rem;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.progress-bar {
-  height: 0.5rem;
-  background: var(--bg-tertiary);
-  border-radius: 0.25rem;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--interactive-primary), var(--brand-accent));
-  transition: width 0.3s ease;
 }
 
 .course-actions {
   display: flex;
-  gap: 0.75rem;
-}
-
-.btn-primary {
-  display: flex;
-  align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  background: var(--interactive-primary);
-  color: var(--text-inverse);
-  font-weight: 500;
-  font-size: 0.75rem;
-  text-decoration: none;
-  transition: all 0.2s ease;
 }
 
-.btn-primary:hover {
-  background: var(--interactive-primary-hover);
-  transform: translateY(-1px);
+.course-actions .quick-action-btn {
+  flex: 1;
+  justify-content: center;
+  padding: 0.75rem;
 }
 
-.btn-secondary {
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+}
+
+.empty-icon {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  background: var(--interactive-tertiary);
+  justify-content: center;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 600;
   color: var(--text-primary);
-  font-weight: 500;
-  font-size: 0.75rem;
-  text-decoration: none;
-  border: 1px solid var(--border-primary);
-  transition: all 0.2s ease;
+  margin: 0 0 0.5rem 0;
 }
 
-.btn-secondary:hover {
-  background: var(--interactive-tertiary-hover);
-  transform: translateY(-1px);
+.empty-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0 0 2rem 0;
+  line-height: 1.5;
 }
 
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.7rem;
-  gap: 0.25rem;
+@media (max-width: 768px) {
+  .course-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .course-actions {
+    flex-direction: column;
+  }
 }
 </style>

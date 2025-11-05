@@ -1,145 +1,142 @@
 <template>
-  <div class="welcome-section">
-    <div class="welcome-card card">
-      <div class="welcome-content">
-        <div class="welcome-icon">
-          <AcademicCapIcon class="w-16 h-16" />
+  <div class="quick-actions-section">
+    <div class="section-header">
+      <h2 class="section-title">Teaching Overview</h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
         </div>
-        <h2 class="welcome-title">Welcome to Teacher Portal</h2>
-        <p class="welcome-subtitle">Manage your courses, assignments, and track student progress</p>
-        <div class="welcome-actions">
-          <router-link to="/teacher/create-course" class="btn-primary">
-            <PlusIcon class="w-5 h-5" />
-            Create New Course
-          </router-link>
+        <div class="stat-info">
+          <div class="stat-number">{{ stats.totalCourses }}</div>
+          <div class="stat-label">Total Courses</div>
         </div>
       </div>
-    </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ stats.totalStudents }}</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ stats.activeCourses }}</div>
+          <div class="stat-label">Active Courses</div>
+        </div>
+      </div>
+      </div>
   </div>
 </template>
 
 <script>
-import { AcademicCapIcon, ChartBarIcon, PlusIcon } from '@heroicons/vue/24/outline'
-
 export default {
   name: 'DashboardStats',
-  components: {
-    AcademicCapIcon,
-    ChartBarIcon,
-    PlusIcon
+  props: {
+    stats: {
+      type: Object,
+      required: true
+    }
   }
 }
 </script>
 
 <style scoped>
-.welcome-section {
+.quick-actions-section {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-light);
   margin-bottom: 2rem;
 }
 
-.welcome-card {
-  text-align: center;
-  padding: 3rem 2rem;
-  background: linear-gradient(135deg, var(--interactive-primary), var(--brand-accent));
-  color: white;
-  border: none;
-}
-
-.welcome-content {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.welcome-icon {
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
 }
 
-.welcome-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 1rem 0;
-  color: white;
+.section-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.welcome-subtitle {
-  font-size: 1.1rem;
-  margin: 0 0 2rem 0;
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.6;
-}
-
-.welcome-actions {
-  display: flex;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
-.btn-primary {
+.stat-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
-  text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
   transition: all 0.2s ease;
 }
 
-.btn-primary:hover {
-  background: rgba(255, 255, 255, 0.3);
+.stat-card:hover {
+  border-color: var(--border-hover);
   transform: translateY(-1px);
 }
 
-.btn-secondary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-weight: 600;
+.stat-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
   font-size: 0.875rem;
-  text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
-  .welcome-card {
-    padding: 2rem 1rem;
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
   
-  .welcome-title {
-    font-size: 1.5rem;
-  }
-  
-  .welcome-subtitle {
-    font-size: 1rem;
-  }
-  
-  .welcome-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    max-width: 250px;
-    justify-content: center;
+  .stat-card {
+    padding: 1rem;
   }
 }
 </style>

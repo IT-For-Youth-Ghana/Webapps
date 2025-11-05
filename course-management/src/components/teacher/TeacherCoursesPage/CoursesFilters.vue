@@ -2,13 +2,6 @@
   <div class="quick-actions-section">
     <div class="section-header">
       <h2 class="section-title">Course Filters</h2>
-      <button class="quick-action-btn">
-        <!-- Filter Icon -->
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-        </svg>
-        Filter
-      </button>
     </div>
     
     <div class="filters-section">

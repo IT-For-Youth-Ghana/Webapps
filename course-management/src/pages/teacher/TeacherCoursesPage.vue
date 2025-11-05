@@ -48,7 +48,11 @@ export default {
         avgProgress: 75,
         status: 'active',
         totalLessons: 24,
-        duration: '12 weeks'
+        duration: '12 weeks',
+        category: 'web-development',
+        schedule: 'Mo 09:00-11:00, Mi 14:00-16:00',
+        createdAt: new Date('2024-10-15'),
+        backgroundImage: '#2383e2'
       },
       {
         id: 2,
@@ -58,7 +62,10 @@ export default {
         avgProgress: 60,
         status: 'active',
         totalLessons: 18,
-        duration: '10 weeks'
+        duration: '10 weeks',
+        category: 'web-development',
+        schedule: 'Di 10:00-12:00, Do 15:00-17:00',
+        createdAt: new Date('2024-11-01')
       },
       {
         id: 3,
@@ -68,7 +75,36 @@ export default {
         avgProgress: 85,
         status: 'completed',
         totalLessons: 20,
-        duration: '8 weeks'
+        duration: '8 weeks',
+        category: 'database',
+        schedule: 'Fr 13:00-15:00',
+        createdAt: new Date('2024-09-20')
+      },
+      {
+        id: 4,
+        title: 'Mobile App Development',
+        description: 'Build native and cross-platform mobile applications',
+        enrolledStudents: 18,
+        avgProgress: 45,
+        status: 'active',
+        totalLessons: 16,
+        duration: '8 weeks',
+        category: 'mobile-development',
+        schedule: 'Mo 14:00-16:00, Do 09:00-11:00',
+        createdAt: new Date('2024-10-30')
+      },
+      {
+        id: 5,
+        title: 'UI/UX Design Principles',
+        description: 'Learn the fundamentals of user interface and user experience design',
+        enrolledStudents: 12,
+        avgProgress: 30,
+        status: 'draft',
+        totalLessons: 14,
+        duration: '6 weeks',
+        category: 'design',
+        schedule: 'Mi 16:00-18:00',
+        createdAt: new Date('2024-11-02')
       }
     ])
     
@@ -90,11 +126,24 @@ export default {
         filtered = filtered.filter(course => course.status === statusFilter.value)
       }
       
+      // Apply category filter
+      if (categoryFilter.value) {
+        filtered = filtered.filter(course => course.category === categoryFilter.value)
+      }
+      
       // Apply sorting
       filtered.sort((a, b) => {
         switch (sortBy.value) {
+          case 'created':
+            return new Date(b.createdAt) - new Date(a.createdAt)
+          case 'updated':
+            return new Date(b.createdAt) - new Date(a.createdAt) // Using createdAt for demo
           case 'students':
             return b.enrolledStudents - a.enrolledStudents
+          case 'rating':
+            return 0 // Not implemented
+          case 'alphabetical':
+            return a.title.localeCompare(b.title)
           default:
             return 0
         }
