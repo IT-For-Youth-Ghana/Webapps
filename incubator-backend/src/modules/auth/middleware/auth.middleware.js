@@ -5,11 +5,11 @@
  * Integrates with AuthHelpers, cache (Redis), and user repository
  */
 
-import { AuthHelpers } from "../../utils/helpers/auth.helpers";
+import { AuthHelpers } from "../../../utils/helpers/auth.helpers";
 import { ERROR_MESSAGES, HTTP_STATUS_CODES, ROLES } from "../../../utils/constants";
-import { sendErrorResponse } from "../../utils/helpers/response.helpers";
-import { cache } from "../../utils/cache/cache.util";
-import userRepository from "../user/repositories/user.repository";
+import { sendErrorResponse } from "../../../utils/helpers/response.helpers";
+import { cache } from "../../../utils/cache/cache.util";
+import userRepository from "../../user/repositories/user.repository";
 
 /**
  * Extract JWT token from Authorization header
@@ -260,6 +260,7 @@ export const optionalAuth = async (req, res, next) => {
         req.token = token;
       }
     } catch (error) {
+      console.warn("Optional auth token invalid:", error.message);
       // Token invalid/expired - continue as unauthenticated
       // Don't send error response
     }
