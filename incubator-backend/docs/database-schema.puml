@@ -100,7 +100,8 @@ package "Job Management" {
     ENUM(job_type) : ('full-time', 'part-time', 'internship', 'remote')
     requirements : [String]
     ENUM(status) : ('active', 'closed', 'draft', 'deleted')
-    application_deadline : Date
+    posted_at : Date
+    closing_date : Date
     --
     created_at : Date
     updated_at : Date

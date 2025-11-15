@@ -2,7 +2,7 @@
  * The job model definition for the job module
  */
 import { BaseModel } from "../../shared/base.model";
-import { mongo } from "mongoose";
+import mongoose from "mongoose";
 
 class Job extends BaseModel {
   constructor() {
@@ -43,7 +43,7 @@ class Job extends BaseModel {
       },
       company: {
         ref: "Company",
-        type: mongo.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         required: true, 
       }
     };

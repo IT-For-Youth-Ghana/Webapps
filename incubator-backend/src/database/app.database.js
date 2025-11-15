@@ -6,12 +6,12 @@
  */
 
 import mongoose from "mongoose";
-import { userModel } from "../models/user.model";
-import { studentModel } from "../models/student.model";
-import { companyModel } from "../models/company.model";
-import { adminModel } from "../models/admin.model";
-import { jobModel } from "../models/job.model"; // Future
-import { applicationModel } from "../models/application.model"; // Future
+import { userModel } from "../modules/user/model/user.model.js";
+import { studentModel } from "../modules/user/model/student.model.js";
+import { companyModel } from "../modules/user/model/company.model.js";
+import { adminModel } from "../modules/user/model/admin.model.js";
+import { jobModel } from "../modules/job/model/job.model.js"; // Future
+import { applicationModel } from "../modules/application/model/application.model.js"; // Future
 
 class DatabaseManager {
   constructor() {

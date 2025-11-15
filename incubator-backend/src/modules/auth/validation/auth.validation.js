@@ -165,7 +165,7 @@ class AuthValidation {
       .valid(Joi.ref("password"))
       .required()
       .messages({
-        "any.only": ERROR_MESSAGES.PASSWORDS_DONT_MATCH,
+        "any.only": ERROR_MESSAGES.PASSWORDS_DO_NOT_MATCH,
         "any.required": "Confirm password is required",
       }),
   }).options({ stripUnknown: true });

@@ -19,7 +19,7 @@ import studentRepository from "../../user/repositories/student.repository";
 import companyRepository from "../../user/repositories/company.repository";
 import adminRepository from "../../user/repositories/admin.repository";
 import db from "../../../database/app.database";
-import { cache } from "../../../config/cache";
+import { cache } from "../../../utils/cache/cache.util";
 import bcrypt from "bcrypt";
 
 // Attach validation once

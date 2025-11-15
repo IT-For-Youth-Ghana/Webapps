@@ -300,6 +300,27 @@ class UserValidation {
     }),
   }).unknown(true);
 
+  /**
+   * Schema for education entry
+   */
+  static educationSchema = Joi.object({
+    school: Joi.string().trim().max(100).required().messages({
+      "any.required": "School name is required",
+    }),
+    qualification: Joi.string().trim().max(100).required().messages({
+      "any.required": "Qualification is required",
+    }),
+    field_of_study: Joi.string().trim().max(100).required().messages({
+      "any.required": "Field of study is required",
+    }),
+    start_date: Joi.date().required().messages({
+      "any.required": "Start date is required",
+    }),
+    end_date: Joi.date().allow(null),
+    is_current: Joi.boolean().default(false),
+  }).options({ stripUnknown: true });
+   
+
   // ================================
   // 5. VALIDATION HELPER
   // ================================

@@ -1,97 +1,155 @@
 /**
  * User Controller
- * Handles HTTP requests for user profile management and admin operations
- * Uses UserService for business logic
- * RBAC via auth.middleware: protectRoute, requireRole
+ * Handles user profile management and admin operations
+ * - Profile CRUD (self-service)
+ * - Photo uploads
+ * - Account management
+ * - Admin operations (list, approve, reject, activate/deactivate)
+ * - Search and filtering
  */
 
-import BaseController from "../../shared/base.controller.js";
-import userService from "../service/user.service.js";
+import BaseController from "../../shared/base.controller";
+import userService from "../service/user.service";
+import UserValidation from "../validation/user.validation";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, ROLES } from "../../../utils/constants";
 
 class UserController extends BaseController {
   constructor() {
-    super({ user: userService });
+    super({
+      user: userService,
+    });
   }
 
   // ========================================
-  // 1. PROFILE MANAGEMENT (Student/Company/Admin)
+  // 1. PROFILE MANAGEMENT (Self-Service)
   // ========================================
 
   /**
-   * Get current user's profile
+   * Get current user's profile with populated data
    * GET /api/users/me
-   * @auth Required - Any authenticated user
+   * Headers: Authorization: Bearer <token>
    */
   getMyProfile = this.asyncHandler(async (req, res) => {
-    const userId = req.user._id;
+    const user = this.getUser(req);
 
-    const result = await this.service("user").getMyProfile(userId);
-
-    if (!result.success) {
-      return this.notFound(res, result.error.message);
+    if (!user) {
+      return this.unauthorized(res, ERROR_MESSAGES.UNAUTHORIZED);
     }
 
-    return this.success(res, result.data);
+    this.log("info", { action: "getMyProfile", userId: user.id });
+
+    // Call service
+    const result = await this.service("user").getMyProfile(user.id, {
+      populate: true,
+    });
+
+    if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, result.data, "Profile retrieved successfully");
   });
 
   /**
    * Update current user's profile
    * PUT /api/users/me
-   * @auth Required - Any authenticated user
+   * Headers: Authorization: Bearer <token>
+   * Body: Role-specific profile fields
    */
   updateMyProfile = this.asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-    const updates = req.body;
+    const user = this.getUser(req);
 
-    const result = await this.service("user").updateMyProfile(userId, updates);
+    if (!user) {
+      return this.unauthorized(res, ERROR_MESSAGES.UNAUTHORIZED);
+    }
+
+    this.log("info", {
+      action: "updateMyProfile",
+      userId: user.id,
+      fields: Object.keys(req.body),
+    });
+
+    // Call service (validation happens in service layer)
+    const validatedData = this.validate(req.body, UserValidation.updateProfileSchema);
+    const result = await this.service("user").updateMyProfile(
+      user.id,
+      validatedData
+    );
 
     if (!result.success) {
-      if (result.error.message.includes("Validation")) {
+      if (result.error.message.includes("Validation failed")) {
         return this.validationError(res, result.error.message);
+      }
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
     }
 
-    return this.success(res, result.data, "Profile updated successfully");
+    return this.success(res, result.data, SUCCESS_MESSAGES.PROFILE_UPDATED);
   });
 
   /**
-   * Upload user photo
+   * Upload profile photo
    * POST /api/users/me/photo
-   * @auth Required - Any authenticated user
+   * Headers: Authorization: Bearer <token>
+   * Body: FormData with 'photo' field
    */
   uploadPhoto = this.asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-    const file = req.file;
+    const user = this.getUser(req);
 
-    if (!file) {
-      return this.badRequest(res, "No file uploaded");
+    if (!user) {
+      return this.unauthorized(res, ERROR_MESSAGES.UNAUTHORIZED);
     }
 
-    const result = await this.service("user").uploadPhoto(userId, file);
+    if (!req.file) {
+      return this.badRequest(res, "Photo file is required");
+    }
+
+    this.log("info", {
+      action: "uploadPhoto",
+      userId: user.id,
+      fileName: req.file.originalname,
+    });
+
+    // Call service
+    const result = await this.service("user").uploadPhoto(user.id, req.file);
 
     if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
       return this.error(res, result.error);
     }
 
-    return this.success(res, result.data, "Photo uploaded successfully");
+    return this.success(res, result.data, SUCCESS_MESSAGES.FILE_UPLOADED);
   });
 
   /**
    * Delete current user's account (soft delete)
    * DELETE /api/users/me
-   * @auth Required - Any authenticated user
+   * Headers: Authorization: Bearer <token>
    */
   deleteMyAccount = this.asyncHandler(async (req, res) => {
-    const userId = req.user._id;
+    const user = this.getUser(req);
 
-    const result = await this.service("user").deleteMyAccount(userId);
+    if (!user) {
+      return this.unauthorized(res, ERROR_MESSAGES.UNAUTHORIZED);
+    }
+
+    this.log("info", { action: "deleteMyAccount", userId: user.id });
+
+    // Call service
+    const result = await this.service("user").deleteMyAccount(user.id);
 
     if (!result.success) {
       return this.error(res, result.error);
     }
 
-    return this.success(res, result.data, "Account deleted successfully");
+    return this.success(res, null, SUCCESS_MESSAGES.ACCOUNT_DELETED);
   });
 
   // ========================================
@@ -99,57 +157,44 @@ class UserController extends BaseController {
   // ========================================
 
   /**
-   * List all users with filters and pagination
-   * GET /api/users?role=student&status=approved&page=1&limit=10
-   * @auth Required - Admin only
+   * List all users with filters and pagination (Admin)
+   * GET /api/users
+   * Query: ?page=1&limit=10&role=student&status=pending&search=email
+   * Headers: Authorization: Bearer <token> (admin)
    */
   listUsers = this.asyncHandler(async (req, res) => {
+    const admin = this.getUser(req);
+
+    this.log("info", {
+      action: "listUsers",
+      adminId: admin.id,
+      filters: req.query,
+    });
+
     const { page, limit } = this.getPagination(req);
     const filters = this.getFilters(req, [
       "role",
       "status",
       "is_active",
-      "email_verified",
+      "email",
     ]);
-    const sort = this.getSort(req);
-    const select = this.getSelect(req);
 
-    const result = await this.service("user").listUsers(
-      filters,
-      { page, limit },
-      { sort, select }
-    );
-
-    if (!result.success) {
-      return this.error(res, result.error);
+    // Add search term if provided
+    if (req.query.search) {
+      filters.searchTerm = req.query.search;
     }
 
-    return this.paginated(
-      res,
-      result.data.data,
-      result.data.metadata.page,
-      result.data.metadata.limit,
-      result.data.metadata.total
-    );
-  });
-
-  /**
-   * List students only
-   * GET /api/users/students?status=approved&page=1
-   * @auth Required - Admin or Company
-   */
-  listStudents = this.asyncHandler(async (req, res) => {
-    const { page, limit } = this.getPagination(req);
-    const filters = {
-      ...this.getFilters(req, ["status", "is_active", "email_verified"]),
-      role: "student",
+    const options = {
+      sort: this.getSort(req, "-created_at"),
+      select: this.getSelect(req),
+      includeDeleted: req.query.includeDeleted === "true",
     };
-    const sort = this.getSort(req);
 
+    // Call service
     const result = await this.service("user").listUsers(
       filters,
       { page, limit },
-      { sort }
+      options
     );
 
     if (!result.success) {
@@ -166,236 +211,350 @@ class UserController extends BaseController {
   });
 
   /**
-   * List companies only
-   * GET /api/users/companies?status=approved&page=1
-   * @auth Required - Admin
-   */
-  listCompanies = this.asyncHandler(async (req, res) => {
-    const { page, limit } = this.getPagination(req);
-    const filters = {
-      ...this.getFilters(req, ["status", "is_active"]),
-      role: "company",
-    };
-    const sort = this.getSort(req);
-
-    const result = await this.service("user").listUsers(
-      filters,
-      { page, limit },
-      { sort }
-    );
-
-    if (!result.success) {
-      return this.error(res, result.error);
-    }
-
-    return this.paginated(
-      res,
-      result.data.data,
-      result.data.metadata.page,
-      result.data.metadata.limit,
-      result.data.metadata.total
-    );
-  });
-
-  /**
-   * List admins only
-   * GET /api/users/admins?page=1
-   * @auth Required - Super Admin
-   */
-  listAdmins = this.asyncHandler(async (req, res) => {
-    const { page, limit } = this.getPagination(req);
-    const filters = {
-      ...this.getFilters(req, ["is_active"]),
-      role: "admin",
-    };
-    const sort = this.getSort(req);
-
-    const result = await this.service("user").listUsers(
-      filters,
-      { page, limit },
-      { sort }
-    );
-
-    if (!result.success) {
-      return this.error(res, result.error);
-    }
-
-    return this.paginated(
-      res,
-      result.data.data,
-      result.data.metadata.page,
-      result.data.metadata.limit,
-      result.data.metadata.total
-    );
-  });
-
-  /**
-   * Get user by ID (with profile)
+   * Get user by ID (Admin)
    * GET /api/users/:id
-   * @auth Required - Admin or self
+   * Headers: Authorization: Bearer <token> (admin)
    */
   getUserById = this.asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const currentUserId = req.user._id.toString();
+    const admin = this.getUser(req);
 
-    // Check if user is accessing their own profile or is admin
-    if (id !== currentUserId && req.user.role !== "admin") {
-      return this.forbidden(res, "You can only access your own profile");
-    }
+    this.log("info", { action: "getUserById", userId: id, adminId: admin.id });
 
-    const result = await this.service("user").getUserById(id);
+    const options = {
+      includeDeleted: req.query.includeDeleted === "true",
+      populate: true,
+    };
+
+    // Call service
+    const result = await this.service("user").getUserById(id, options);
 
     if (!result.success) {
-      return this.notFound(res, result.error.message);
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      return this.error(res, result.error);
     }
 
-    return this.success(res, result.data);
+    return this.success(res, result.data, "User retrieved successfully");
   });
 
   /**
-   * Approve user (admin action)
-   * POST /api/users/:id/approve
-   * @auth Required - Admin only
+   * Search users (Admin)
+   * GET /api/users/search
+   * Query: ?q=searchTerm&page=1&limit=10
+   * Headers: Authorization: Bearer <token> (admin)
    */
-  approveUser = this.asyncHandler(async (req, res) => {
-    const { id } = req.params;
+  searchUsers = this.asyncHandler(async (req, res) => {
+    const admin = this.getUser(req);
+    const { q: searchTerm } = req.query;
 
-    const result = await this.service("user").approveUser(id);
+    if (!searchTerm) {
+      return this.badRequest(res, "Search term is required");
+    }
+
+    this.log("info", {
+      action: "searchUsers",
+      searchTerm,
+      adminId: admin.id,
+    });
+
+    const { page, limit } = this.getPagination(req);
+
+    // Call service (uses repository's searchUsers with aggregation)
+    const result = await this.service("user").listUsers(
+      { searchTerm },
+      { page, limit },
+      { sort: { created_at: -1 } }
+    );
 
     if (!result.success) {
       return this.error(res, result.error);
     }
 
-    return this.success(res, result.data, "User approved successfully");
+    return this.paginated(
+      res,
+      result.data.data,
+      result.data.metadata.page,
+      result.data.metadata.limit,
+      result.data.metadata.total
+    );
+  });
+
+  // ========================================
+  // 3. USER APPROVAL WORKFLOW (Admin)
+  // ========================================
+
+  /**
+   * Approve pending user (Admin)
+   * POST /api/users/:id/approve
+   * Headers: Authorization: Bearer <token> (admin)
+   */
+  approveUser = this.asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const admin = this.getUser(req);
+
+    this.log("info", { action: "approveUser", userId: id, adminId: admin.id });
+
+    // Call service
+    const result = await this.service("user").approveUser(id);
+
+    if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      if (result.error.message.includes("already approved")) {
+        return this.badRequest(res, "User is already approved");
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(
+      res,
+      result.data,
+      result.message || SUCCESS_MESSAGES.ACCOUNT_APPROVED
+    );
   });
 
   /**
-   * Reject user (admin action)
+   * Reject pending user (Admin)
    * POST /api/users/:id/reject
-   * @auth Required - Admin only
+   * Body: { reason: string } (optional)
+   * Headers: Authorization: Bearer <token> (admin)
    */
   rejectUser = this.asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
+    const admin = this.getUser(req);
 
+    this.log("info", {
+      action: "rejectUser",
+      userId: id,
+      adminId: admin.id,
+      reason,
+    });
+
+    // Call service
     const result = await this.service("user").rejectUser(id, reason);
 
     if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      if (result.error.message.includes("must be pending")) {
+        return this.badRequest(res, "User must be pending to reject");
+      }
       return this.error(res, result.error);
     }
 
-    return this.success(res, result.data, "User rejected successfully");
+    return this.success(res, result.data, result.message || "User rejected");
   });
 
   /**
-   * Deactivate/Activate user
-   * PATCH /api/users/:id/status
-   * @auth Required - Admin only
+   * Bulk approve users (Admin)
+   * POST /api/users/bulk-approve
+   * Body: { userIds: string[] }
+   * Headers: Authorization: Bearer <token> (admin)
    */
-  setUserStatus = this.asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { is_active } = req.body;
-
-    if (typeof is_active !== "boolean") {
-      return this.badRequest(res, "is_active must be a boolean");
-    }
-
-    const result = await this.service("user").setUserActiveStatus(
-      id,
-      is_active
-    );
-
-    if (!result.success) {
-      return this.error(res, result.error);
-    }
-
-    const message = is_active
-      ? "User activated successfully"
-      : "User deactivated successfully";
-    return this.success(res, result.data, message);
-  });
-
-  /**
-   * Force delete user (permanent delete)
-   * DELETE /api/users/:id/force
-   * @auth Required - Super Admin only
-   */
-  forceDeleteUser = this.asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    const result = await this.service("user").forceDeleteUser(id);
-
-    if (!result.success) {
-      return this.error(res, result.error);
-    }
-
-    return this.success(res, result.data, "User permanently deleted");
-  });
-
-  /**
-   * Restore soft-deleted user
-   * POST /api/users/:id/restore
-   * @auth Required - Admin only
-   */
-  restoreUser = this.asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    const result = await this.service("user").restoreUser(id);
-
-    if (!result.success) {
-      return this.error(res, result.error);
-    }
-
-    return this.success(res, result.data, "User restored successfully");
-  });
-
-  // ========================================
-  // 3. BULK OPERATIONS
-  // ========================================
-
-  /**
-   * Bulk approve users
-   * POST /api/users/bulk/approve
-   * @auth Required - Admin only
-   */
-  bulkApproveUsers = this.asyncHandler(async (req, res) => {
+  bulkApprove = this.asyncHandler(async (req, res) => {
     const { userIds } = req.body;
+    const admin = this.getUser(req);
 
-    if (!Array.isArray(userIds) || userIds.length === 0) {
-      return this.badRequest(res, "userIds must be a non-empty array");
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return this.badRequest(res, "userIds array is required");
     }
 
+    this.log("info", {
+      action: "bulkApprove",
+      count: userIds.length,
+      adminId: admin.id,
+    });
+
+    // Call service
     const result = await this.service("user").bulkApproveUsers(userIds);
 
     if (!result.success) {
       return this.error(res, result.error);
     }
 
-    return this.success(res, result.data, "Users approved successfully");
+    return this.success(res, result.data, result.data.message);
   });
 
   // ========================================
-  // 4. SEARCH & FILTER
+  // 4. USER ACTIVATION (Admin)
   // ========================================
 
   /**
-   * Search users across all profiles
-   * GET /api/users/search?q=john&role=student
-   * @auth Required - Admin or Company (for students)
+   * Activate user account (Admin)
+   * PUT /api/users/:id/activate
+   * Headers: Authorization: Bearer <token> (admin)
    */
-  searchUsers = this.asyncHandler(async (req, res) => {
-    const { q: searchTerm } = req.query;
-    const { page, limit } = this.getPagination(req);
-    const filters = this.getFilters(req, ["role", "status"]);
+  activateUser = this.asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const admin = this.getUser(req);
 
-    if (!searchTerm || searchTerm.trim().length < 2) {
-      return this.badRequest(res, "Search term must be at least 2 characters");
+    this.log("info", {
+      action: "activateUser",
+      userId: id,
+      adminId: admin.id,
+    });
+
+    // Call service
+    const result = await this.service("user").setUserActiveStatus(id, true);
+
+    if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      return this.error(res, result.error);
     }
 
-    const result = await this.service("user").searchUsers(
-      searchTerm,
+    return this.success(res, result.data, result.message);
+  });
+
+  /**
+   * Deactivate user account (Admin)
+   * PUT /api/users/:id/deactivate
+   * Headers: Authorization: Bearer <token> (admin)
+   */
+  deactivateUser = this.asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const admin = this.getUser(req);
+
+    this.log("info", {
+      action: "deactivateUser",
+      userId: id,
+      adminId: admin.id,
+    });
+
+    // Call service
+    const result = await this.service("user").setUserActiveStatus(id, false);
+
+    if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, result.data, result.message);
+  });
+
+  // ========================================
+  // 5. USER DELETION (Admin)
+  // ========================================
+
+  /**
+   * Soft delete user (Admin)
+   * DELETE /api/users/:id
+   * Headers: Authorization: Bearer <token> (admin)
+   */
+  deleteUser = this.asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const admin = this.getUser(req);
+
+    this.log("info", { action: "deleteUser", userId: id, adminId: admin.id });
+
+    // Call service (uses deleteMyAccount which does soft delete + profile)
+    const result = await this.service("user").deleteMyAccount(id);
+
+    if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, null, result.data.message || "User deleted");
+  });
+
+  /**
+   * Permanently delete user (Super Admin only)
+   * DELETE /api/users/:id/force
+   * Headers: Authorization: Bearer <token> (super admin)
+   */
+  forceDeleteUser = this.asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const admin = this.getUser(req);
+
+    this.log("info", {
+      action: "forceDeleteUser",
+      userId: id,
+      adminId: admin.id,
+    });
+
+    // Call service
+    const result = await this.service("user").forceDeleteUser(id);
+
+    if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, null, result.data.message);
+  });
+
+  /**
+   * Restore soft-deleted user (Admin)
+   * POST /api/users/:id/restore
+   * Headers: Authorization: Bearer <token> (admin)
+   */
+  restoreUser = this.asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const admin = this.getUser(req);
+
+    this.log("info", {
+      action: "restoreUser",
+      userId: id,
+      adminId: admin.id,
+    });
+
+    // Call service
+    const result = await this.service("user").restoreUser(id);
+
+    if (!result.success) {
+      if (result.error.message.includes("not found")) {
+        return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, result.data, result.message);
+  });
+
+  // ========================================
+  // 6. ROLE-SPECIFIC LISTS (Admin)
+  // ========================================
+
+  /**
+   * List all students (Admin)
+   * GET /api/users/students
+   * Query: ?page=1&limit=10&status=active
+   * Headers: Authorization: Bearer <token> (admin)
+   */
+  listStudents = this.asyncHandler(async (req, res) => {
+    const admin = this.getUser(req);
+
+    this.log("info", { action: "listStudents", adminId: admin.id });
+
+    const { page, limit } = this.getPagination(req);
+    const filters = {
+      role: ROLES.STUDENT,
+      ...this.getFilters(req, ["status", "is_active"]),
+    };
+
+    const options = {
+      sort: this.getSort(req, "-created_at"),
+      includeDeleted: req.query.includeDeleted === "true",
+    };
+
+    // Call service
+    const result = await this.service("user").listUsers(
       filters,
-      { page, limit }
+      { page, limit },
+      options
     );
 
     if (!result.success) {
@@ -412,46 +571,127 @@ class UserController extends BaseController {
   });
 
   /**
-   * Get eligible users (approved and active)
-   * GET /api/users/eligible
-   * @auth Required - Admin or Company
+   * List all companies (Admin)
+   * GET /api/users/companies
+   * Query: ?page=1&limit=10&status=approved
+   * Headers: Authorization: Bearer <token> (admin)
    */
-  getEligibleUsers = this.asyncHandler(async (req, res) => {
-    const result = await this.service("user").getEligibleUsers();
+  listCompanies = this.asyncHandler(async (req, res) => {
+    const admin = this.getUser(req);
+
+    this.log("info", { action: "listCompanies", adminId: admin.id });
+
+    const { page, limit } = this.getPagination(req);
+    const filters = {
+      role: ROLES.COMPANY,
+      ...this.getFilters(req, ["status", "is_active"]),
+    };
+
+    const options = {
+      sort: this.getSort(req, "-created_at"),
+      includeDeleted: req.query.includeDeleted === "true",
+    };
+
+    // Call service
+    const result = await this.service("user").listUsers(
+      filters,
+      { page, limit },
+      options
+    );
 
     if (!result.success) {
       return this.error(res, result.error);
     }
 
-    return this.success(res, result.data);
+    return this.paginated(
+      res,
+      result.data.data,
+      result.data.metadata.page,
+      result.data.metadata.limit,
+      result.data.metadata.total
+    );
+  });
+
+  /**
+   * List all admins (Super Admin only)
+   * GET /api/users/admins
+   * Query: ?page=1&limit=10
+   * Headers: Authorization: Bearer <token> (super admin)
+   */
+  listAdmins = this.asyncHandler(async (req, res) => {
+    const admin = this.getUser(req);
+
+    this.log("info", { action: "listAdmins", adminId: admin.id });
+
+    const { page, limit } = this.getPagination(req);
+    const filters = {
+      role: ROLES.ADMIN,
+      ...this.getFilters(req, ["status", "is_active"]),
+    };
+
+    const options = {
+      sort: this.getSort(req, "-created_at"),
+      includeDeleted: req.query.includeDeleted === "true",
+    };
+
+    // Call service
+    const result = await this.service("user").listUsers(
+      filters,
+      { page, limit },
+      options
+    );
+
+    if (!result.success) {
+      return this.error(res, result.error);
+    }
+
+    return this.paginated(
+      res,
+      result.data.data,
+      result.data.metadata.page,
+      result.data.metadata.limit,
+      result.data.metadata.total
+    );
   });
 
   // ========================================
-  // 5. ANALYTICS
+  // 7. ANALYTICS & STATS (Admin)
   // ========================================
 
   /**
-   * Get user statistics
-   * GET /api/users/:id/stats
-   * @auth Required - Admin or self
+   * Get user statistics (Admin)
+   * GET /api/users/stats
+   * Headers: Authorization: Bearer <token> (admin)
    */
   getUserStats = this.asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const currentUserId = req.user._id.toString();
+    const admin = this.getUser(req);
 
-    // Check if user is accessing their own stats or is admin
-    if (id !== currentUserId && req.user.role !== "admin") {
-      return this.forbidden(res, "You can only access your own statistics");
-    }
+    this.log("info", { action: "getUserStats", adminId: admin.id });
 
-    const result = await this.service("user").getUserStats(id);
+    // TODO: Implement getUserStats in service
+    // For now, return basic stats from listUsers
+    const studentsResult = await this.service("user").listUsers(
+      { role: ROLES.STUDENT },
+      { page: 1, limit: 1 }
+    );
 
-    if (!result.success) {
-      return this.error(res, result.error);
-    }
+    const companiesResult = await this.service("user").listUsers(
+      { role: ROLES.COMPANY },
+      { page: 1, limit: 1 }
+    );
 
-    return this.success(res, result.data);
+    const pendingResult = await this.service("user").listUsers(
+      { status: "pending" },
+      { page: 1, limit: 1 }
+    );
+
+    return this.success(res, {
+      totalStudents: studentsResult.data?.metadata?.total || 0,
+      totalCompanies: companiesResult.data?.metadata?.total || 0,
+      pendingApprovals: pendingResult.data?.metadata?.total || 0,
+    });
   });
 }
 
+// Export singleton instance
 export default new UserController();

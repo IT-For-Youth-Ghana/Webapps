@@ -43,6 +43,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
     "winston": "^3.18.3"
   },
   "devDependencies": {
