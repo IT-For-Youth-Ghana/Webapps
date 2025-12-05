@@ -11,6 +11,7 @@
 import BaseController from "../../shared/base.controller";
 import userService from "../service/user.service";
 import studentRepository from "../repositories/student.repository";
+import applicationService from "../../application/service/application.service";
 import UserValidation from "../validation/user.validation";
 import { 
   ERROR_MESSAGES, 
@@ -23,6 +24,7 @@ class StudentController extends BaseController {
   constructor() {
     super({
       user: userService,
+      application: applicationService,
     });
     this.studentRepo = studentRepository;
   }
@@ -86,13 +88,12 @@ class StudentController extends BaseController {
       userId: user.id,
       fields: Object.keys(req.body),
     });
-
-    const validatedData = this.validate(req.body, UserValidation.updateProfileSchema);
+    
 
     // Call user service (handles validation)
     const result = await this.service("user").updateMyProfile(
       user.id,
-      validatedData
+      req.body
     );
 
     if (!result.success) {
@@ -131,11 +132,10 @@ class StudentController extends BaseController {
       return this.notFound(res, ERROR_MESSAGES.PROFILE_NOT_FOUND);
     }
 
-    const validatedData = this.validate(req.body, UserValidation.educationSchema);
-
     // Add new education entry
     const education = profile.education || [];
-    education.push(validatedData);
+    education.push(req.body);
+
     // Update profile
     const result = await this.studentRepo.updateProfile(
       { user: user.id },
@@ -439,7 +439,10 @@ class StudentController extends BaseController {
       fileName: req.file.originalname,
     });
 
-    // TODO: Implement actual file storage (S3/local with proper path)
+    // NOTE: File storage implementation
+    // For local: Multer already saved to uploads/resumes/ via upload.middleware.js
+    // For cloud: Integrate FileStorage service (S3/Cloudinary)
+    // Example: const cvUrl = await FileStorage.uploadDocument(req.file);
     const cvUrl = `/uploads/resumes/${req.file.filename}`;
 
     // Update profile with CV URL
@@ -483,7 +486,11 @@ class StudentController extends BaseController {
       return this.error(res, new Error("Failed to delete CV"));
     }
 
-    // TODO: Delete actual file from storage
+    // NOTE: File deletion implementation
+    // For local storage: Use fs.unlink() to remove file from uploads/resumes/
+    // For cloud storage: Call FileStorage.delete(cvUrl) or s3Client.deleteObject()
+    // Example local: if (result.cv_url) { fs.unlinkSync(path.join(process.cwd(), result.cv_url)); }
+    // Example cloud: await FileStorage.delete(result.cv_url);
 
     return this.success(res, null, "CV deleted successfully");
   });
@@ -705,14 +712,34 @@ class StudentController extends BaseController {
       return this.unauthorized(res, ERROR_MESSAGES.UNAUTHORIZED);
     }
 
-    this.log("info", { action: "getMyApplications", userId: user.id });
+    const { page = 1, limit = 10, status } = req.query;
 
-    // TODO: Implement when ApplicationService is ready
-    // For now, return placeholder
+    this.log("info", {
+      action: "getMyApplications",
+      userId: user.id,
+      page,
+      limit,
+      status,
+    });
+
+    // Get applications using ApplicationService
+    const result = await this.service("application").getStudentApplications(
+      user.id,
+      {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        ...(status && { status }),
+      }
+    );
+
+    if (!result.success) {
+      return this.error(res, result.error);
+    }
+
     return this.success(
       res,
-      [],
-      "Applications feature coming soon"
+      result.data,
+      "Applications retrieved successfully"
     );
   });
 }

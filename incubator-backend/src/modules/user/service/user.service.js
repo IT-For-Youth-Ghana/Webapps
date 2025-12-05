@@ -9,8 +9,10 @@ import { userRepository } from "../repositories/user.repository";
 import { studentRepository } from "../repositories/student.repository";
 import { companyRepository } from "../repositories/company.repository";
 import { adminRepository } from "../repositories/admin.repository";
+import { applicationRepository } from "../../application/repositories/application.repository";
 import UserValidation from "../validation/user.validation";
 import { ERROR_MESSAGES } from "../../../utils/constants";
+import { agenda } from "../../../config/agenda.config";
 
 // Attach validation to BaseService (done once at startup, but here for completeness)
 BaseService.setValidation(UserValidation);
@@ -22,6 +24,7 @@ class UserService extends BaseService {
       student: studentRepository,
       company: companyRepository,
       admin: adminRepository,
+      application: applicationRepository,
     });
   }
 
@@ -137,9 +140,11 @@ class UserService extends BaseService {
       try {
         this.log("uploadPhoto.start", { userId, fileName: file?.originalname });
 
-        // TODO: Implement file upload to storage (S3/local)
-        // const photoUrl = await FileStorage.upload(file, "profiles");
-        const photoUrl = `/uploads/profiles/${file.filename}`; // Placeholder
+        // NOTE: File upload implementation
+        // For local storage: File is already saved by multer to uploads/profiles/
+        // For cloud storage (S3/Cloudinary): Implement FileStorage.upload(file, "profiles")
+        // Example S3: const photoUrl = await s3Client.upload(file.buffer, file.originalname);
+        const photoUrl = `/uploads/profiles/${file.filename}`;
 
         const updateData = { photo_url: photoUrl };
         const user = await this.repo("user").updateById(userId, updateData);
@@ -270,7 +275,8 @@ class UserService extends BaseService {
           user: user.deserialize({ exclude: ["password_hash"] }),
           profile,
           applicationsCount: await this._getApplicationsCount(userId),
-          // TODO: Add more admin stats
+          accountAge: Math.floor((Date.now() - new Date(user.created_at)) / (1000 * 60 * 60 * 24)), // days
+          lastLogin: user.last_login_at,
         };
 
         this.log("getUserById.success", { userId });
@@ -302,8 +308,13 @@ class UserService extends BaseService {
           updated_at: Date.now(),
         });
 
-        // TODO: Queue welcome email via Agenda.js
-        // await agendaQueue.now('sendWelcomeEmail', { userId });
+        // Queue welcome email via Agenda.js
+        await agenda.now('send-welcome-email', { 
+          userId,
+          email: updatedUser.email,
+          name: `${updatedUser.first_name || ''} ${updatedUser.last_name || ''}`.trim(),
+          role: updatedUser.role
+        });
 
         this.log("approveUser.success", { userId });
         return this.success(updatedUser, { message: "User approved successfully" });
@@ -337,9 +348,13 @@ class UserService extends BaseService {
           updated_at: Date.now(),
         });
 
-        
-        // TODO: Queue rejection email
-        // await agendaQueue.now('sendRejectionEmail', { userId, reason });
+        // Queue rejection email via Agenda.js
+        await agenda.now('send-rejection-email', { 
+          userId,
+          email: updatedUser.email,
+          name: `${updatedUser.first_name || ''} ${updatedUser.last_name || ''}`.trim(),
+          reason: reason || 'Your application did not meet our requirements'
+        });
 
         this.log("rejectUser.success", { userId });
         return this.success(updatedUser, { message: "User rejected successfully" });
@@ -405,7 +420,21 @@ class UserService extends BaseService {
               await profileRepo.forceDeleteByUserId(userId, { session });
             }
 
-            // TODO: Delete related applications, etc.
+            // Delete related applications (if user is a student)
+            if (user.role === 'student') {
+              const student = await this.repo("student").getByUserId(userId);
+              if (student) {
+                await this.repo("application").model.deleteMany(
+                  { student: student._id },
+                  { session }
+                );
+                this.log("forceDeleteUser.applicationsDeleted", { 
+                  userId, 
+                  studentId: student._id 
+                });
+              }
+            }
+
             this.log("forceDeleteUser.success", { userId });
             return this.success({ message: "User permanently deleted" });
           });
@@ -569,14 +598,90 @@ class UserService extends BaseService {
 
   /**
    * Get user's applications count (for admin dashboard)
-   * @param {string} userId
+   * @param {string} userId - User ID (not student profile ID)
    * @returns {Promise<number>}
    * @private
    */
   async _getApplicationsCount(userId) {
-    // TODO: Implement when applications module is ready
-    // return await applicationsRepository.countDocuments({ student_id: userId });
-    return 0; // Placeholder
+    try {
+      // Get student profile from user ID
+      const student = await this.repo("student").getByUserId(userId);
+      if (!student) {
+        return 0;
+      }
+      
+      // Count applications using student profile ID
+      const count = await this.repo("application").model.countDocuments({ 
+        student: student._id,
+        deleted_at: null
+      });
+      return count;
+    } catch (error) {
+      this.log("_getApplicationsCount.error", { userId, error: error.message });
+      return 0;
+    }
+  }
+
+  /**
+   * Get comprehensive user statistics (Admin only)
+   * @returns {Promise<Object>}
+   */
+  async getUserStats() {
+    return this.runInContext({ action: "getUserStats" }, async () => {
+      try {
+        this.log("getUserStats.start");
+
+        // Get all users for statistics
+        const users = await this.repo("user").findAll({}, 1, 10000, {
+          select: "_id email role status created_at",
+          lean: true,
+        });
+
+        const data = users.data || [];
+
+        // Calculate statistics
+        const stats = {
+          overview: {
+            totalUsers: data.length,
+            totalStudents: data.filter((u) => u.role === "student").length,
+            totalCompanies: data.filter((u) => u.role === "company").length,
+            totalAdmins: data.filter((u) => u.role === "admin").length,
+          },
+          byStatus: {
+            active: data.filter((u) => u.status === "active").length,
+            pending: data.filter((u) => u.status === "pending").length,
+            inactive: data.filter((u) => u.status === "inactive").length,
+            rejected: data.filter((u) => u.status === "rejected").length,
+          },
+          byRole: {
+            students: {
+              active: data.filter((u) => u.role === "student" && u.status === "active").length,
+              pending: data.filter((u) => u.role === "student" && u.status === "pending").length,
+            },
+            companies: {
+              active: data.filter((u) => u.role === "company" && u.status === "active").length,
+              pending: data.filter((u) => u.role === "company" && u.status === "pending").length,
+            },
+          },
+          recentSignups: data
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 10)
+            .map((u) => ({
+              id: u._id,
+              email: u.email,
+              role: u.role,
+              status: u.status,
+              created_at: u.created_at,
+            })),
+        };
+
+        this.log("getUserStats.success", { totalUsers: stats.overview.totalUsers });
+        return this.success(stats);
+      } catch (error) {
+        this.log("getUserStats.error", { error: error.message });
+        return this.error(error, "Failed to retrieve user statistics");
+      }
+    });
   }
 }
 

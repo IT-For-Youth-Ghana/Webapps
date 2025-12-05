@@ -1,0 +1,3359 @@
+openapi: 3.0.3
+info:
+  title: IT Youth Talent Incubator API
+  description: |
+    # IT Youth Talent Incubator Backend API
+    
+    Welcome to the comprehensive API documentation for the IT Youth Talent Incubator platform.
+    This platform connects talented IT students in Ghana with companies seeking skilled professionals.
+    
+    ## Features
+    - **Authentication & Authorization**: Secure JWT-based authentication with role-based access control
+    - **User Management**: Support for Students, Companies, and Admins with distinct profiles
+    - **Job Posting & Management**: Companies can post, manage, and track jobs
+    - **Application System**: Students can apply to jobs and track application status
+    - **Admin Panel**: Comprehensive admin tools for user approval and platform management
+    
+    ## Authentication
+    Most endpoints require authentication via JWT tokens. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your_token>
+    ```
+    
+    ## Rate Limiting
+    API requests are rate-limited to prevent abuse:
+    - General endpoints: 100 requests per 15 minutes
+    - Authentication endpoints: 3-5 requests per 15 minutes
+    
+    ## Pagination
+    List endpoints support pagination with the following query parameters:
+    - `page`: Page number (default: 1)
+    - `limit`: Items per page (default: 10, max: 100)
+    
+  version: 1.0.0
+  contact:
+    name: IT Youth Talent Incubator
+    email: support@itfy-incubator.com
+  license:
+    name: ISC
+    
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Development server
+  - url: https://api.itfy-incubator.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization endpoints
+  - name: Users
+    description: User profile and management endpoints
+  - name: Students
+    description: Student-specific profile endpoints
+  - name: Companies
+    description: Company-specific profile endpoints
+  - name: Jobs
+    description: Job posting and management endpoints
+  - name: Applications
+    description: Job application management
+  - name: Health
+    description: System health and monitoring
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login or registration
+      
+  schemas:
+    # ==================
+    # Common Schemas
+    # ==================
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "An error occurred"
+        error:
+          type: string
+          example: "Detailed error message"
+        code:
+          type: string
+          example: "ERR_CODE"
+          
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation successful"
+        data:
+          type: object
+          
+    PaginationMeta:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 10
+        totalItems:
+          type: integer
+          example: 95
+        itemsPerPage:
+          type: integer
+          example: 10
+        hasNextPage:
+          type: boolean
+          example: true
+        hasPrevPage:
+          type: boolean
+          example: false
+          
+    # ==================
+    # User Schemas
+    # ==================
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+          example: "507f1f77bcf86cd799439011"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        role:
+          type: string
+          enum: [student, company, admin]
+          example: "student"
+        photo_url:
+          type: string
+          nullable: true
+          example: "https://example.com/photo.jpg"
+        is_active:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum: [approved, pending, rejected, deleted]
+          example: "approved"
+        email_verified:
+          type: boolean
+          example: true
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+        locked_until:
+          type: string
+          format: date-time
+          nullable: true
+        login_attempts:
+          type: integer
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
+    Student:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+        user:
+          $ref: '#/components/schemas/User'
+        first_name:
+          type: string
+          example: "John"
+        last_name:
+          type: string
+          example: "Doe"
+        bio:
+          type: string
+          example: "Passionate software developer"
+        social_links:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "LinkedIn"
+              url:
+                type: string
+                example: "https://linkedin.com/in/johndoe"
+        cv_url:
+          type: string
+          example: "https://example.com/cv.pdf"
+        skills:
+          type: array
+          items:
+            type: string
+          example: ["JavaScript", "React", "Node.js"]
+        education:
+          type: array
+          items:
+            type: object
+            properties:
+              school:
+                type: string
+                example: "University of Ghana"
+              qualification:
+                type: string
+                example: "Bachelor of Science"
+              field_of_study:
+                type: string
+                example: "Computer Science"
+              start_date:
+                type: string
+                format: date
+              end_date:
+                type: string
+                format: date
+                nullable: true
+              is_current:
+                type: boolean
+                example: false
+        work_experience:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                example: "Software Developer Intern"
+              company:
+                type: string
+                example: "Tech Solutions Ltd"
+              location:
+                type: string
+                example: "Accra, Ghana"
+              start_date:
+                type: string
+                format: date
+              end_date:
+                type: string
+                format: date
+                nullable: true
+              is_current:
+                type: boolean
+                example: false
+              description:
+                type: string
+                example: "Developed web applications using React and Node.js"
+        status:
+          type: string
+          enum: [active, job_seeking, inactive]
+          example: "job_seeking"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
+    Company:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+        user:
+          $ref: '#/components/schemas/User'
+        name:
+          type: string
+          example: "Tech Innovations Ghana"
+        description:
+          type: string
+          example: "Leading software development company in West Africa"
+        industry:
+          type: string
+          example: "Information Technology"
+        website:
+          type: string
+          example: "https://techinnovations.com"
+        social_links:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "LinkedIn"
+              url:
+                type: string
+                example: "https://linkedin.com/company/techinnovations"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
+    # ==================
+    # Job Schemas
+    # ==================
+    Job:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+        company:
+          type: string
+          format: objectid
+          description: Reference to Company
+        title:
+          type: string
+          example: "Full Stack Developer"
+        description:
+          type: string
+          example: "We are looking for an experienced full stack developer..."
+        location:
+          type: string
+          example: "Accra, Ghana"
+        salary_range:
+          type: object
+          properties:
+            min:
+              type: number
+              example: 5000
+            max:
+              type: number
+              example: 10000
+            currency:
+              type: string
+              enum: [GHS, USD, EUR, GBP]
+              example: "GHS"
+            display:
+              type: string
+              example: "GHS 5,000 - 10,000"
+        job_type:
+          type: string
+          enum: [full-time, part-time, internship, contract, remote, hybrid]
+          example: "full-time"
+        experience_level:
+          type: string
+          enum: [entry, junior, mid, senior, lead, executive]
+          example: "mid"
+        skills:
+          type: array
+          items:
+            type: string
+          example: ["React", "Node.js", "MongoDB"]
+        status:
+          type: string
+          enum: [draft, published, paused, closed, deleted]
+          example: "published"
+        slug:
+          type: string
+          example: "full-stack-developer-accra"
+        views:
+          type: integer
+          example: 150
+        applications_count:
+          type: integer
+          example: 25
+        is_featured:
+          type: boolean
+          example: false
+        featured_until:
+          type: string
+          format: date-time
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
+    # ==================
+    # Auth Request Schemas
+    # ==================
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - confirmPassword
+        - role
+        - profile
+      properties:
+        email:
+          type: string
+          format: email
+          example: "newuser@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "SecurePass123!"
+          description: Must contain uppercase, lowercase, number, and special character
+        confirmPassword:
+          type: string
+          format: password
+          example: "SecurePass123!"
+        role:
+          type: string
+          enum: [student, company, admin]
+          example: "student"
+        profile:
+          oneOf:
+            - $ref: '#/components/schemas/StudentProfileRequest'
+            - $ref: '#/components/schemas/CompanyProfileRequest'
+            
+    StudentProfileRequest:
+      type: object
+      required:
+        - first_name
+        - last_name
+      properties:
+        first_name:
+          type: string
+          example: "Jane"
+        last_name:
+          type: string
+          example: "Smith"
+        bio:
+          type: string
+          example: "Aspiring software engineer"
+        skills:
+          type: array
+          items:
+            type: string
+          example: ["Python", "JavaScript"]
+        social_links:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              url:
+                type: string
+                
+    CompanyProfileRequest:
+      type: object
+      required:
+        - name
+        - description
+        - industry
+      properties:
+        name:
+          type: string
+          example: "Innovative Tech Ltd"
+        description:
+          type: string
+          example: "We build innovative software solutions"
+        industry:
+          type: string
+          example: "Technology"
+        website:
+          type: string
+          example: "https://innovativetech.com"
+        social_links:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              url:
+                type: string
+                
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "SecurePass123!"
+          
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login successful"
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            tokens:
+              type: object
+              properties:
+                accessToken:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                refreshToken:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                expiresIn:
+                  type: string
+                  example: "15m"
+                  
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+          
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - password
+        - confirmPassword
+      properties:
+        token:
+          type: string
+          example: "reset-token-here"
+        password:
+          type: string
+          format: password
+          example: "NewSecurePass123!"
+        confirmPassword:
+          type: string
+          format: password
+          example: "NewSecurePass123!"
+          
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+        - confirmPassword
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          example: "CurrentPass123!"
+        newPassword:
+          type: string
+          format: password
+          example: "NewSecurePass123!"
+        confirmPassword:
+          type: string
+          format: password
+          example: "NewSecurePass123!"
+          
+    # ==================
+    # Job Request Schemas
+    # ==================
+    CreateJobRequest:
+      type: object
+      required:
+        - title
+        - description
+        - job_type
+      properties:
+        title:
+          type: string
+          example: "Backend Developer"
+        description:
+          type: string
+          minLength: 50
+          example: "We are seeking a talented backend developer to join our team..."
+        location:
+          type: string
+          example: "Remote"
+        salary_range:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+            currency:
+              type: string
+              enum: [GHS, USD, EUR, GBP]
+        job_type:
+          type: string
+          enum: [full-time, part-time, internship, contract, remote, hybrid]
+        experience_level:
+          type: string
+          enum: [entry, junior, mid, senior, lead, executive]
+        skills:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+          
+    UpdateJobRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        salary_range:
+          type: object
+        job_type:
+          type: string
+        experience_level:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+            
+    # ==================
+    # Health Check Schema
+    # ==================
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          properties:
+            database:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "healthy"
+                responseTime:
+                  type: string
+                  example: "5ms"
+            cache:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "healthy"
+            agenda:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "healthy"
+
+  responses:
+    UnauthorizedError:
+      description: Authentication token is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Unauthorized"
+            error: "You are not authorized to perform this action"
+            
+    ForbiddenError:
+      description: User does not have permission to access this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Forbidden"
+            error: "Access denied. You don't have permission for this resource"
+            
+    NotFoundError:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Not Found"
+            error: "The requested resource was not found"
+            
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Validation Error"
+            error: "Some required fields are missing. Please fill them all."
+            
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            message: "Internal Server Error"
+            error: "Something went wrong on our end. Please try again later."
+
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number for pagination
+      
+    LimitParam:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+      description: Number of items per page
+      
+    SearchParam:
+      in: query
+      name: search
+      schema:
+        type: string
+      description: Search query string
+      
+    RoleParam:
+      in: query
+      name: role
+      schema:
+        type: string
+        enum: [student, company, admin]
+      description: Filter by user role
+      
+    StatusParam:
+      in: query
+      name: status
+      schema:
+        type: string
+      description: Filter by status
+
+paths:
+  # ==================
+  # Health Check
+  # ==================
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: Check the health status of the API and its services
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+
+  # ==================
+  # Authentication Endpoints
+  # ==================
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: |
+        Create a new user account. Users can register as Students, Companies, or Admins.
+        The profile object structure depends on the role selected.
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              studentRegistration:
+                summary: Student Registration
+                value:
+                  email: "student@example.com"
+                  password: "SecurePass123!"
+                  confirmPassword: "SecurePass123!"
+                  role: "student"
+                  profile:
+                    first_name: "John"
+                    last_name: "Doe"
+                    bio: "Passionate software developer"
+                    skills: ["JavaScript", "React", "Node.js"]
+              companyRegistration:
+                summary: Company Registration
+                value:
+                  email: "hr@company.com"
+                  password: "SecurePass123!"
+                  confirmPassword: "SecurePass123!"
+                  role: "company"
+                  profile:
+                    name: "Tech Innovations Ghana"
+                    description: "Leading IT company"
+                    industry: "Information Technology"
+                    website: "https://techinnovations.com"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login to the system
+      description: Authenticate user and receive JWT tokens
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                message: "Incorrect email or password"
+        '423':
+          description: Account locked due to too many failed attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get a new access token using a valid refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      expiresIn:
+                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout current user
+      description: Invalidate the current user's tokens
+      operationId: logout
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      description: Send password reset email to user
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset password
+      description: Reset user password using reset token
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Invalid or expired reset token
+
+  /auth/verify-email:
+    post:
+      tags:
+        - Authentication
+      summary: Verify email address
+      description: Verify user's email using verification token
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid or expired token
+
+  /auth/resend-verification:
+    post:
+      tags:
+        - Authentication
+      summary: Resend verification email
+      description: Resend email verification link
+      operationId: resendVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Verification email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /auth/check:
+    get:
+      tags:
+        - Authentication
+      summary: Check authentication status
+      description: Verify if the current token is valid
+      operationId: checkAuth
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  authenticated:
+                    type: boolean
+                    example: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Retrieve the authenticated user's profile
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/change-password:
+    put:
+      tags:
+        - Authentication
+      summary: Change password
+      description: Change the authenticated user's password
+      operationId: changePassword
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Current password is incorrect
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/revoke-all:
+    post:
+      tags:
+        - Authentication
+      summary: Revoke all tokens
+      description: Invalidate all tokens for the authenticated user
+      operationId: revokeAllTokens
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All tokens revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/unlock/{userId}:
+    post:
+      tags:
+        - Authentication
+      summary: Unlock user account (Admin only)
+      description: Remove account lock from a user (Admin only)
+      operationId: unlockAccount
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: User ID to unlock
+      responses:
+        '200':
+          description: Account unlocked successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # ==================
+  # User Endpoints
+  # ==================
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get my profile
+      description: Retrieve the authenticated user's full profile
+      operationId: getMyProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    oneOf:
+                      - $ref: '#/components/schemas/Student'
+                      - $ref: '#/components/schemas/Company'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    put:
+      tags:
+        - Users
+      summary: Update my profile
+      description: Update the authenticated user's profile
+      operationId: updateMyProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Profile fields to update (varies by role)
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete my account
+      description: Soft delete the authenticated user's account
+      operationId: deleteMyAccount
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Account deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /users/me/photo:
+    post:
+      tags:
+        - Users
+      summary: Upload profile photo
+      description: Upload or update profile photo
+      operationId: uploadPhoto
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: Profile photo (max 5MB, images only)
+      responses:
+        '200':
+          description: Photo uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      photo_url:
+                        type: string
+        '400':
+          description: Invalid file type or size
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List all users (Admin only)
+      description: Retrieve paginated list of all users
+      operationId: listUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/RoleParam'
+        - $ref: '#/components/parameters/StatusParam'
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /users/search:
+    get:
+      tags:
+        - Users
+      summary: Search users (Admin only)
+      description: Search users by email, name, or other criteria
+      operationId: searchUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SearchParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  # ==================
+  # Student Endpoints
+  # ==================
+  /users/students:
+    get:
+      tags:
+        - Students
+      summary: List all students
+      description: |
+        Retrieve paginated list of student profiles.
+        - Public access: Shows approved students only
+        - Admin access: Shows all students with optional filters
+      operationId: listStudents
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusParam'
+      responses:
+        '200':
+          description: Students retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Student'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/students/job-seeking:
+    get:
+      tags:
+        - Students
+      summary: Get job-seeking students
+      description: Retrieve students actively seeking employment
+      operationId: getJobSeekingStudents
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Job-seeking students retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Student'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /users/students/me:
+    get:
+      tags:
+        - Students
+      summary: Get my student profile
+      description: Retrieve the authenticated student's full profile
+      operationId: getMyStudentProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Student profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Student'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+    
+    put:
+      tags:
+        - Students
+      summary: Update my student profile
+      description: Update the authenticated student's profile information
+      operationId: updateMyStudentProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                bio:
+                  type: string
+                phone:
+                  type: string
+                location:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Student'
+
+  /users/students/me/education:
+    post:
+      tags:
+        - Students
+      summary: Add education entry
+      description: Add a new education entry to student profile
+      operationId: addEducation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - institution
+                - degree
+                - field_of_study
+              properties:
+                institution:
+                  type: string
+                  example: "University of Ghana"
+                degree:
+                  type: string
+                  example: "Bachelor of Science"
+                field_of_study:
+                  type: string
+                  example: "Computer Science"
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                grade:
+                  type: string
+                  example: "3.8 GPA"
+      responses:
+        '201':
+          description: Education entry added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Student'
+
+  /users/students/me/education/{index}:
+    put:
+      tags:
+        - Students
+      summary: Update education entry
+      description: Update an existing education entry
+      operationId: updateEducation
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: index
+          required: true
+          schema:
+            type: integer
+          description: Index of the education entry to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                institution:
+                  type: string
+                degree:
+                  type: string
+                field_of_study:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Education entry updated successfully
+    
+    delete:
+      tags:
+        - Students
+      summary: Delete education entry
+      description: Remove an education entry from profile
+      operationId: deleteEducation
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: index
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Education entry deleted successfully
+
+  /users/students/me/experience:
+    post:
+      tags:
+        - Students
+      summary: Add work experience
+      description: Add a new work experience entry to student profile
+      operationId: addExperience
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - company
+                - position
+              properties:
+                company:
+                  type: string
+                  example: "Tech Company Ghana"
+                position:
+                  type: string
+                  example: "Software Developer Intern"
+                description:
+                  type: string
+                  example: "Developed web applications using React and Node.js"
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                  nullable: true
+      responses:
+        '201':
+          description: Work experience added successfully
+
+  /users/students/me/experience/{index}:
+    put:
+      tags:
+        - Students
+      summary: Update work experience
+      description: Update an existing work experience entry
+      operationId: updateExperience
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: index
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                company:
+                  type: string
+                position:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Work experience updated successfully
+    
+    delete:
+      tags:
+        - Students
+      summary: Delete work experience
+      description: Remove a work experience entry from profile
+      operationId: deleteExperience
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: index
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Work experience deleted successfully
+
+  /users/students/me/cv:
+    post:
+      tags:
+        - Students
+      summary: Upload CV/Resume
+      description: Upload or update student CV/Resume (PDF, DOC, DOCX - max 5MB)
+      operationId: uploadCV
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - cv
+              properties:
+                cv:
+                  type: string
+                  format: binary
+                  description: CV file (PDF, DOC, DOCX - max 5MB)
+      responses:
+        '200':
+          description: CV uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      cv_url:
+                        type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - Students
+      summary: Delete CV/Resume
+      description: Remove CV from student profile
+      operationId: deleteCV
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: CV deleted successfully
+
+  /users/students/me/skills:
+    put:
+      tags:
+        - Students
+      summary: Update skills
+      description: Update student skills list
+      operationId: updateSkills
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - skills
+              properties:
+                skills:
+                  type: array
+                  items:
+                    type: string
+                  example: ["JavaScript", "React", "Node.js", "MongoDB", "Python"]
+      responses:
+        '200':
+          description: Skills updated successfully
+
+  /users/students/me/status:
+    put:
+      tags:
+        - Students
+      summary: Update job-seeking status
+      description: Update whether student is actively seeking employment
+      operationId: updateStudentStatus
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [seeking, employed, not_seeking]
+                  example: "seeking"
+      responses:
+        '200':
+          description: Status updated successfully
+
+  /users/students/me/applications:
+    get:
+      tags:
+        - Students
+        - Applications
+      summary: Get my applications
+      description: Retrieve all job applications submitted by the student
+      operationId: getMyStudentApplications
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, reviewing, shortlisted, rejected, accepted]
+      responses:
+        '200':
+          description: Applications retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /users/students/{id}:
+    get:
+      tags:
+        - Students
+      summary: Get student by ID
+      description: Retrieve detailed information about a specific student
+      operationId: getStudentById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Student ID
+      responses:
+        '200':
+          description: Student profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Student'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # ==================
+  # Company Endpoints
+  # ==================
+  /users/companies:
+    get:
+      tags:
+        - Companies
+      summary: List all companies
+      description: |
+        Retrieve paginated list of company profiles.
+        - Public access: Shows approved companies only
+        - Admin access: Shows all companies with optional filters
+      operationId: listCompanies
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/StatusParam'
+      responses:
+        '200':
+          description: Companies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Company'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /users/companies/me:
+    get:
+      tags:
+        - Companies
+      summary: Get my company profile
+      description: Retrieve the authenticated company's full profile
+      operationId: getMyCompanyProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Company profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Company'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+    
+    put:
+      tags:
+        - Companies
+      summary: Update my company profile
+      description: Update the authenticated company's profile information
+      operationId: updateMyCompanyProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                industry:
+                  type: string
+                website:
+                  type: string
+                location:
+                  type: string
+                size:
+                  type: string
+                  enum: ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Company'
+
+  /users/companies/me/logo:
+    post:
+      tags:
+        - Companies
+      summary: Upload company logo
+      description: Upload or update company logo (Images only - max 2MB)
+      operationId: uploadCompanyLogo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - logo
+              properties:
+                logo:
+                  type: string
+                  format: binary
+                  description: Logo image file (max 2MB)
+      responses:
+        '200':
+          description: Logo uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      logo_url:
+                        type: string
+
+  /users/companies/me/social-links:
+    put:
+      tags:
+        - Companies
+      summary: Update social media links
+      description: Update company social media profiles
+      operationId: updateCompanySocialLinks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                linkedin:
+                  type: string
+                  example: "https://linkedin.com/company/example"
+                twitter:
+                  type: string
+                  example: "https://twitter.com/example"
+                facebook:
+                  type: string
+                  example: "https://facebook.com/example"
+                instagram:
+                  type: string
+                  example: "https://instagram.com/example"
+      responses:
+        '200':
+          description: Social links updated successfully
+
+  /users/companies/me/jobs:
+    get:
+      tags:
+        - Companies
+        - Jobs
+      summary: Get my posted jobs
+      description: Retrieve all jobs posted by the authenticated company
+      operationId: getMyCompanyJobs
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [draft, published, closed, paused]
+      responses:
+        '200':
+          description: Jobs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /users/companies/me/jobs/stats:
+    get:
+      tags:
+        - Companies
+        - Jobs
+      summary: Get job posting statistics
+      description: Retrieve statistics for company's job postings
+      operationId: getCompanyJobStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Job statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      total_jobs:
+                        type: integer
+                        example: 25
+                      active_jobs:
+                        type: integer
+                        example: 10
+                      draft_jobs:
+                        type: integer
+                        example: 3
+                      closed_jobs:
+                        type: integer
+                        example: 12
+                      total_applications:
+                        type: integer
+                        example: 150
+                      pending_applications:
+                        type: integer
+                        example: 45
+
+  /users/companies/me/jobs/{jobId}/analytics:
+    get:
+      tags:
+        - Companies
+        - Jobs
+      summary: Get job analytics
+      description: Retrieve detailed analytics for a specific job
+      operationId: getCompanyJobAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      responses:
+        '200':
+          description: Job analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      views:
+                        type: integer
+                      applications:
+                        type: integer
+                      shortlisted:
+                        type: integer
+                      hired:
+                        type: integer
+
+  /users/companies/me/applications:
+    get:
+      tags:
+        - Companies
+        - Applications
+      summary: Get applications to my jobs
+      description: Retrieve all applications to company's job postings
+      operationId: getCompanyApplications
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, reviewing, shortlisted, rejected, accepted]
+        - in: query
+          name: jobId
+          schema:
+            type: string
+          description: Filter by specific job ID
+      responses:
+        '200':
+          description: Applications retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /users/companies/me/applications/{id}:
+    get:
+      tags:
+        - Companies
+        - Applications
+      summary: Get application by ID
+      description: Retrieve detailed information about a specific application
+      operationId: getCompanyApplicationById
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Application ID
+      responses:
+        '200':
+          description: Application retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /users/companies/me/applications/{id}/status:
+    put:
+      tags:
+        - Companies
+        - Applications
+      summary: Update application status
+      description: Update the status of a job application
+      operationId: updateCompanyApplicationStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Application ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [pending, reviewing, shortlisted, rejected, accepted]
+                  example: "shortlisted"
+                notes:
+                  type: string
+                  example: "Great candidate, moving to interview stage"
+      responses:
+        '200':
+          description: Application status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /users/companies/me/applications/bulk-update:
+    post:
+      tags:
+        - Companies
+        - Applications
+      summary: Bulk update applications
+      description: Update multiple applications at once
+      operationId: bulkUpdateCompanyApplications
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - application_ids
+                - status
+              properties:
+                application_ids:
+                  type: array
+                  items:
+                    type: string
+                  example: ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
+                status:
+                  type: string
+                  enum: [pending, reviewing, shortlisted, rejected, accepted]
+                  example: "rejected"
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Applications updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      updated_count:
+                        type: integer
+
+  /users/companies/me/analytics:
+    get:
+      tags:
+        - Companies
+      summary: Get company analytics
+      description: Retrieve comprehensive analytics for the company
+      operationId: getCompanyAnalytics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      profile_views:
+                        type: integer
+                      job_posts:
+                        type: integer
+                      total_applications:
+                        type: integer
+                      response_rate:
+                        type: number
+                        format: float
+
+  /users/companies/me/team:
+    get:
+      tags:
+        - Companies
+      summary: Get team members
+      description: Retrieve list of company team members
+      operationId: getCompanyTeamMembers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Team members retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+
+  /users/companies/me/team/invite:
+    post:
+      tags:
+        - Companies
+      summary: Invite team member
+      description: Send invitation to new team member
+      operationId: inviteCompanyTeamMember
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - role
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "team@example.com"
+                role:
+                  type: string
+                  example: "recruiter"
+      responses:
+        '201':
+          description: Invitation sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /users/companies/me/preferences:
+    get:
+      tags:
+        - Companies
+      summary: Get company preferences
+      description: Retrieve company notification and privacy preferences
+      operationId: getCompanyPreferences
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      notifications:
+                        type: object
+                      privacy:
+                        type: object
+    
+    put:
+      tags:
+        - Companies
+      summary: Update company preferences
+      description: Update company notification and privacy preferences
+      operationId: updateCompanyPreferences
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notifications:
+                  type: object
+                  properties:
+                    email_applications:
+                      type: boolean
+                    email_messages:
+                      type: boolean
+                privacy:
+                  type: object
+                  properties:
+                    show_email:
+                      type: boolean
+                    show_phone:
+                      type: boolean
+      responses:
+        '200':
+          description: Preferences updated successfully
+
+  /users/companies/{id}:
+    get:
+      tags:
+        - Companies
+      summary: Get company by ID
+      description: Retrieve detailed information about a specific company
+      operationId: getCompanyById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Company ID
+      responses:
+        '200':
+          description: Company profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Company'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /users/admins:
+    get:
+      tags:
+        - Users
+      summary: List all admins (Super Admin only)
+      description: Retrieve list of admin users
+      operationId: listAdmins
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Admins retrieved successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /users/stats:
+    get:
+      tags:
+        - Users
+      summary: Get user statistics (Admin only)
+      description: Retrieve platform user statistics
+      operationId: getUserStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      totalUsers:
+                        type: integer
+                      activeUsers:
+                        type: integer
+                      pendingApprovals:
+                        type: integer
+                      studentCount:
+                        type: integer
+                      companyCount:
+                        type: integer
+                      adminCount:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /users/{id}/approve:
+    post:
+      tags:
+        - Users
+      summary: Approve user account (Admin only)
+      description: Approve a pending user registration
+      operationId: approveUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID to approve
+      responses:
+        '200':
+          description: User approved successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /users/{id}/reject:
+    post:
+      tags:
+        - Users
+      summary: Reject user account (Admin only)
+      description: Reject a pending user registration
+      operationId: rejectUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID to reject
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for rejection
+      responses:
+        '200':
+          description: User rejected successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /users/bulk-approve:
+    post:
+      tags:
+        - Users
+      summary: Bulk approve users (Admin only)
+      description: Approve multiple users at once
+      operationId: bulkApprove
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Users approved successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /users/{id}/activate:
+    put:
+      tags:
+        - Users
+      summary: Activate user account (Admin only)
+      description: Activate a deactivated user account
+      operationId: activateUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User activated successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /users/{id}/deactivate:
+    put:
+      tags:
+        - Users
+      summary: Deactivate user account (Admin only)
+      description: Temporarily deactivate a user account
+      operationId: deactivateUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deactivated successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /users/{id}:
+    delete:
+      tags:
+        - Users
+      summary: Delete user (Admin only)
+      description: Soft delete a user account
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /users/{id}/force:
+    delete:
+      tags:
+        - Users
+      summary: Force delete user (Admin only)
+      description: Permanently delete a user account
+      operationId: forceDeleteUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User permanently deleted
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /users/{id}/restore:
+    post:
+      tags:
+        - Users
+      summary: Restore deleted user (Admin only)
+      description: Restore a soft-deleted user account
+      operationId: restoreUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User restored successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  # ==================
+  # Job Endpoints
+  # ==================
+  /jobs:
+    get:
+      tags:
+        - Jobs
+      summary: List all active jobs
+      description: Get a paginated list of all published and active jobs
+      operationId: listActiveJobs
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - in: query
+          name: job_type
+          schema:
+            type: string
+            enum: [full-time, part-time, internship, contract, remote, hybrid]
+        - in: query
+          name: experience_level
+          schema:
+            type: string
+            enum: [entry, junior, mid, senior, lead, executive]
+        - in: query
+          name: location
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Jobs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags:
+        - Jobs
+      summary: Create a new job (Company only)
+      description: Create a new job posting
+      operationId: createJob
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+      responses:
+        '201':
+          description: Job created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /jobs/featured:
+    get:
+      tags:
+        - Jobs
+      summary: Get featured jobs
+      description: Retrieve list of featured job postings
+      operationId: getFeaturedJobs
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Featured jobs retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+
+  /jobs/recent:
+    get:
+      tags:
+        - Jobs
+      summary: Get recent jobs
+      description: Retrieve recently posted jobs
+      operationId: getRecentJobs
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Recent jobs retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+
+  /jobs/trending:
+    get:
+      tags:
+        - Jobs
+      summary: Get trending jobs
+      description: Retrieve jobs with high engagement
+      operationId: getTrendingJobs
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Trending jobs retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+
+  /jobs/search:
+    get:
+      tags:
+        - Jobs
+      summary: Search jobs
+      description: Search jobs by title, description, or skills
+      operationId: searchJobs
+      parameters:
+        - $ref: '#/components/parameters/SearchParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+
+  /jobs/filter:
+    get:
+      tags:
+        - Jobs
+      summary: Filter jobs
+      description: Filter jobs by multiple criteria
+      operationId: filterJobs
+      parameters:
+        - in: query
+          name: job_type
+          schema:
+            type: array
+            items:
+              type: string
+        - in: query
+          name: experience_level
+          schema:
+            type: array
+            items:
+              type: string
+        - in: query
+          name: skills
+          schema:
+            type: array
+            items:
+              type: string
+        - in: query
+          name: location
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Filtered jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+
+  /jobs/my-jobs:
+    get:
+      tags:
+        - Jobs
+      summary: Get my jobs (Company only)
+      description: Retrieve all jobs posted by the authenticated company
+      operationId: getMyJobs
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [draft, published, paused, closed]
+      responses:
+        '200':
+          description: Jobs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /jobs/my-jobs/stats:
+    get:
+      tags:
+        - Jobs
+      summary: Get my job statistics (Company only)
+      description: Get statistics for company's job postings
+      operationId: getMyJobStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Statistics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      totalJobs:
+                        type: integer
+                      publishedJobs:
+                        type: integer
+                      draftJobs:
+                        type: integer
+                      pausedJobs:
+                        type: integer
+                      closedJobs:
+                        type: integer
+                      totalViews:
+                        type: integer
+                      totalApplications:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /jobs/{id}:
+    get:
+      tags:
+        - Jobs
+      summary: Get job by ID
+      description: Retrieve detailed information about a specific job
+      operationId: getJobById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      responses:
+        '200':
+          description: Job retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Job'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Jobs
+      summary: Update job (Company only)
+      description: Update a job posting
+      operationId: updateJob
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateJobRequest'
+      responses:
+        '200':
+          description: Job updated successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Jobs
+      summary: Delete job (Company only)
+      description: Soft delete a job posting
+      operationId: deleteJob
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /jobs/slug/{slug}:
+    get:
+      tags:
+        - Jobs
+      summary: Get job by slug
+      description: Retrieve job using URL-friendly slug
+      operationId: getJobBySlug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          description: Job slug
+      responses:
+        '200':
+          description: Job retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Job'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /jobs/{id}/publish:
+    post:
+      tags:
+        - Jobs
+      summary: Publish job (Company only)
+      description: Publish a draft job posting
+      operationId: publishJob
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job published successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /jobs/{id}/close:
+    post:
+      tags:
+        - Jobs
+      summary: Close job (Company only)
+      description: Close a published job posting
+      operationId: closeJob
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job closed successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /jobs/{id}/pause:
+    post:
+      tags:
+        - Jobs
+      summary: Pause job (Company only)
+      description: Temporarily pause a job posting
+      operationId: pauseJob
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job paused successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /jobs/{id}/analytics:
+    get:
+      tags:
+        - Jobs
+      summary: Get job analytics (Company only)
+      description: Retrieve analytics data for a specific job
+      operationId: getJobAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      views:
+                        type: integer
+                      applications:
+                        type: integer
+                      viewsOverTime:
+                        type: array
+                        items:
+                          type: object
+                      applicationsOverTime:
+                        type: array
+                        items:
+                          type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /jobs/bulk-update:
+    post:
+      tags:
+        - Jobs
+      summary: Bulk update job status (Company only)
+      description: Update status for multiple jobs at once
+      operationId: bulkUpdateStatus
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                jobIds:
+                  type: array
+                  items:
+                    type: string
+                status:
+                  type: string
+                  enum: [draft, published, paused, closed]
+      responses:
+        '200':
+          description: Jobs updated successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /jobs/platform-stats:
+    get:
+      tags:
+        - Jobs
+      summary: Get platform statistics (Admin only)
+      description: Get overall job statistics for the platform
+      operationId: getPlatformStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Platform statistics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      totalJobs:
+                        type: integer
+                      publishedJobs:
+                        type: integer
+                      totalApplications:
+                        type: integer
+                      activeCompanies:
+                        type: integer
+                      jobsByType:
+                        type: object
+                      jobsByExperience:
+                        type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'

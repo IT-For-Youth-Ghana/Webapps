@@ -11,7 +11,8 @@
 import BaseController from "../../shared/base.controller";
 import userService from "../service/user.service";
 import companyRepository from "../repositories/company.repository";
-import UserValidation from "../validation/user.validation";
+import applicationService from "../../application/service/application.service";
+import jobService from "../../job/service/job.service";
 import { 
   ERROR_MESSAGES, 
   SUCCESS_MESSAGES, 
@@ -22,6 +23,8 @@ class CompanyController extends BaseController {
   constructor() {
     super({
       user: userService,
+      application: applicationService,
+      job: jobService,
     });
     this.companyRepo = companyRepository;
   }
@@ -332,17 +335,28 @@ class CompanyController extends BaseController {
       return this.forbidden(res, "Only companies can view their jobs");
     }
 
-    this.log("info", { action: "getMyJobs", userId: user.id });
+    const { page = 1, limit = 10, status } = req.query;
 
-    // TODO: Implement when JobService is ready
-    // For now, return placeholder
-    return this.success(
-      res,
-      {
-        jobs: [],
-        message: "Job management feature coming soon",
-      }
-    );
+    this.log("info", { 
+      action: "getMyJobs", 
+      userId: user.id,
+      page,
+      limit,
+      status
+    });
+
+    // Get jobs using JobService
+    const result = await this.service("job").getCompanyJobs(user.id, {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      ...(status && { status }),
+    });
+
+    if (!result.success) {
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, result.data, "Jobs retrieved successfully");
   });
 
   /**
@@ -363,16 +377,14 @@ class CompanyController extends BaseController {
 
     this.log("info", { action: "getJobStats", userId: user.id });
 
-    // TODO: Implement when JobService is ready
-    // Return placeholder stats
-    return this.success(res, {
-      totalJobs: 0,
-      activeJobs: 0,
-      closedJobs: 0,
-      draftJobs: 0,
-      totalApplications: 0,
-      pendingApplications: 0,
-    });
+    // Get job statistics using JobService
+    const result = await this.service("job").getCompanyJobStats(user.id);
+
+    if (!result.success) {
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, result.data, "Job statistics retrieved successfully");
   });
 
   // ========================================
@@ -396,20 +408,33 @@ class CompanyController extends BaseController {
       return this.forbidden(res, "Only companies can view applications");
     }
 
+    const { page = 1, limit = 10, status, job_id } = req.query;
+
     this.log("info", {
       action: "getApplications",
       userId: user.id,
-      filters: req.query,
+      filters: { page, limit, status, job_id },
     });
 
-    // TODO: Implement when ApplicationService is ready
-    // For now, return placeholder
+    // Get applications using ApplicationService
+    const result = await this.service("application").getCompanyApplications(
+      user.id,
+      {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        ...(status && { status }),
+        ...(job_id && { job_id }),
+      }
+    );
+
+    if (!result.success) {
+      return this.error(res, result.error);
+    }
+
     return this.success(
       res,
-      {
-        applications: [],
-        message: "Application management feature coming soon",
-      }
+      result.data,
+      "Applications retrieved successfully"
     );
   });
 
@@ -436,8 +461,24 @@ class CompanyController extends BaseController {
       applicationId: id,
     });
 
-    // TODO: Implement when ApplicationService is ready
-    return this.notFound(res, "Application not found");
+    // Get application details using ApplicationService
+    const result = await this.service("application").getApplicationByIdForCompany(
+      id,
+      user.id
+    );
+
+    if (!result.success) {
+      if (result.error.message?.includes("not found")) {
+        return this.notFound(res, "Application not found");
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(
+      res,
+      result.data,
+      "Application retrieved successfully"
+    );
   });
 
   /**
@@ -474,11 +515,24 @@ class CompanyController extends BaseController {
       status,
     });
 
-    // TODO: Implement when ApplicationService is ready
+    // Update application status using ApplicationService
+    const result = await this.service("application").updateApplicationStatus(
+      id,
+      user.id,
+      { status }
+    );
+
+    if (!result.success) {
+      if (result.error.message?.includes("not found")) {
+        return this.notFound(res, "Application not found");
+      }
+      return this.error(res, result.error);
+    }
+
     return this.success(
       res,
-      null,
-      "Application status update feature coming soon"
+      result.data,
+      "Application status updated successfully"
     );
   });
 
@@ -519,11 +573,21 @@ class CompanyController extends BaseController {
       status,
     });
 
-    // TODO: Implement when ApplicationService is ready
+    // Bulk update applications using ApplicationService
+    const result = await this.service("application").bulkUpdateApplicationStatus(
+      applicationIds,
+      user.id,
+      status
+    );
+
+    if (!result.success) {
+      return this.error(res, result.error);
+    }
+
     return this.success(
       res,
-      { count: applicationIds.length },
-      "Bulk update feature coming soon"
+      result.data,
+      `${result.data.count} applications updated successfully`
     );
   });
 
@@ -551,14 +615,23 @@ class CompanyController extends BaseController {
 
     this.log("info", { action: "getAnalytics", userId: user.id, period });
 
-    // TODO: Implement comprehensive analytics
-    // Return placeholder data
+    // Get comprehensive analytics from ApplicationService and JobService
+    const jobStatsResult = await this.service("job").getCompanyJobStats(user.id);
+    const appStatsResult = await this.service("application").getCompanyApplicationStats(
+      user.id,
+      period
+    );
+
+    if (!jobStatsResult.success || !appStatsResult.success) {
+      return this.error(res, "Failed to retrieve analytics");
+    }
+
     return this.success(res, {
       period,
       overview: {
-        totalJobs: 0,
-        activeJobs: 0,
-        totalApplications: 0,
+        totalJobs: jobStatsResult.data.totalJobs || 0,
+        activeJobs: jobStatsResult.data.activeJobs || 0,
+        totalApplications: appStatsResult.data.totalApplications || 0,
         pendingReview: 0,
         approved: 0,
         rejected: 0,
@@ -595,19 +668,20 @@ class CompanyController extends BaseController {
       jobId,
     });
 
-    // TODO: Implement when JobService and ApplicationService are ready
-    return this.success(res, {
+    // Get job-specific analytics from ApplicationService
+    const result = await this.service("application").getJobApplicationAnalytics(
       jobId,
-      totalApplications: 0,
-      statusBreakdown: {
-        pending: 0,
-        reviewing: 0,
-        approved: 0,
-        rejected: 0,
-      },
-      applicantSkills: [],
-      averageResponseTime: 0,
-    });
+      user.id
+    );
+
+    if (!result.success) {
+      if (result.error.message?.includes("not found")) {
+        return this.notFound(res, "Job not found");
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, result.data, "Job analytics retrieved successfully");
   });
 
   // ========================================
@@ -632,7 +706,10 @@ class CompanyController extends BaseController {
 
     this.log("info", { action: "getTeamMembers", userId: user.id });
 
-    // TODO: Implement team management feature
+    // NOTE: Team management feature - Future implementation
+    // This would involve creating a Team model with members linked to company
+    // Team members would have roles (admin, recruiter, viewer) and permissions
+    // Implementation: TeamService.getTeamMembers(companyId)
     return this.success(
       res,
       {
@@ -670,7 +747,10 @@ class CompanyController extends BaseController {
       inviteeEmail: email,
     });
 
-    // TODO: Implement team invitation feature
+    // NOTE: Team invitation feature - Future implementation
+    // This would send an invitation email with a unique token
+    // Implementation: TeamService.inviteTeamMember(companyId, email, role)
+    // Flow: Generate token → Send email → User accepts → Create team member record
     return this.success(
       res,
       null,
@@ -700,7 +780,9 @@ class CompanyController extends BaseController {
 
     this.log("info", { action: "getPreferences", userId: user.id });
 
-    // TODO: Implement preferences management
+    // NOTE: Preferences management - Can be stored in Company model or separate Preferences model
+    // For now, returning default preferences structure
+    // Implementation: Store in company.preferences field or create UserPreferences model
     return this.success(res, {
       emailNotifications: {
         newApplications: true,
@@ -733,11 +815,14 @@ class CompanyController extends BaseController {
 
     this.log("info", { action: "updatePreferences", userId: user.id });
 
-    // TODO: Implement preferences management
+    // NOTE: Preferences update implementation
+    // Store preferences in company.preferences or UserPreferences model
+    // Implementation: await companyRepository.updatePreferences(companyId, req.body)
+    // Or: await UserPreferencesService.update(userId, req.body)
     return this.success(
       res,
       req.body,
-      "Preferences updated successfully"
+      "Preferences updated successfully (placeholder - implement persistence)"
     );
   });
 }

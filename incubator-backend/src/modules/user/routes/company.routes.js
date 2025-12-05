@@ -28,7 +28,9 @@ const logoUpload = multer({
 // PUBLIC ROUTES (Company Directory)
 // ========================================
 router.get("/", optionalAuth, companyController.listCompanies);
-// router.get("/search", optionalAuth, companyController.searchCompanies); //TODO: recheck relevance
+// NOTE: Search endpoint - Currently handled by listCompanies with query params
+// If dedicated search with advanced filters is needed, implement searchCompanies
+// router.get("/search", optionalAuth, companyController.searchCompanies);
 router.get("/:id", optionalAuth, companyController.getCompanyById);
 
 // ========================================

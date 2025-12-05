@@ -668,28 +668,14 @@ class UserController extends BaseController {
 
     this.log("info", { action: "getUserStats", adminId: admin.id });
 
-    // TODO: Implement getUserStats in service
-    // For now, return basic stats from listUsers
-    const studentsResult = await this.service("user").listUsers(
-      { role: ROLES.STUDENT },
-      { page: 1, limit: 1 }
-    );
+    // Get comprehensive user statistics from service
+    const result = await this.service("user").getUserStats();
 
-    const companiesResult = await this.service("user").listUsers(
-      { role: ROLES.COMPANY },
-      { page: 1, limit: 1 }
-    );
+    if (!result.success) {
+      return this.error(res, result.error);
+    }
 
-    const pendingResult = await this.service("user").listUsers(
-      { status: "pending" },
-      { page: 1, limit: 1 }
-    );
-
-    return this.success(res, {
-      totalStudents: studentsResult.data?.metadata?.total || 0,
-      totalCompanies: companiesResult.data?.metadata?.total || 0,
-      pendingApprovals: pendingResult.data?.metadata?.total || 0,
-    });
+    return this.success(res, result.data, "User statistics retrieved successfully");
   });
 }
 

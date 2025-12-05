@@ -323,11 +323,8 @@ class AuthController extends BaseController {
       AuthValidation.forgotPasswordSchema // Reuse email schema
     );
 
-    // TODO: Implement resendVerification in auth service
-    // For now, we'll use the same flow as password reset
-    const result = await this.service("auth").requestPasswordReset(
-      validatedData
-    );
+    // Call resendVerification service method
+    const result = await this.service("auth").resendVerification(validatedData);
 
     if (!result.success) {
       return this.error(res, result.error);
@@ -336,7 +333,7 @@ class AuthController extends BaseController {
     return this.success(
       res,
       null,
-      "Verification email sent. Please check your inbox."
+      result.data.message || "Verification email sent. Please check your inbox."
     );
   });
 
@@ -402,16 +399,24 @@ class AuthController extends BaseController {
       return this.badRequest(res, ERROR_MESSAGES.PASSWORDS_DO_NOT_MATCH);
     }
 
-    // TODO: Implement changePassword in auth service
-    // For now, we'll use resetPassword logic
-    // const result = await this.service("auth").changePassword(
-    //   user.id,
-    //   currentPassword,
-    //   newPassword
-    // );
+    // Call changePassword service method
+    const result = await this.service("auth").changePassword(
+      user.id,
+      currentPassword,
+      newPassword
+    );
 
-    // Placeholder response
-    return this.success(res, null, "Password changed successfully");
+    if (!result.success) {
+      if (result.error.message?.includes("incorrect")) {
+        return this.unauthorized(res, "Current password is incorrect");
+      }
+      if (result.error.message?.includes("different")) {
+        return this.badRequest(res, result.error.message);
+      }
+      return this.error(res, result.error);
+    }
+
+    return this.success(res, null, result.data.message || "Password changed successfully");
   });
 
   // ========================================

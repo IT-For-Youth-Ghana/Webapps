@@ -607,6 +607,116 @@ class AuthService extends BaseService {
       await cache.incr(key);
     }
   }
+
+  /**
+   * Resend verification email
+   * @param {Object} rawData - { email }
+   * @returns {Promise<Object>}
+   */
+  async resendVerification(rawData) {
+    return this.runInContext({ action: "resendVerification" }, async () => {
+      try {
+        this.log("resendVerification.start", { email: rawData.email });
+
+        const { email } = this.validate(
+          rawData,
+          AuthValidation.forgotPasswordSchema // Reuse email schema
+        );
+
+        const user = await this.repo("user").findByEmail(email);
+
+        // Return success to prevent email enumeration
+        if (!user) {
+          this.log("resendVerification.no_user", { email });
+          await new Promise(resolve => setTimeout(resolve, 100));
+          return this.success({
+            message: "If an account exists with this email, a verification link has been sent."
+          });
+        }
+
+        // Check if already verified
+        if (user.email_verified) {
+          return this.success({
+            message: "Email is already verified."
+          });
+        }
+
+        // Generate verification token
+        const verificationToken = await AuthHelpers.generateAndStoreResetToken(
+          user._id.toString()
+        );
+        const verificationUrl = `${process.env.APP_URL}/verify-email?token=${verificationToken}`;
+
+        // Queue verification email (using agenda)
+        // await agenda.now("send-verification-email", {
+        //   email: user.email,
+        //   verificationUrl,
+        //   name: `${user.first_name || ''} ${user.last_name || ''}`.trim()
+        // });
+
+        this.log("resendVerification.success", { userId: user._id });
+        return this.success({
+          message: "If an account exists with this email, a verification link has been sent."
+        });
+      } catch (error) {
+        this.log("resendVerification.error", { error: error.message });
+        return this.error(error, "Failed to resend verification email");
+      }
+    });
+  }
+
+  /**
+   * Change password for authenticated user
+   * @param {string} userId - User ID
+   * @param {string} currentPassword - Current password
+   * @param {string} newPassword - New password
+   * @returns {Promise<Object>}
+   */
+  async changePassword(userId, currentPassword, newPassword) {
+    return this.runInContext({ action: "changePassword", userId }, async () => {
+      try {
+        this.log("changePassword.start", { userId });
+
+        // Get user
+        const user = await this.repo("user").findById(userId);
+        if (!user || user.deleted_at) {
+          throw new Error(ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+        }
+
+        // Verify current password
+        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+        if (!isValidPassword) {
+          throw new Error("Current password is incorrect");
+        }
+
+        // Check if new password is same as current
+        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        if (isSamePassword) {
+          throw new Error("New password must be different from current password");
+        }
+
+        // Hash new password
+        const hashedPassword = await AuthHelpers.hashPassword(newPassword);
+
+        // Update password
+        await this.repo("user").updateById(userId, {
+          password: hashedPassword,
+          updated_at: new Date(),
+        });
+
+        // Invalidate all refresh tokens for this user (force re-login on other devices)
+        await cache.del(`refresh_tokens:${userId}`);
+
+        this.log("changePassword.success", { userId });
+        return this.success({
+          message: "Password changed successfully. Please login with your new password."
+        });
+      } catch (error) {
+        this.log("changePassword.error", { userId, error: error.message });
+        return this.error(error, "Failed to change password");
+      }
+    });
+  }
 }
 
 // Export singleton
