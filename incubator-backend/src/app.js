@@ -139,33 +139,33 @@ const PORT = process.env.PORT || 3001;
 
 async function startServer() {
   try {
-    console.log("🚀 Starting IT Youth Talent Incubator Backend...");
+    console.log("Starting IT Youth Talent Incubator Backend...");
 
     // 1. Connect to MongoDB
-    console.log("📦 Connecting to MongoDB...");
+    console.log("Connecting to MongoDB...");
     await db.connect();
 
     // 2. Connect to Redis/Cache
-    console.log("🔄 Connecting to cache...");
+    console.log("Connecting to cache...");
     await cache.connect();
 
     // 3. Initialize Agenda.js
-    console.log("⚙️ Initializing Agenda.js...");
+    console.log("Initializing Agenda.js...");
     await agendaManager.initialize();
 
     // 4. Setup recurring tasks
-    console.log("🔁 Setting up recurring tasks...");
+    console.log("Setting up recurring tasks...");
     await agendaManager.setupRecurringTasks();
 
     // 5. Start Express server
     app.listen(PORT, () => {
-      console.log("✅ Server started successfully!");
-      console.log(`🌐 API: http://localhost:${PORT}`);
-      console.log(`🏥 Health: http://localhost:${PORT}/health`);
-      console.log(`📚 Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log("Server started successfully!");
+      console.log(`API: http://localhost:${PORT}`);
+      console.log(`Health: http://localhost:${PORT}/health`);
+      console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 }
@@ -175,28 +175,28 @@ async function startServer() {
 // ========================================
 
 async function gracefulShutdown(signal) {
-  console.log(`\n📥 Received ${signal}. Starting graceful shutdown...`);
+  console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
 
   try {
     // Stop accepting new requests
-    console.log("🛑 Stopping HTTP server...");
+    console.log("Stopping HTTP server...");
 
     // Stop Agenda
-    console.log("⏸️ Stopping Agenda.js...");
+    console.log("Stopping Agenda.js...");
     await agendaManager.stop();
 
     // Close database connection
-    console.log("🔌 Closing database connection...");
+    console.log("Closing database connection...");
     await db.gracefulShutdown(signal);
 
     // Close cache connection
-    console.log("🔌 Closing cache connection...");
+    console.log("Closing cache connection...");
     await cache.disconnect();
 
-    console.log("✅ Graceful shutdown completed");
+    console.log("Graceful shutdown completed");
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error during shutdown:", error);
+    console.error("Error during shutdown:", error);
     process.exit(1);
   }
 }
@@ -207,12 +207,12 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 // Handle uncaught errors
 process.on("uncaughtException", (error) => {
-  console.error("💥 Uncaught Exception:", error);
+  console.error("Uncaught Exception:", error);
   gracefulShutdown("UNCAUGHT_EXCEPTION");
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("💥 Unhandled Rejection at:", promise, "reason:", reason);
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
   gracefulShutdown("UNHANDLED_REJECTION");
 });
 

@@ -340,12 +340,12 @@ const setupAPIDocs = (app) => {
     `);
   });
 
-  console.log("✅ API Documentation routes configured:");
-  console.log("   📘 Swagger UI:    /api-docs");
-  console.log("   📗 ReDoc:         /api-docs/redoc");
-  console.log("   📄 OpenAPI YAML:  /api-docs/openapi.yaml");
-  console.log("   📄 OpenAPI JSON:  /api-docs/openapi.json");
-  console.log("   🏠 Docs Home:     /docs");
+  console.log("API Documentation routes configured:");
+  console.log("   Swagger UI:    /api-docs");
+  console.log("   ReDoc:         /api-docs/redoc");
+  console.log("   OpenAPI YAML:  /api-docs/openapi.yaml");
+  console.log("   OpenAPI JSON:  /api-docs/openapi.json");
+  console.log("   Docs Home:     /docs");
 };
 
 module.exports = {
