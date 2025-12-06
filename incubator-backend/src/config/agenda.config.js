@@ -9,6 +9,7 @@
  */
 
 import Agenda from "agenda";
+import {emailService} from "../utils/services/email.service.js";
 
 class AgendaManager {
   constructor() {
@@ -222,30 +223,41 @@ class AgendaManager {
             return;
           }
 
-          // NOTE: Email service integration (SendGrid, AWS SES, etc.) goes here
-          // For now, logging email details for development/testing
-          const emailTemplates = {
-            "student-confirmation": {
-              to: application.student?.user?.email,
-              subject: `Application Submitted - ${application.job?.title}`,
-              message: `Your application for ${application.job?.title} has been submitted successfully.`,
-            },
-            "company-notification": {
-              to: application.job?.company?.user?.email,
-              subject: `New Application - ${application.job?.title}`,
-              message: `${application.student?.first_name} ${application.student?.last_name} has applied for ${application.job?.title}.`,
-            },
-            "status-change": {
-              to: application.student?.user?.email,
-              subject: `Application Status Update - ${application.job?.title}`,
-              message: `Your application status has been changed to: ${status}`,
-            },
-          };
+          // Send appropriate email based on type
+          switch (type) {
+            case "student-confirmation":
+              await emailService.sendApplicationReceivedEmail({
+                to: application.student?.user?.email,
+                studentName: `${application.student?.first_name} ${application.student?.last_name}`,
+                jobTitle: application.job?.title,
+                companyName: application.job?.company?.name,
+              });
+              break;
 
-          const template = emailTemplates[type];
-          console.log(`Email to ${template.to}: ${template.subject}`);
-          console.log(`   Message: ${template.message}`);
-          console.log("Email sent successfully");
+            case "company-notification":
+              await emailService.sendNewApplicationNotification({
+                to: application.job?.company?.user?.email,
+                companyName: application.job?.company?.name,
+                studentName: `${application.student?.first_name} ${application.student?.last_name}`,
+                jobTitle: application.job?.title,
+              });
+              break;
+
+            case "status-change":
+              await emailService.sendApplicationStatusUpdate({
+                to: application.student?.user?.email,
+                studentName: `${application.student?.first_name} ${application.student?.last_name}`,
+                jobTitle: application.job?.title,
+                status: status,
+                notes: application.notes,
+              });
+              break;
+
+            default:
+              console.warn(`Unknown email type: ${type}`);
+          }
+
+          console.log(`Email sent successfully: ${type} for application ${applicationId}`);
         } catch (error) {
           console.error("Failed to send email:", error);
           // Don't throw - email failures shouldn't block other operations
@@ -260,17 +272,19 @@ class AgendaManager {
       "send-welcome-email",
       { priority: "low", concurrency: 20 },
       async (job) => {
-        const { userId, email, name, role, verificationUrl } = job.attrs.data;
+        const { email, name, role, verificationUrl } = job.attrs.data;
 
         try {
           console.log("Sending welcome email to:", email);
 
-          // NOTE: Email service integration goes here (SendGrid, AWS SES, etc.)
-          // For now, logging welcome email details for development/testing
-          console.log(`Welcome ${name}!`);
-          console.log(`   Role: ${role}`);
-          console.log(`   Verify email: ${verificationUrl}`);
-          console.log("Welcome email sent");
+          await emailService.sendWelcomeEmail({
+            to: email,
+            name: name,
+            role: role,
+            verificationUrl: verificationUrl,
+          });
+
+          console.log("Welcome email sent successfully");
         } catch (error) {
           console.error("Failed to send welcome email:", error);
         }
@@ -288,8 +302,14 @@ class AgendaManager {
 
         try {
           console.log("Sending verification email to:", email);
-          console.log(`   Link: ${verificationUrl}`);
-          console.log("Verification email sent");
+
+          await emailService.sendVerificationEmail({
+            to: email,
+            name: name,
+            verificationUrl: verificationUrl,
+          });
+
+          console.log("Verification email sent successfully");
         } catch (error) {
           console.error("Failed to send verification email:", error);
         }
@@ -307,8 +327,14 @@ class AgendaManager {
 
         try {
           console.log("Sending password reset email to:", email);
-          console.log(`   Reset link: ${resetUrl}`);
-          console.log("Password reset email sent");
+
+          await emailService.sendPasswordResetEmail({
+            to: email,
+            name: name,
+            resetUrl: resetUrl,
+          });
+
+          console.log("Password reset email sent successfully");
         } catch (error) {
           console.error("Failed to send password reset email:", error);
         }
@@ -326,7 +352,13 @@ class AgendaManager {
 
         try {
           console.log("Sending password changed confirmation to:", email);
-          console.log("Password changed email sent");
+
+          await emailService.sendPasswordChangedEmail({
+            to: email,
+            name: name,
+          });
+
+          console.log("Password changed email sent successfully");
         } catch (error) {
           console.error("Failed to send password changed email:", error);
         }
@@ -344,8 +376,14 @@ class AgendaManager {
 
         try {
           console.log("Sending account locked email to:", email);
-          console.log(`   Duration: ${duration} minutes`);
-          console.log("Account locked email sent");
+
+          await emailService.sendAccountLockedEmail({
+            to: email,
+            name: name,
+            duration: duration,
+          });
+
+          console.log("Account locked email sent successfully");
         } catch (error) {
           console.error("Failed to send account locked email:", error);
         }
@@ -384,7 +422,15 @@ class AgendaManager {
           });
 
           if (application) {
-            console.log(` Notifying company about withdrawal by ${application.student?.first_name}`);
+            await emailService.sendEmail({
+              to: application.job?.company?.user?.email,
+              subject: `Application Withdrawn - ${application.job?.title}`,
+              html: `
+                <h3>Application Withdrawn</h3>
+                <p><strong>${application.student?.first_name} ${application.student?.last_name}</strong> has withdrawn their application for <strong>${application.job?.title}</strong>.</p>
+                <p>Application ID: ${applicationId}</p>
+              `,
+            });
             console.log("Withdrawal notification sent");
           }
         } catch (error) {
@@ -403,7 +449,7 @@ class AgendaManager {
     this.agenda.define(
       "close-expired-jobs",
       { priority: "low", concurrency: 1 },
-      async (job) => {
+      async () => {
         try {
           console.log("Closing expired jobs...");
 
@@ -440,7 +486,7 @@ class AgendaManager {
     this.agenda.define(
       "remind-pending-applications",
       { priority: "low", concurrency: 1 },
-      async (job) => {
+      async () => {
         try {
           console.log("Checking for pending applications needing reminders...");
 
@@ -474,9 +520,17 @@ class AgendaManager {
           console.log(` Found ${pendingApps.data.length} applications needing reminder`);
 
           for (const app of pendingApps.data) {
-            // NOTE: Email service integration for reminders goes here
-            // For now, logging reminder details for development/testing
-            console.log(`   Reminder for job: ${app.job?.title}`);
+            await emailService.sendEmail({
+              to: app.job?.company?.user?.email,
+              subject: `Reminder: Pending Application - ${app.job?.title}`,
+              html: `
+                <h3>Pending Application Reminder</h3>
+                <p>You have an application that has been pending for more than 7 days.</p>
+                <p><strong>Job:</strong> ${app.job?.title}</p>
+                <p><strong>Application ID:</strong> ${app._id}</p>
+                <p>Please review and update the status.</p>
+              `,
+            });
           }
 
           console.log("Reminders sent");
@@ -492,7 +546,7 @@ class AgendaManager {
     this.agenda.define(
       "cleanup-old-jobs",
       { priority: "low", concurrency: 1 },
-      async (job) => {
+      async () => {
         try {
           console.log("Cleaning up old agenda jobs...");
 
@@ -517,7 +571,7 @@ class AgendaManager {
     this.agenda.define(
       "generate-daily-stats",
       { priority: "low", concurrency: 1 },
-      async (job) => {
+      async () => {
         try {
           console.log("Generating daily statistics...");
 
@@ -563,16 +617,15 @@ class AgendaManager {
     this.agenda.define(
       "cleanup-expired-tokens",
       { priority: "low", concurrency: 1 },
-      async (job) => {
+      async () => {
         try {
           console.log("Cleaning up expired tokens...");
 
           // NOTE: Token cleanup implementation
           // This should query User model for expired tokens and remove them
           // Consider implementing in AuthService or UserRepository
-          const now = new Date();
           // Example: await User.updateMany(
-          //   { 'reset_password_expires': { $lt: now } },
+          //   { 'reset_password_expires': { $lt: new Date() } },
           //   { $unset: { reset_password_token: '', reset_password_expires: '' } }
           // );
           console.log("Expired tokens cleaned up");

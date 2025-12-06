@@ -2,7 +2,7 @@
  * Job Model
  * Enhanced with additional fields, validation, and indexes
  */
-import { BaseModel } from "../../shared/base.model";
+import { BaseModel } from "../../shared/base.model.js";
 import mongoose from "mongoose";
 
 class Job extends BaseModel {

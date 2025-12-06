@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Status Update</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+    .info-box { background: white; border-left: 4px solid #6c757d; padding: 15px; margin: 20px 0; border-radius: 4px; }
+    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Application Status Update</h1>
+    </div>
+    <div class="content">
+      <p>Hi {{name}},</p>
+      
+      <p>Thank you for your interest in joining {{appName}}.</p>
+      
+      <div class="info-box">
+        <p>After careful review, we regret to inform you that we are unable to approve your account at this time.</p>
+      </div>
+      
+      <p><strong>Reason:</strong> {{reason}}</p>
+      
+      <p>We encourage you to:</p>
+      <ul>
+        <li>Review our requirements and guidelines</li>
+        <li>Update your information if needed</li>
+        <li>Reapply when you meet the criteria</li>
+      </ul>
+      
+      <p>If you have any questions or would like more information, please contact us at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+      
+      <p>We appreciate your understanding and wish you the best in your future endeavors.</p>
+      
+      <p>Best regards,<br>The {{appName}} Team</p>
+    </div>
+    <div class="footer">
+      <p>© {{currentYear}} {{appName}}. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

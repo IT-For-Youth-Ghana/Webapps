@@ -11,6 +11,12 @@ import db from "./database/app.database";
 import agendaManager from "./config/agenda.config";
 import cache from "./utils/cache/cache.util";
 import { setupAPIDocs } from "./config/swagger.config.js";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
+
+// ========================================
 
 // Import routes
 import routes from "./routes/app.routes";

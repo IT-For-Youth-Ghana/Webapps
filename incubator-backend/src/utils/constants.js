@@ -81,12 +81,15 @@ export const PASSWORD_POLICY = {
 export const EMAIL_TEMPLATES = {
   WELCOME: "welcome_email",
   PASSWORD_RESET: "password_reset",
+  PASSWORD_CHANGED: "password_changed",
   EMAIL_VERIFICATION: "email_verification",
   APPLICATION_RECEIVED: "application_received",
   APPLICATION_STATUS_UPDATE: "application_status_update",
+  NEW_APPLICATION: "new_application",
   JOB_POSTED: "job_posted",
   ACCOUNT_APPROVED: "account_approved",
   ACCOUNT_REJECTED: "account_rejected",
+  ACCOUNT_LOCKED: "account_locked",
 };
 
 // Cache & Performance

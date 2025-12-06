@@ -44,7 +44,7 @@ class UserController extends BaseController {
     });
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
@@ -80,10 +80,10 @@ class UserController extends BaseController {
     );
 
     if (!result.success) {
-      if (result.error.message.includes("Validation failed")) {
-        return this.validationError(res, result.error.message);
+      if (result.error.includes("Validation failed")) {
+        return this.validationError(res, result.error);
       }
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
@@ -119,7 +119,7 @@ class UserController extends BaseController {
     const result = await this.service("user").uploadPhoto(user.id, req.file);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
@@ -230,7 +230,7 @@ class UserController extends BaseController {
     const result = await this.service("user").getUserById(id, options);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
@@ -262,8 +262,8 @@ class UserController extends BaseController {
     const { page, limit } = this.getPagination(req);
 
     // Call service (uses repository's searchUsers with aggregation)
-    const result = await this.service("user").listUsers(
-      { searchTerm },
+    const result = await this.service("user").searchUsers(
+      searchTerm,
       { page, limit },
       { sort: { created_at: -1 } }
     );
@@ -300,10 +300,10 @@ class UserController extends BaseController {
     const result = await this.service("user").approveUser(id);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
-      if (result.error.message.includes("already approved")) {
+      if (result.error.includes("already approved")) {
         return this.badRequest(res, "User is already approved");
       }
       return this.error(res, result.error);
@@ -338,10 +338,10 @@ class UserController extends BaseController {
     const result = await this.service("user").rejectUser(id, reason);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
-      if (result.error.message.includes("must be pending")) {
+      if (result.error.includes("must be pending")) {
         return this.badRequest(res, "User must be pending to reject");
       }
       return this.error(res, result.error);
@@ -403,7 +403,7 @@ class UserController extends BaseController {
     const result = await this.service("user").setUserActiveStatus(id, true);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
@@ -431,7 +431,7 @@ class UserController extends BaseController {
     const result = await this.service("user").setUserActiveStatus(id, false);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
@@ -459,7 +459,7 @@ class UserController extends BaseController {
     const result = await this.service("user").deleteMyAccount(id);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
@@ -487,7 +487,7 @@ class UserController extends BaseController {
     const result = await this.service("user").forceDeleteUser(id);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);
@@ -515,7 +515,7 @@ class UserController extends BaseController {
     const result = await this.service("user").restoreUser(id);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);

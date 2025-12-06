@@ -6,9 +6,10 @@
 
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { JWT_CONFIG } from "../../config/jwt.config";
-import { SALT_ROUNDS, JWT_EXPIRATION } from "../../utils/constants";
-import { cache } from "../../utils/cache/cache.util";
+import crypto from "crypto";
+import { JWT_CONFIG } from "../../config/jwt.config.js";
+import { SALT_ROUNDS, JWT_EXPIRATION } from "../../utils/constants.js";
+import { cache } from "../../utils/cache/cache.util.js";
 const jwtLibrary = jwt;
 
 export class AuthHelpers {
@@ -38,6 +39,7 @@ export class AuthHelpers {
 
       return jwtLibrary.sign(payload, JWT_CONFIG.SECRET_KEY, {
         ...JWT_CONFIG.TOKEN_OPTIONS,
+        jwtid: crypto.randomBytes(16).toString('hex'),
         expiresIn,
         algorithm: JWT_CONFIG.ALGORITHM,
         issuer: JWT_CONFIG.ISSUER,

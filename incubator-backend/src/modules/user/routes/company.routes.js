@@ -7,22 +7,9 @@ import {
   optionalAuth 
 } from "../../auth/middleware/auth.middleware";
 import { ROLES } from "../../../utils/constants";
-import multer from "multer";
+import { fileService } from "../../../utils/services/file.service.js";
 
 const router = express.Router();
-
-// Configure multer for logo uploads
-const logoUpload = multer({
-  dest: "uploads/logos/",
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image files are allowed for logos"));
-    }
-  },
-});
 
 // ========================================
 // PUBLIC ROUTES (Company Directory)
@@ -40,7 +27,7 @@ router.get("/:id", optionalAuth, companyController.getCompanyById);
 // Profile Management
 router.get("/me", authenticate, authorize(ROLES.COMPANY), companyController.getMyProfile);
 router.put("/me", authenticate, authorize(ROLES.COMPANY), companyController.updateMyProfile);
-router.post("/me/logo", authenticate, authorize(ROLES.COMPANY), logoUpload.single("logo"), companyController.uploadLogo);
+router.post("/me/logo", authenticate, authorize(ROLES.COMPANY), fileService.uploadLogo, companyController.uploadLogo);
 
 // Social Links
 router.put("/me/social-links", authenticate, authorize(ROLES.COMPANY), companyController.updateSocialLinks);

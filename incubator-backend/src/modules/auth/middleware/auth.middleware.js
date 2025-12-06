@@ -10,6 +10,7 @@ import { ERROR_MESSAGES, HTTP_STATUS_CODES, ROLES } from "../../../utils/constan
 import { sendErrorResponse } from "../../../utils/helpers/response.helpers";
 import { cache } from "../../../utils/cache/cache.util";
 import userRepository from "../../user/repositories/user.repository";
+import adminRepository from "../../user/repositories/admin.repository";
 
 /**
  * Extract JWT token from Authorization header
@@ -461,11 +462,13 @@ export const requireAdminPermission = (...requiredPermissions) => {
       }
 
       // Get admin profile with permissions
-      const adminProfile = await userRepository.findById(req.user.id, {
-        populate: { path: "admin_profile", select: "permissions" },
+      const adminProfile = await adminRepository.getByUserId(req.user.id, {
+        populate: { path: "admin", select: "permissions" },
       });
 
-      if (!adminProfile?.admin_profile?.permissions) {
+      console.log("Admin profile:", adminProfile);
+
+      if (!adminProfile?.permissions) {
         return sendErrorResponse(
           res,
           new Error(ERROR_MESSAGES.FORBIDDEN),
@@ -474,7 +477,7 @@ export const requireAdminPermission = (...requiredPermissions) => {
         );
       }
 
-      const userPermissions = adminProfile.admin_profile.permissions;
+      const userPermissions = adminProfile.permissions;
 
       // Super admins have all permissions
       if (userPermissions.includes("super")) {

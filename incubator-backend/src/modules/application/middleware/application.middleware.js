@@ -10,8 +10,7 @@ import { jobRepository } from "../../job/repositories/job.repository";
 import { studentRepository } from "../../user/repositories/student.repository";
 import { companyRepository } from "../../user/repositories/company.repository";
 import { ERROR_MESSAGES } from "../../../utils/constants";
-import multer from "multer";
-import path from "path";
+import { fileService } from "../../../utils/services/file.service.js";
 
 // ========================================
 // 1. OWNERSHIP & PERMISSION CHECKS
@@ -283,76 +282,37 @@ export const validateBulkUpdate = (req, res, next) => {
 // ========================================
 
 /**
- * Configure multer storage for resume uploads
+ * Resume upload middleware using fileService
+ * Handles PDF and Word documents (up to 5MB)
  */
-const resumeStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/resumes/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `resume-${uniqueSuffix}${path.extname(file.originalname)}`);
-  },
-});
+export const uploadResume = fileService.uploadResume;
 
 /**
- * File filter for resume uploads (PDF, DOC, DOCX only)
+ * Handle file upload errors
  */
-const resumeFileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(
-      new Error(
-        "Invalid file type. Only PDF and Word documents are allowed."
-      ),
-      false
-    );
-  }
-};
+export const handleResumeUploadError = fileService.handleUploadError.bind(fileService);
 
 /**
- * Multer upload configuration for resumes
+ * Validate uploaded resume file
  */
-export const uploadResume = multer({
-  storage: resumeStorage,
-  fileFilter: resumeFileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-  },
-}).single("resume");
-
-/**
- * Handle multer errors
- */
-export const handleResumeUploadError = (err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    if (err.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.FILE_TOO_LARGE,
-      });
-    }
+export const validateResumeFile = (req, res, next) => {
+  if (!req.file) {
     return res.status(400).json({
       success: false,
-      error: `File upload error: ${err.message}`,
+      error: ERROR_MESSAGES.RESUME_REQUIRED || "Resume file is required",
     });
   }
 
-  if (err) {
+  // Additional validation using ApplicationValidation
+  try {
+    ApplicationValidation.validateResumeUpload(req.file);
+    next();
+  } catch (error) {
     return res.status(400).json({
       success: false,
-      error: err.message || "File upload failed",
+      error: error.message,
     });
   }
-
-  next();
 };
 
 // ========================================

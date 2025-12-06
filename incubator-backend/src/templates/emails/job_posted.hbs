@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Job Posted</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #1b65b2 0%, #8fb2d6 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+    .info-box { background: white; border: 1px solid #ddd; padding: 15px; margin: 20px 0; border-radius: 4px; }
+    .button { display: inline-block; padding: 12px 30px; background: #1b65b2; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; box-shadow: 0 4px 12px rgba(27, 101, 178, 0.4); }
+    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💼 New Job Posted</h1>
+    </div>
+    <div class="content">
+      <p>Hi Admin,</p>
+      
+      <p>A new job has been posted on the platform and requires review.</p>
+      
+      <div class="info-box">
+        <p><strong>Company:</strong> {{companyName}}</p>
+        <p><strong>Job Title:</strong> {{jobTitle}}</p>
+        <p><strong>Posted on:</strong> {{postDate}}</p>
+      </div>
+      
+      <p>Please review the job posting to ensure it meets platform guidelines before it goes live.</p>
+      
+      <div style="text-align: center;">
+        <a href="{{jobUrl}}" class="button">Review Job Posting</a>
+      </div>
+      
+      <p><strong>Review checklist:</strong></p>
+      <ul>
+        <li>Job description is clear and appropriate</li>
+        <li>Requirements are reasonable</li>
+        <li>Company information is accurate</li>
+        <li>Complies with platform policies</li>
+      </ul>
+      
+      <p>Best regards,<br>The {{appName}} System</p>
+    </div>
+    <div class="footer">
+      <p>© {{currentYear}} {{appName}}. All rights reserved.</p>
+      <p>This is an automated notification.</p>
+    </div>
+  </div>
+</body>
+</html>

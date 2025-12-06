@@ -5,8 +5,8 @@
  * It includes settings such as secret keys, expiration times, and algorithms
  */
 
-import { JWT_EXPIRATION } from "../utils/constants";
-import { isProduction } from "../utils/environment"; // You'll need to create this
+import { JWT_EXPIRATION } from "../utils/constants.js";
+import { isProduction } from "../utils/environment.js"; // You'll need to create this
 
 // Validate required environment variables
 const validateRequiredEnvVars = () => {
@@ -38,11 +38,7 @@ export const JWT_CONFIG = {
 
   // Token options
   TOKEN_OPTIONS: {
-    jwtid: true,                    // Enable unique token IDs for revocation
-    subject: 'auth',                // Subject of the token
     noTimestamp: false,             // Include issued at timestamp
-    clockTolerance: 30,             // Clock skew tolerance in seconds
-    clockTimestamp: Math.floor(Date.now() / 1000), // Current timestamp
   },
 
   // Refresh token rotation settings

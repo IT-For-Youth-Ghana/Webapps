@@ -2,8 +2,8 @@
  * The user model definition for the user module
  */
 
-import { AuthHelpers } from "../../../utils/helpers/auth.helpers";
-import { BaseModel } from "../../shared/base.model";
+import { AuthHelpers } from "../../../utils/helpers/auth.helpers.js";
+import { BaseModel } from "../../shared/base.model.js";
 
 class User extends BaseModel {
   constructor() {

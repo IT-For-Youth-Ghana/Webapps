@@ -3,7 +3,7 @@
  */
 
 import mongoose from "mongoose";
-import { BaseModel } from "../../shared/base.model";
+import { BaseModel } from "../../shared/base.model.js";
 
 class Student extends BaseModel {
 

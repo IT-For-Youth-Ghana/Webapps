@@ -12,7 +12,6 @@ import BaseController from "../../shared/base.controller";
 import userService from "../service/user.service";
 import studentRepository from "../repositories/student.repository";
 import applicationService from "../../application/service/application.service";
-import UserValidation from "../validation/user.validation";
 import { 
   ERROR_MESSAGES, 
   SUCCESS_MESSAGES, 

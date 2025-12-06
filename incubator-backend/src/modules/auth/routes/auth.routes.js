@@ -19,7 +19,7 @@ router.post("/forgot-password", authRateLimit(3, 15), authController.forgotPassw
 router.post("/reset-password", authController.resetPassword);
 router.post("/verify-email", authController.verifyEmail);
 router.post("/resend-verification", authRateLimit(3, 15), authController.resendVerification);
-
+router.get("/verify-email", authController.verifyEmail);
 // Token management (no full auth needed)
 router.post("/refresh", authController.refreshToken);
 router.get("/check", authenticate, authController.checkAuth);

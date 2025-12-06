@@ -260,9 +260,8 @@ class UserValidation {
    * Schema for searching users
    */
   static searchUsersSchema = Joi.object({
-    searchTerm: Joi.string().min(1).required().messages({
+    searchTerm: Joi.string().min(1).optional().messages({
       "string.min": "Search term must be at least 1 character",
-      "any.required": "Search term is required",
     }),
     page: Joi.number().integer().min(1).default(1).messages({
       "number.min": ERROR_MESSAGES.INVALID_PAGE,

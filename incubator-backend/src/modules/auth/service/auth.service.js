@@ -21,6 +21,7 @@ import adminRepository from "../../user/repositories/admin.repository";
 import db from "../../../database/app.database";
 import { cache } from "../../../utils/cache/cache.util";
 import bcrypt from "bcrypt";
+import { agendaManager } from "../../../config/agenda.config.js";
 
 // Attach validation once
 BaseService.setValidation(AuthValidation);
@@ -90,7 +91,13 @@ class AuthService extends BaseService {
 
         // 6. Queue welcome + verification email
         const verificationUrl = `${process.env.APP_URL}/verify-email?token=${verificationToken}`;
-        // await agenda.now("sendWelcomeEmail", { ... });
+        
+        await agendaManager.now("send-welcome-email", {
+          email: newUser.email,
+          name: `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || newUser.email,
+          role: newUser.role,
+          verificationUrl: verificationUrl,
+        });
 
         if (!options.session) {
           await session.commitTransaction();
@@ -399,11 +406,11 @@ class AuthService extends BaseService {
         const resetUrl = `${process.env.APP_URL}/reset-password?token=${resetToken}`;
 
         // Queue email
-        // await agenda.now("sendPasswordResetEmail", {
-        //   to: user.email,
-        //   resetUrl,
-        //   userId: user._id,
-        // });
+        await agendaManager.now("send-password-reset-email", {
+          email: user.email,
+          name: user.email,
+          resetUrl: resetUrl,
+        });
 
         this.log("requestPasswordReset.success", { userId: user._id });
         return this.success({ 
@@ -461,7 +468,10 @@ class AuthService extends BaseService {
         await AuthHelpers.deleteRefreshToken(user._id.toString());
 
         // Send confirmation email
-        // await agenda.now("sendPasswordChangedEmail", { to: user.email });
+        await agendaManager.now("send-password-changed-email", {
+          email: user.email,
+          name: user.email,
+        });
 
         this.log("resetPassword.success", { userId: user._id });
         return this.success({ 
@@ -515,9 +525,6 @@ class AuthService extends BaseService {
         });
 
         await AuthHelpers.deleteVerificationToken(token);
-
-        // Send welcome email
-        // await agenda.now("sendWelcomeEmail", { to: user.email, userId: user._id });
 
         this.log("verifyEmail.success", { userId: user._id });
         return this.success({ message: "Email verified successfully" });
@@ -587,10 +594,11 @@ class AuthService extends BaseService {
 
     if (attempts >= MAX_LOGIN_ATTEMPTS) {
       // Queue account locked email
-      // await agenda.now("sendAccountLockedEmail", {
-      //   to: user.email,
-      //   duration: ACCOUNT_LOCK_DURATION_MINUTES,
-      // });
+      await agendaManager.now("send-account-locked-email", {
+        email: user.email,
+        name: user.email,
+        duration: ACCOUNT_LOCK_DURATION_MINUTES,
+      });
     }
   }
 
@@ -648,11 +656,11 @@ class AuthService extends BaseService {
         const verificationUrl = `${process.env.APP_URL}/verify-email?token=${verificationToken}`;
 
         // Queue verification email (using agenda)
-        // await agenda.now("send-verification-email", {
-        //   email: user.email,
-        //   verificationUrl,
-        //   name: `${user.first_name || ''} ${user.last_name || ''}`.trim()
-        // });
+        await agendaManager.now("send-verification-email", {
+          email: user.email,
+          verificationUrl: verificationUrl,
+          name: user.email,
+        });
 
         this.log("resendVerification.success", { userId: user._id });
         return this.success({

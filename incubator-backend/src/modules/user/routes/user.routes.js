@@ -7,29 +7,16 @@ import {
   requireAdminPermission 
 } from "../../auth/middleware/auth.middleware";
 import { ROLES } from "../../../utils/constants";
-import multer from "multer";
+import { fileService } from "../../../utils/services/file.service.js";
 
 const router = express.Router();
-
-// Configure multer for photo uploads
-const upload = multer({
-  dest: "uploads/photos/",
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only images are allowed"));
-    }
-  },
-});
 
 // ========================================
 // SELF-SERVICE ROUTES (Authenticated)
 // ========================================
 router.get("/me", authenticate, userController.getMyProfile);
 router.put("/me", authenticate, userController.updateMyProfile);
-router.post("/me/photo", authenticate, upload.single("photo"), userController.uploadPhoto);
+router.post("/me/photo", authenticate, fileService.uploadProfilePhoto, userController.uploadPhoto);
 router.delete("/me", authenticate, userController.deleteMyAccount);
 
 // ========================================

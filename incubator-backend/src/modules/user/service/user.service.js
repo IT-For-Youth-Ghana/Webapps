@@ -13,6 +13,7 @@ import { applicationRepository } from "../../application/repositories/applicatio
 import UserValidation from "../validation/user.validation";
 import { ERROR_MESSAGES } from "../../../utils/constants";
 import { agenda } from "../../../config/agenda.config";
+import { fileService } from "../../../utils/services/file.service.js";
 
 // Attach validation to BaseService (done once at startup, but here for completeness)
 BaseService.setValidation(UserValidation);
@@ -140,19 +141,43 @@ class UserService extends BaseService {
       try {
         this.log("uploadPhoto.start", { userId, fileName: file?.originalname });
 
-        // NOTE: File upload implementation
-        // For local storage: File is already saved by multer to uploads/profiles/
-        // For cloud storage (S3/Cloudinary): Implement FileStorage.upload(file, "profiles")
-        // Example S3: const photoUrl = await s3Client.upload(file.buffer, file.originalname);
+        // File is already saved by fileService.uploadProfilePhoto middleware
+        // Construct the URL for the uploaded file
         const photoUrl = `/uploads/profiles/${file.filename}`;
 
-        const updateData = { photo_url: photoUrl };
-        const user = await this.repo("user").updateById(userId, updateData);
+        // Optionally optimize the image
+        try {
+          const optimizedPath = await fileService.optimizeImage(file.path, {
+            width: 400,
+            height: 400,
+            quality: 85,
+            format: "jpeg",
+            fit: "cover",
+          });
+          // Update photoUrl to optimized version
+          const optimizedFilename = optimizedPath.split("/").pop();
+          const finalPhotoUrl = `/uploads/profiles/${optimizedFilename}`;
+          
+          // Update user record with photo URL
+          const updateData = { photo_url: finalPhotoUrl };
+          const user = await this.repo("user").updateById(userId, updateData);
 
-        if (!user) throw new Error("User not found");
+          if (!user) throw new Error("User not found");
 
-        this.log("uploadPhoto.success", { userId, photoUrl });
-        return this.success({ photo_url: photoUrl });
+          this.log("uploadPhoto.success", { userId, photoUrl: finalPhotoUrl });
+          return this.success({ photo_url: finalPhotoUrl });
+        } catch (optimizeError) {
+          // If optimization fails, use original file
+          this.log("uploadPhoto.optimizationFailed", { userId, error: optimizeError.message });
+          
+          const updateData = { photo_url: photoUrl };
+          const user = await this.repo("user").updateById(userId, updateData);
+
+          if (!user) throw new Error("User not found");
+
+          this.log("uploadPhoto.success", { userId, photoUrl });
+          return this.success({ photo_url: photoUrl });
+        }
       } catch (error) {
         return this.error(error, "Failed to upload photo");
       }
@@ -173,7 +198,7 @@ class UserService extends BaseService {
 
           return await this.transaction(async (session) => {
             // Soft delete user
-            const user = await this.repo("user").delete(userId, { session });
+            const user = await this.repo("user").deleteUser(userId, { session });
             if (!user) throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
 
             // Soft delete profile
@@ -243,6 +268,52 @@ class UserService extends BaseService {
         return this.success(result);
       } catch (error) {
         return this.error(error, "Failed to list users");
+      }
+    });
+  }
+
+  /**
+   * Search users with aggregation (semantic search across profiles)
+   * @param {string} searchTerm - Search term for email, names, company name
+   * @param {Object} pagination - { page, limit }
+   * @param {Object} [options] - { select, sort, includeDeleted }
+   * @returns {Promise<Object>}
+   */
+  async searchUsers(
+    searchTerm,
+    pagination = { page: 1, limit: 10 },
+    options = {}
+  ) {
+    return this.runInContext({ action: "searchUsers", searchTerm }, async () => {
+      try {
+        this.log("searchUsers.start", { searchTerm, pagination });
+
+        if (!searchTerm || typeof searchTerm !== "string") {
+          throw new Error("Search term is required and must be a string");
+        }
+
+        // Validate pagination
+        const { page, limit } = this.validate(
+          pagination,
+          UserValidation.searchUsersSchema
+        );
+
+        // Use repository's searchUsers (aggregation with profile joins)
+        const result = await this.repo("user").searchUsers(
+          searchTerm,
+          page,
+          limit,
+          {
+            ...options,
+            select: options.select,
+            sort: options.sort || { created_at: -1 },
+          }
+        );
+
+        this.log("searchUsers.success", { total: result.metadata.total });
+        return this.success(result);
+      } catch (error) {
+        return this.error(error, "Failed to search users");
       }
     });
   }
@@ -456,7 +527,7 @@ class UserService extends BaseService {
         this.log("restoreUser.start", { userId });
 
         return await this.transaction(async (session) => {
-          const user = await this.repo("user").restore(userId, { session });
+          const user = await this.repo("user").restoreUser(userId, { session });
           if (!user) throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
 
           // Restore profile

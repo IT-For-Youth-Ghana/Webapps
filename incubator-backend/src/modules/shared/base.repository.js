@@ -249,11 +249,13 @@ class BaseRepository {
   _applyOptions(query, options) {
     if (options.select) query.select(options.select);
     if (options.populate) {
-      if (Array.isArray(options.populate)) {
-        options.populate.forEach(p => query.populate(p));
-      } else {
+      // Only apply populate if it's a string or array, not a boolean flag
+      if (typeof options.populate === 'string') {
         query.populate(options.populate);
+      } else if (Array.isArray(options.populate)) {
+        options.populate.forEach(p => query.populate(p));
       }
+      // If it's a boolean (true/false), ignore it - let the service handle population logic
     }
     if (options.includeDeleted) {
       query._includeDeleted = true;

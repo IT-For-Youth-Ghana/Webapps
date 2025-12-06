@@ -40,12 +40,13 @@ class AuthController extends BaseController {
     const result = await this.service("auth").register(validatedData);
 
     if (!result.success) {
+      console.log("Registration error:", result); // Debug log
       // Handle specific errors
-      if (result.error.message.includes("already exists")) {
+      if (result.error.includes("already exists")) {
         return this.conflict(res, ERROR_MESSAGES.EMAIL_ALREADY_EXISTS);
       }
-      if (result.error.message.includes("Validation failed")) {
-        return this.validationError(res, result.error.message);
+      if (result.error.includes("Validation failed")) {
+        return this.validationError(res, result.error);
       }
       return this.error(res, result.error);
     }
@@ -181,8 +182,8 @@ class AuthController extends BaseController {
 
     if (!result.success) {
       if (
-        result.error.message.includes("Invalid") ||
-        result.error.message.includes("expired")
+        result.error.includes("Invalid") ||
+        result.error.includes("expired")
       ) {
         return this.unauthorized(res, ERROR_MESSAGES.TOKEN_EXPIRED);
       }
@@ -253,13 +254,13 @@ class AuthController extends BaseController {
     const result = await this.service("auth").resetPassword(validatedData);
 
     if (!result.success) {
-      if (result.error.message.includes("expired")) {
+      if (result.error.includes("expired")) {
         return this.unauthorized(
           res,
           ERROR_MESSAGES.PASSWORD_RESET_TOKEN_EXPIRED
         );
       }
-      if (result.error.message.includes("Invalid")) {
+      if (result.error.includes("Invalid")) {
         return this.badRequest(res, ERROR_MESSAGES.INVALID_TOKEN);
       }
       return this.error(res, result.error);
@@ -280,6 +281,11 @@ class AuthController extends BaseController {
   verifyEmail = this.asyncHandler(async (req, res) => {
     this.log("info", { action: "verifyEmail" });
 
+    if (req.method === "GET") {
+      req.body = {};
+      // For GET requests, extract token from query parameters
+      req.body.token = req.query.token;
+    }
     // Validate input
     const validatedData = this.validate(
       req.body,
@@ -290,10 +296,10 @@ class AuthController extends BaseController {
     const result = await this.service("auth").verifyEmail(validatedData);
 
     if (!result.success) {
-      if (result.error.message.includes("expired")) {
+      if (result.error.includes("expired")) {
         return this.unauthorized(res, ERROR_MESSAGES.TOKEN_EXPIRED);
       }
-      if (result.error.message.includes("already verified")) {
+      if (result.error.includes("already verified")) {
         return this.badRequest(res, ERROR_MESSAGES.EMAIL_ALREADY_VERIFIED);
       }
       return this.error(res, result.error);
@@ -407,11 +413,11 @@ class AuthController extends BaseController {
     );
 
     if (!result.success) {
-      if (result.error.message?.includes("incorrect")) {
+      if (result.error?.includes("incorrect")) {
         return this.unauthorized(res, "Current password is incorrect");
       }
-      if (result.error.message?.includes("different")) {
-        return this.badRequest(res, result.error.message);
+      if (result.error?.includes("different")) {
+        return this.badRequest(res, result.error);
       }
       return this.error(res, result.error);
     }
@@ -442,7 +448,7 @@ class AuthController extends BaseController {
     const result = await this.service("auth").unlockAccount(userId);
 
     if (!result.success) {
-      if (result.error.message.includes("not found")) {
+      if (result.error.includes("not found")) {
         return this.notFound(res, ERROR_MESSAGES.USER_NOT_FOUND);
       }
       return this.error(res, result.error);

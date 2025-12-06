@@ -2,7 +2,7 @@
  * Application Model
  * Tracks job applications from students
  */
-import { BaseModel } from "../../shared/base.model";
+import { BaseModel } from "../../shared/base.model.js";
 import mongoose from "mongoose";
 
 class Application extends BaseModel {
