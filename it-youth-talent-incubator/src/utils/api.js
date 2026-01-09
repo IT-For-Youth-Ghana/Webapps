@@ -1,11 +1,24 @@
 import axios from 'axios'
 
+/**
+ * @typedef {import('../types/api.types.js').ApiResponse} ApiResponse
+ * @typedef {import('../types/api.types.js').PaginatedResponse} PaginatedResponse
+ * @typedef {import('../types/api.types.js').User} User
+ * @typedef {import('../types/api.types.js').Student} Student
+ * @typedef {import('../types/api.types.js').Company} Company
+ * @typedef {import('../types/api.types.js').Job} Job
+ * @typedef {import('../types/api.types.js').Application} Application
+ * @typedef {import('../types/api.types.js').LoginResponse} LoginResponse
+ * @typedef {import('../types/api.types.js').AuthTokens} AuthTokens
+ */
+
 // ===========================================
 // API Configuration
 // ===========================================
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT) || 10000
 
+/** @type {import('axios').AxiosInstance} */
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: API_TIMEOUT,
