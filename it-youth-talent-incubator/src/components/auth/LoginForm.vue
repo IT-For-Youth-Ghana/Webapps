@@ -1,4 +1,4 @@
-<!-- 
+<!--
 🚀 IT Youth Talent Incubator - Login Authentication Component
 
 PURPOSE: A secure and user-friendly login interface that handles authentication for both
@@ -51,13 +51,24 @@ TODO ITEMS:
 - Add support for social login providers (Google, GitHub, etc.)
 -->
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from '../../stores/auth.js'
+
+// Auth store
+const authStore = useAuthStore()
+
+// Emits for parent component navigation
+const emit = defineEmits(['login-success', 'navigate'])
 
 // Form data
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
-const isLoading = ref(false)
+
+// Use store loading state
+const isLoading = computed(() => authStore.isLoading)
+
+// Local error state (for validation errors)
 const errorMessage = ref('')
 
 // Form validation
@@ -71,12 +82,13 @@ const validateEmail = (email) => {
 
 const validateForm = () => {
   let isValid = true
-  
+
   // Reset errors
   emailError.value = ''
   passwordError.value = ''
   errorMessage.value = ''
-  
+  authStore.clearError()
+
   // Email validation
   if (!email.value) {
     emailError.value = 'Email is required'
@@ -85,7 +97,7 @@ const validateForm = () => {
     emailError.value = 'Please enter a valid email address'
     isValid = false
   }
-  
+
   // Password validation
   if (!password.value) {
     passwordError.value = 'Password is required'
@@ -94,52 +106,35 @@ const validateForm = () => {
     passwordError.value = 'Password must be at least 6 characters'
     isValid = false
   }
-  
+
   return isValid
 }
 
 const handleLogin = async () => {
   if (!validateForm()) return
-  
-  isLoading.value = true
-  errorMessage.value = ''
-  
-  try {
-    // TODO: Replace with actual authentication API call
-    // Example: const response = await authAPI.login(email.value, password.value, rememberMe.value)
-    console.log('Login attempt:', { email: email.value, password: password.value, rememberMe: rememberMe.value })
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Mock authentication logic for demo purposes
-    if (email.value === 'admin@itforyouth.gh' && password.value === 'admin123') {
-      console.log('Login successful - Admin user')
-      // TODO: Store authentication token and user data
-      // TODO: Navigate to admin dashboard component (Dashboard.vue)
-    } else if (email.value.includes('student') && password.value === 'student123') {
-      console.log('Login successful - Student user')
-      // TODO: Store authentication token and user data
-      // TODO: Navigate to student profile or job browsing page
-    } else {
-      throw new Error('Invalid email or password')
-    }
-    
-  } catch (error) {
-    errorMessage.value = error.message || 'Login failed. Please try again.'
-  } finally {
-    isLoading.value = false
+
+  const result = await authStore.login({
+    email: email.value,
+    password: password.value
+  })
+
+  if (result.success) {
+    // Emit success event for parent to handle navigation
+    emit('login-success', {
+      user: authStore.user,
+      role: authStore.userRole
+    })
+  } else {
+    errorMessage.value = result.message || 'Login failed. Please try again.'
   }
 }
 
 const goToRegister = () => {
-  // TODO: Navigate to register page
-  console.log('Navigate to register page')
+  emit('navigate', 'register')
 }
 
 const goToForgotPassword = () => {
-  // TODO: Navigate to forgot password page
-  console.log('Navigate to forgot password page')
+  emit('navigate', 'forgot-password')
 }
 </script>
 
@@ -147,23 +142,23 @@ const goToForgotPassword = () => {
   <div>
     <h1>Welcome Back</h1>
     <p class="subtitle">Sign in to your IT Youth Talent Incubator account</p>
-    
+
     <!-- Login Form -->
     <div class="section-container">
       <h2>Login</h2>
-      
+
       <!-- Error Message -->
       <div v-if="errorMessage" class="error-banner">
         <span class="error-icon">⚠️</span>
         {{ errorMessage }}
       </div>
-      
+
       <form @submit.prevent="handleLogin">
         <!-- Email Field -->
         <div class="form-row">
           <div class="form-field full-width">
             <label for="email" class="form-label">Email Address:</label>
-            <input 
+            <input
               id="email"
               v-model="email"
               type="email"
@@ -180,7 +175,7 @@ const goToForgotPassword = () => {
         <div class="form-row">
           <div class="form-field full-width">
             <label for="password" class="form-label">Password:</label>
-            <input 
+            <input
               id="password"
               v-model="password"
               type="password"
@@ -200,7 +195,7 @@ const goToForgotPassword = () => {
               <input type="checkbox" v-model="rememberMe" class="checkbox">
               <span class="checkbox-text">Remember me</span>
             </label>
-            
+
             <button type="button" @click="goToForgotPassword" class="link-button">
               Forgot Password?
             </button>
@@ -209,8 +204,8 @@ const goToForgotPassword = () => {
 
         <!-- Submit Button -->
         <div class="form-row">
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             class="btn-primary full-width"
             :disabled="isLoading"
           >
@@ -223,7 +218,7 @@ const goToForgotPassword = () => {
       <!-- Register Link -->
       <div class="form-footer">
         <p class="register-text">
-          Don't have an account? 
+          Don't have an account?
           <button @click="goToRegister" class="link-button strong">
             Create Account
           </button>
@@ -478,12 +473,12 @@ h2 {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .section-container {
     padding: 20px;
     margin-bottom: 24px;
   }
-  
+
   .form-options {
     flex-direction: column;
     align-items: flex-start;

@@ -1,6 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useTheme } from './composables/useTheme.js'
+import { useAuthStore } from './stores/auth.js'
+
+// Components
 import DashboardNavigation from './components/layout/DashboardNavigation.vue'
 import StudentDashboard from './pages/StudentDashboard.vue'
 import AdminDashboard from './pages/AdminDashboard.vue'
@@ -14,18 +17,28 @@ import AdminStudentsPage from './pages/AdminStudentsPage.vue'
 import AdminAnalyticsPage from './pages/AdminAnalyticsPage.vue'
 import CompanyMyJobPosts from './pages/company/MyJobPosts.vue'
 import CompanyApplications from './pages/company/Applications.vue'
+import LoginForm from './components/auth/LoginForm.vue'
+import RegisterForm from './components/auth/RegisterForm.vue'
+import ForgotPassword from './components/auth/ForgotPassword.vue'
 
 // Theme management
 const { currentTheme, theme } = useTheme()
 
-// Authentication state - would come from external auth system
-const userRole = ref('student') // 'student', 'admin', or 'company'
-const userName = ref('Alex Johnson')
-const isAuthenticated = ref(true)
-const currentView = ref('dashboard')
+// Auth store
+const authStore = useAuthStore()
 
-// Demo mode for testing
-const isDemoMode = ref(true)
+// Computed auth state from store
+const userRole = computed(() => authStore.userRole || 'student')
+const userName = computed(() => authStore.userName || 'Guest')
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+const isAuthLoading = computed(() => authStore.isLoading && !authStore.isInitialized)
+
+// View state
+const currentView = ref('dashboard')
+const authView = ref('login') // 'login', 'register', 'forgot-password'
+
+// Demo mode for testing (can be disabled in production)
+const isDemoMode = ref(import.meta.env.DEV)
 
 // Navigation handler
 const handleNavigation = (viewId) => {
@@ -33,11 +46,29 @@ const handleNavigation = (viewId) => {
   console.log('Navigating to:', viewId)
 }
 
+// Auth navigation handler
+const handleAuthNavigation = (view) => {
+  authView.value = view
+}
+
+// Login success handler
+const handleLoginSuccess = ({ user, role }) => {
+  console.log('Login successful:', user?.email, 'Role:', role)
+  currentView.value = 'dashboard'
+}
+
+// Register success handler
+const handleRegisterSuccess = ({ email }) => {
+  console.log('Registration successful for:', email)
+  authView.value = 'login'
+}
+
 // Logout handler
-const handleLogout = () => {
+const handleLogout = async () => {
   console.log('Logging out...')
-  // In real app, this would redirect to main website
-  window.location.href = 'https://itforyouthghana.org'
+  await authStore.logout()
+  currentView.value = 'dashboard'
+  authView.value = 'login'
 }
 
 // Job application handler for student dashboard
@@ -46,28 +77,68 @@ const handleApplyToJob = (jobId) => {
   // In real app, this would open application modal or navigate to application form
 }
 
-// Simulate authentication check on mount
-onMounted(() => {
-  // In real app, check authentication status and user role from main website
+// Initialize auth on mount
+onMounted(async () => {
   console.log('🚀 IT Youth Talent Incubator Dashboard')
-  console.log('User authenticated as:', userRole.value)
-  
+
+  // Initialize auth store (checks for existing session)
+  await authStore.initialize()
+
+  if (authStore.isAuthenticated) {
+    console.log('User authenticated as:', authStore.userRole)
+  } else {
+    console.log('No active session - showing login')
+  }
+
   if (isDemoMode.value) {
-    console.log('Demo Mode: Switch between student/admin by changing userRole in code')
+    console.log('Demo Mode: Use demo controls to switch roles')
   }
 })
 
 // Demo functions to switch roles (remove in production)
-const switchToRole = (role) => {
-  userRole.value = role
-  
-  const names = {
-    student: 'Alex Johnson',
-    admin: 'Admin User',
-    company: 'TechCorp Ghana'
+const switchToRole = async (role) => {
+  // In demo mode, simulate different user roles
+  // This modifies the store directly for testing purposes
+  if (isDemoMode.value) {
+    const mockUsers = {
+      student: {
+        _id: 'demo-student-1',
+        email: 'student@demo.com',
+        role: 'student',
+        status: 'approved',
+        is_active: true,
+        email_verified: true
+      },
+      admin: {
+        _id: 'demo-admin-1',
+        email: 'admin@demo.com',
+        role: 'admin',
+        status: 'approved',
+        is_active: true,
+        email_verified: true
+      },
+      company: {
+        _id: 'demo-company-1',
+        email: 'company@demo.com',
+        role: 'company',
+        status: 'approved',
+        is_active: true,
+        email_verified: true
+      }
+    }
+
+    const mockProfiles = {
+      student: { first_name: 'Alex', last_name: 'Johnson' },
+      admin: { first_name: 'Admin', last_name: 'User' },
+      company: { name: 'TechCorp Ghana' }
+    }
+
+    // Update store state directly for demo
+    authStore.user = mockUsers[role]
+    authStore.profile = mockProfiles[role]
+    authStore.isAuthenticated = true
+    currentView.value = 'dashboard'
   }
-  userName.value = names[userRole.value]
-  currentView.value = 'dashboard'
 }
 
 const switchRole = () => {
@@ -78,52 +149,87 @@ const switchRole = () => {
 }
 
 // Make demo function available in console
-window.switchRole = switchRole
+if (import.meta.env.DEV) {
+  window.switchRole = switchRole
+  window.authStore = authStore
+}
 </script>
 
 <template>
   <div id="app">
-    <!-- Navigation -->
-    <DashboardNavigation
-      :user-role="userRole"
-      :current-view="currentView"
-      :user-name="userName"
-      @navigate="handleNavigation"
-      @logout="handleLogout"
-    />
+    <!-- Loading State -->
+    <div v-if="isAuthLoading" class="auth-loading">
+      <div class="loading-spinner-large">⟳</div>
+      <p>Loading...</p>
+    </div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Student Dashboard -->
-      <StudentDashboard
-        v-if="userRole === 'student' && currentView === 'dashboard'"
-        :current-view="currentView"
-        @navigate="handleNavigation"
-        @apply-to-job="handleApplyToJob"
-      />
-
-      <!-- Admin Dashboard -->
-      <AdminDashboard
-        v-else-if="userRole === 'admin' && currentView === 'dashboard'"
-        :current-view="currentView"
-        @navigate="handleNavigation"
-      />
-
-      <!-- Company Dashboard -->
-      <CompanyDashboard
-        v-else-if="userRole === 'company' && currentView === 'dashboard'"
-        :current-view="currentView"
-        @navigate="handleNavigation"
-      />
-
-      <!-- Student Jobs Page -->
-      <div v-if="userRole === 'student' && currentView === 'jobs'" class="page-container">
-        <div class="page-header">
-          <h1 class="page-title">Student Jobs (Loading...)</h1>
-          <p class="page-subtitle">Job search interface will load here</p>
+    <!-- Auth Forms (Not Authenticated) -->
+    <template v-else-if="!isAuthenticated">
+      <div class="auth-container">
+        <div class="auth-header">
+          <img src="/logo/itfy-logo.png" alt="IT For Youth Ghana" class="auth-logo" />
+          <h1>IT Youth Talent Incubator</h1>
         </div>
-        <StudentJobsPage />
+
+        <LoginForm
+          v-if="authView === 'login'"
+          @login-success="handleLoginSuccess"
+          @navigate="handleAuthNavigation"
+        />
+
+        <RegisterForm
+          v-else-if="authView === 'register'"
+          @register-success="handleRegisterSuccess"
+          @navigate="handleAuthNavigation"
+        />
+
+        <ForgotPassword v-else-if="authView === 'forgot-password'" @navigate="handleAuthNavigation" />
       </div>
+    </template>
+
+    <!-- Authenticated App -->
+    <template v-else>
+      <!-- Navigation -->
+      <DashboardNavigation
+        :user-role="userRole"
+        :current-view="currentView"
+        :user-name="userName"
+        @navigate="handleNavigation"
+        @logout="handleLogout"
+      />
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Student Dashboard -->
+        <StudentDashboard
+          v-if="userRole === 'student' && currentView === 'dashboard'"
+          :current-view="currentView"
+          @navigate="handleNavigation"
+          @apply-to-job="handleApplyToJob"
+        />
+
+        <!-- Admin Dashboard -->
+        <AdminDashboard
+          v-else-if="userRole === 'admin' && currentView === 'dashboard'"
+          :current-view="currentView"
+          @navigate="handleNavigation"
+        />
+
+        <!-- Company Dashboard -->
+        <CompanyDashboard
+          v-else-if="userRole === 'company' && currentView === 'dashboard'"
+          :current-view="currentView"
+          @navigate="handleNavigation"
+        />
+
+        <!-- Student Jobs Page -->
+        <div v-if="userRole === 'student' && currentView === 'jobs'" class="page-container">
+          <div class="page-header">
+            <h1 class="page-title">Student Jobs (Loading...)</h1>
+            <p class="page-subtitle">Job search interface will load here</p>
+          </div>
+          <StudentJobsPage />
+        </div>
 
       <!-- Student Applications Page -->
       <StudentApplicationsPage
@@ -168,30 +274,31 @@ window.switchRole = switchRole
       <CompanyApplications
         v-else-if="userRole === 'company' && currentView === 'applications'"
       />
-    </main>
+      </main>
+    </template>
 
-    <!-- Demo Mode Indicator -->
+    <!-- Demo Mode Indicator (visible in both auth and app views) -->
     <div v-if="isDemoMode" class="demo-controls">
       <div class="demo-indicator">
-        Demo Mode - {{ userRole }}
+        Demo Mode - {{ isAuthenticated ? userRole : 'Not logged in' }}
       </div>
-      <div class="demo-buttons">
-        <button 
-          @click="switchToRole('student')" 
+      <div v-if="isAuthenticated" class="demo-buttons">
+        <button
+          @click="switchToRole('student')"
           class="role-switch-btn"
           :class="{ active: userRole === 'student' }"
         >
           Student
         </button>
-        <button 
-          @click="switchToRole('admin')" 
+        <button
+          @click="switchToRole('admin')"
           class="role-switch-btn"
           :class="{ active: userRole === 'admin' }"
         >
           Admin
         </button>
-        <button 
-          @click="switchToRole('company')" 
+        <button
+          @click="switchToRole('company')"
           class="role-switch-btn"
           :class="{ active: userRole === 'company' }"
         >
@@ -343,5 +450,62 @@ window.switchRole = switchRole
     bottom: 0.5rem;
     right: 0.5rem;
   }
+
+  .auth-container {
+    padding: 1rem;
+  }
+}
+
+/* Auth Loading State */
+.auth-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 1rem;
+}
+
+.loading-spinner-large {
+  font-size: 3rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Auth Container */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--bg-primary, #0d1117) 0%, var(--bg-secondary, #161b22) 100%);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+}
+
+.auth-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
 }
 </style>

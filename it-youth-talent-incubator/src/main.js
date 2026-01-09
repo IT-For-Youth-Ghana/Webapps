@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 
 import App from './App.vue'
 
@@ -7,6 +8,10 @@ import './styles/global.css'
 
 const app = createApp(App)
 
+// Setup Pinia store
+const pinia = createPinia()
+app.use(pinia)
+
 // Global error handler
 app.config.errorHandler = (err, instance, info) => {
   console.error('Global error:', err)
@@ -14,3 +19,4 @@ app.config.errorHandler = (err, instance, info) => {
 }
 
 app.mount('#app')
+

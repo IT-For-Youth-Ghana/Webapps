@@ -1,4 +1,4 @@
-<!-- 
+<!--
 🚀 IT Youth Talent Incubator - Student Registration Component
 
 PURPOSE: A comprehensive student registration form that collects all necessary information
@@ -68,7 +68,14 @@ TODO ITEMS:
 - Add skill suggestions or autocomplete functionality
 -->
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from '../../stores/auth.js'
+
+// Auth store
+const authStore = useAuthStore()
+
+// Emits for parent component navigation
+const emit = defineEmits(['register-success', 'navigate'])
 
 // Form data
 const firstName = ref('')
@@ -81,7 +88,10 @@ const university = ref('')
 const studyField = ref('')
 const skills = ref('')
 const agreeToTerms = ref(false)
-const isLoading = ref(false)
+
+// Use store loading state
+const isLoading = computed(() => authStore.isLoading)
+
 const successMessage = ref('')
 const errorMessage = ref('')
 
@@ -109,7 +119,7 @@ const validatePhone = (phone) => {
 
 const validateForm = () => {
   let isValid = true
-  
+
   // Reset errors
   firstNameError.value = ''
   lastNameError.value = ''
@@ -122,7 +132,8 @@ const validateForm = () => {
   skillsError.value = ''
   termsError.value = ''
   errorMessage.value = ''
-  
+  authStore.clearError()
+
   // First name validation
   if (!firstName.value.trim()) {
     firstNameError.value = 'First name is required'
@@ -131,7 +142,7 @@ const validateForm = () => {
     firstNameError.value = 'First name must be at least 2 characters'
     isValid = false
   }
-  
+
   // Last name validation
   if (!lastName.value.trim()) {
     lastNameError.value = 'Last name is required'
@@ -140,7 +151,7 @@ const validateForm = () => {
     lastNameError.value = 'Last name must be at least 2 characters'
     isValid = false
   }
-  
+
   // Email validation
   if (!email.value) {
     emailError.value = 'Email is required'
@@ -149,7 +160,7 @@ const validateForm = () => {
     emailError.value = 'Please enter a valid email address'
     isValid = false
   }
-  
+
   // Phone validation
   if (!phone.value) {
     phoneError.value = 'Phone number is required'
@@ -158,7 +169,7 @@ const validateForm = () => {
     phoneError.value = 'Please enter a valid phone number'
     isValid = false
   }
-  
+
   // Password validation
   if (!password.value) {
     passwordError.value = 'Password is required'
@@ -170,7 +181,7 @@ const validateForm = () => {
     passwordError.value = 'Password must contain uppercase, lowercase, and number'
     isValid = false
   }
-  
+
   // Confirm password validation
   if (!confirmPassword.value) {
     confirmPasswordError.value = 'Please confirm your password'
@@ -179,75 +190,82 @@ const validateForm = () => {
     confirmPasswordError.value = 'Passwords do not match'
     isValid = false
   }
-  
+
   // University validation
   if (!university.value.trim()) {
     universityError.value = 'University/Institution is required'
     isValid = false
   }
-  
+
   // Study field validation
   if (!studyField.value.trim()) {
     studyFieldError.value = 'Field of study is required'
     isValid = false
   }
-  
+
   // Skills validation
   if (!skills.value.trim()) {
     skillsError.value = 'Please list at least some skills'
     isValid = false
   }
-  
+
   // Terms validation
   if (!agreeToTerms.value) {
     termsError.value = 'You must agree to the terms and conditions'
     isValid = false
   }
-  
+
   return isValid
 }
 
 const handleRegister = async () => {
   if (!validateForm()) return
-  
-  isLoading.value = true
+
   errorMessage.value = ''
   successMessage.value = ''
-  
-  try {
-    // TODO: Replace with actual registration API call
-    // Example: const response = await authAPI.register(userData)
-    const userData = {
-      firstName: firstName.value,
-      lastName: lastName.value,
-      email: email.value,
-      phone: phone.value,
-      university: university.value,
-      studyField: studyField.value,
-      skills: skills.value,
-      // Note: password should be hashed on the server side
-      password: password.value
+
+  // Build registration data matching backend schema
+  const registerData = {
+    email: email.value,
+    password: password.value,
+    confirmPassword: confirmPassword.value,
+    role: 'student',
+    profile: {
+      first_name: firstName.value.trim(),
+      last_name: lastName.value.trim(),
+      bio: '', // Can be added later in profile
+      skills: skills.value
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s),
+      social_links: []
     }
-    console.log('Registration attempt:', userData)
-    
-    // Simulate API registration process
-    await new Promise(resolve => setTimeout(resolve, 3000))
-    
-    // Mock success response for demo
-    successMessage.value = 'Account created successfully! Please check your email for verification.'
-    
-    // Auto-redirect after successful registration
+  }
+
+  // Store additional info that might be needed (education)
+  // This will be added to profile after registration
+  const educationData = {
+    school: university.value.trim(),
+    field_of_study: studyField.value.trim(),
+    is_current: true
+  }
+
+  const result = await authStore.register(registerData)
+
+  if (result.success) {
+    successMessage.value =
+      result.message || 'Account created successfully! Please check your email for verification.'
+
+    // Store education data for later profile completion
+    sessionStorage.setItem('pendingEducation', JSON.stringify(educationData))
+
+    // Emit success and navigate after delay
     setTimeout(() => {
+      emit('register-success', { email: email.value })
       resetForm()
-      // TODO: Navigate to login page or email verification page
-      // TODO: Send welcome email with verification link
-      console.log('Navigate to login page with success message')
     }, 2000)
-    
-  } catch (error) {
-    errorMessage.value = error.message || 'Registration failed. Please try again.'
-  } finally {
-    isLoading.value = false
+  } else {
+    errorMessage.value = result.message || 'Registration failed. Please try again.'
   }
 }
 
@@ -265,8 +283,7 @@ const resetForm = () => {
 }
 
 const goToLogin = () => {
-  // TODO: Navigate to login page
-  console.log('Navigate to login page')
+  emit('navigate', 'login')
 }
 </script>
 
@@ -274,33 +291,33 @@ const goToLogin = () => {
   <div>
     <h1>Join IT for Youth Ghana</h1>
     <p class="subtitle">Create your account to start your IT career journey</p>
-    
+
     <!-- Registration Form -->
     <div class="section-container">
       <h2>Create Account</h2>
-      
+
       <!-- Success Message -->
       <div v-if="successMessage" class="success-banner">
         <span class="success-icon">✅</span>
         {{ successMessage }}
       </div>
-      
+
       <!-- Error Message -->
       <div v-if="errorMessage" class="error-banner">
         <span class="error-icon">⚠️</span>
         {{ errorMessage }}
       </div>
-      
+
       <form @submit.prevent="handleRegister">
         <!-- Personal Information -->
         <div class="form-section">
           <h3>Personal Information</h3>
-          
+
           <!-- Name Fields -->
           <div class="form-row">
             <div class="form-field">
               <label for="firstName" class="form-label">First Name:</label>
-              <input 
+              <input
                 id="firstName"
                 v-model="firstName"
                 type="text"
@@ -311,10 +328,10 @@ const goToLogin = () => {
               >
               <span v-if="firstNameError" class="field-error">{{ firstNameError }}</span>
             </div>
-            
+
             <div class="form-field">
               <label for="lastName" class="form-label">Last Name:</label>
-              <input 
+              <input
                 id="lastName"
                 v-model="lastName"
                 type="text"
@@ -331,7 +348,7 @@ const goToLogin = () => {
           <div class="form-row">
             <div class="form-field">
               <label for="email" class="form-label">Email Address:</label>
-              <input 
+              <input
                 id="email"
                 v-model="email"
                 type="email"
@@ -342,10 +359,10 @@ const goToLogin = () => {
               >
               <span v-if="emailError" class="field-error">{{ emailError }}</span>
             </div>
-            
+
             <div class="form-field">
               <label for="phone" class="form-label">Phone Number:</label>
-              <input 
+              <input
                 id="phone"
                 v-model="phone"
                 type="tel"
@@ -362,11 +379,11 @@ const goToLogin = () => {
         <!-- Education Information -->
         <div class="form-section">
           <h3>Education</h3>
-          
+
           <div class="form-row">
             <div class="form-field">
               <label for="university" class="form-label">University/Institution:</label>
-              <input 
+              <input
                 id="university"
                 v-model="university"
                 type="text"
@@ -377,10 +394,10 @@ const goToLogin = () => {
               >
               <span v-if="universityError" class="field-error">{{ universityError }}</span>
             </div>
-            
+
             <div class="form-field">
               <label for="studyField" class="form-label">Field of Study:</label>
-              <input 
+              <input
                 id="studyField"
                 v-model="studyField"
                 type="text"
@@ -397,7 +414,7 @@ const goToLogin = () => {
           <div class="form-row">
             <div class="form-field full-width">
               <label for="skills" class="form-label">Technical Skills:</label>
-              <textarea 
+              <textarea
                 id="skills"
                 v-model="skills"
                 class="form-textarea"
@@ -414,11 +431,11 @@ const goToLogin = () => {
         <!-- Security -->
         <div class="form-section">
           <h3>Account Security</h3>
-          
+
           <div class="form-row">
             <div class="form-field">
               <label for="password" class="form-label">Password:</label>
-              <input 
+              <input
                 id="password"
                 v-model="password"
                 type="password"
@@ -429,10 +446,10 @@ const goToLogin = () => {
               >
               <span v-if="passwordError" class="field-error">{{ passwordError }}</span>
             </div>
-            
+
             <div class="form-field">
               <label for="confirmPassword" class="form-label">Confirm Password:</label>
-              <input 
+              <input
                 id="confirmPassword"
                 v-model="confirmPassword"
                 type="password"
@@ -452,9 +469,9 @@ const goToLogin = () => {
             <label class="checkbox-label">
               <input type="checkbox" v-model="agreeToTerms" class="checkbox">
               <span class="checkbox-text">
-                I agree to the 
+                I agree to the
                 <button type="button" class="link-button">Terms and Conditions</button>
-                and 
+                and
                 <button type="button" class="link-button">Privacy Policy</button>
               </span>
             </label>
@@ -464,8 +481,8 @@ const goToLogin = () => {
 
         <!-- Submit Button -->
         <div class="form-row">
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             class="btn-primary full-width"
             :disabled="isLoading"
           >
@@ -478,7 +495,7 @@ const goToLogin = () => {
       <!-- Login Link -->
       <div class="form-footer">
         <p class="login-text">
-          Already have an account? 
+          Already have an account?
           <button @click="goToLogin" class="link-button strong">
             Sign In
           </button>
@@ -754,12 +771,12 @@ h2 {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .section-container {
     padding: 20px;
     margin-bottom: 24px;
   }
-  
+
   .form-section {
     margin-bottom: 24px;
     padding-bottom: 20px;
