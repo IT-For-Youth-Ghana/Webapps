@@ -1,55 +1,64 @@
 // Authentication Service
-// Handles all authentication-related API calls and token management
-//
-// TODO for co-programmers:
-// - Add input validation for all authentication methods
-// - Implement secure token storage (consider HttpOnly cookies)
-// - Add user session management
-// - Implement automatic token refresh logic
-// - Add multi-factor authentication support
-// - Implement social login providers (Google, LinkedIn)
-// - Add password strength validation
-// - Implement account lockout after failed attempts
-// - Add email verification flow
-// - Implement remember me functionality with secure tokens
+// Re-exports authAPI and apiUtils from centralized API configuration
+// Use authAPI for all authentication-related API calls
+// Use apiUtils for token management and auth state
 
-import api from './api'
+export { authAPI, apiUtils } from '../utils/api.js'
 
+// Legacy export for backward compatibility
 export const authService = {
   async login(credentials) {
-    const response = await api.post('/auth/login', credentials)
+    const { authAPI, apiUtils } = await import('../utils/api.js')
+    const response = await authAPI.login(credentials)
+    if (response.data?.data?.token) {
+      apiUtils.setAuthToken(response.data.data.token)
+    }
     return response.data
   },
 
   async register(userData) {
-    const response = await api.post('/auth/register', userData)
+    const { authAPI } = await import('../utils/api.js')
+    const response = await authAPI.register(userData)
     return response.data
   },
 
   async logout() {
-    const response = await api.post('/auth/logout')
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('user')
-    return response.data
+    const { authAPI, apiUtils } = await import('../utils/api.js')
+    try {
+      const response = await authAPI.logout()
+      return response.data
+    } finally {
+      apiUtils.clearAuth()
+    }
   },
 
   async forgotPassword(email) {
-    const response = await api.post('/auth/forgot-password', { email })
+    const { authAPI } = await import('../utils/api.js')
+    const response = await authAPI.forgotPassword(email)
     return response.data
   },
 
   async resetPassword(token, password) {
-    const response = await api.post('/auth/reset-password', { token, password })
+    const { authAPI } = await import('../utils/api.js')
+    const response = await authAPI.resetPassword(token, password)
     return response.data
   },
 
   async verifyToken() {
-    const response = await api.get('/auth/verify')
+    const { authAPI } = await import('../utils/api.js')
+    const response = await authAPI.checkAuth()
     return response.data
   },
 
   async refreshToken() {
-    const response = await api.post('/auth/refresh')
+    const { authAPI } = await import('../utils/api.js')
+    const response = await authAPI.refreshToken()
+    return response.data
+  },
+
+  async getCurrentUser() {
+    const { authAPI } = await import('../utils/api.js')
+    const response = await authAPI.getCurrentUser()
     return response.data
   }
 }
