@@ -1,0 +1,7 @@
+/**
+ * Store exports
+ * Central export point for all Pinia stores
+ */
+
+export { useAuthStore } from './auth.js'
+export { useStudentStore } from './student.js'
