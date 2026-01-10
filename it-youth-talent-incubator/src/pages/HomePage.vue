@@ -298,8 +298,8 @@ const navigateToJobs = () => router.push('/jobs')
     system-ui,
     -apple-system,
     sans-serif;
-  color: #1e293b !important;
-  background-color: #f0f4f8;
+  color: var(--text-primary, #ffffff);
+  background-color: var(--bg-primary, #0D1117);
   line-height: 1.6;
 }
 
@@ -633,7 +633,7 @@ const navigateToJobs = () => router.push('/jobs')
 /* ── FEATURES ── */
 .features-section {
   padding: 9rem 0;
-  background: linear-gradient(180deg, #f0f4f8 0%, #e8f0f8 100%);
+  background: var(--bg-secondary, #161B22);
   position: relative;
 }
 
@@ -657,13 +657,13 @@ const navigateToJobs = () => router.push('/jobs')
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 1.2rem;
-  color: #0f172a;
+  color: var(--text-primary, #ffffff);
   letter-spacing: -0.02em;
 }
 
 .section-header p {
   font-size: 1.25rem;
-  color: #475569;
+  color: var(--text-secondary, #8fb2d6);
 }
 
 .features-grid {
@@ -675,10 +675,10 @@ const navigateToJobs = () => router.push('/jobs')
 .feature-card {
   padding: 3.5rem 2.5rem;
   border-radius: 2rem;
-  background: white;
-  border: 1px solid rgba(27, 101, 178, 0.08);
+  background: var(--bg-tertiary, #21262D);
+  border: 1px solid var(--border-primary, #30363d);
   transition: var(--transition);
-  box-shadow: 0 4px 20px rgba(27, 101, 178, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .feature-card:hover {
@@ -708,18 +708,18 @@ const navigateToJobs = () => router.push('/jobs')
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  color: #0f172a;
+  color: var(--text-primary, #ffffff);
 }
 
 .feature-card p {
-  color: #475569;
+  color: var(--text-secondary, #8fb2d6);
   line-height: 1.7;
 }
 
 /* ── JOBS ── */
 .jobs-section {
   padding: 9rem 0;
-  background: white;
+  background: var(--bg-primary, #0D1117);
   position: relative;
 }
 
@@ -883,15 +883,15 @@ const navigateToJobs = () => router.push('/jobs')
 .empty-state {
   text-align: center;
   padding: 8rem 0;
-  color: #475569;
+  color: var(--text-secondary, #8fb2d6);
   font-size: 1.1rem;
 }
 
 .spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid #e2e8f0;
-  border-top-color: #1b65b2;
+  border: 4px solid var(--border-primary, #30363d);
+  border-top-color: var(--interactive-primary, #1b65b2);
   border-radius: 50%;
   animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   margin: 0 auto 2rem;

@@ -753,7 +753,8 @@ onMounted(async () => {
 .search-box {
   display: flex;
   align-items: center;
-  background: white;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 0.5rem;
   box-shadow: var(--shadow-lg), var(--shadow-glow);
@@ -845,9 +846,9 @@ onMounted(async () => {
 .filters-sidebar {
   position: sticky;
   top: 1rem;
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -1039,9 +1040,9 @@ onMounted(async () => {
   gap: 0.5rem;
   margin-bottom: 1.5rem;
   padding: 0.5rem;
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color);
 }
 
 .tab-btn {
@@ -1115,7 +1116,7 @@ onMounted(async () => {
 
 .sort-select {
   padding: 0.625rem 1rem;
-  background: white;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-primary);
@@ -1148,17 +1149,17 @@ onMounted(async () => {
 }
 
 .skeleton-card {
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color);
 }
 
 .skeleton-header,
 .skeleton-title,
 .skeleton-text,
 .skeleton-tags {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-elevated) 50%, var(--bg-tertiary) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 4px;
@@ -1303,7 +1304,7 @@ onMounted(async () => {
   gap: 0.5rem;
   min-width: 200px;
   padding: 1rem 2rem;
-  background: white;
+  background: var(--bg-card);
   border: 2px solid var(--primary);
   border-radius: 12px;
   color: var(--primary);
