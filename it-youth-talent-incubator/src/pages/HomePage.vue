@@ -2,12 +2,15 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useJobsStore } from '../stores/jobs.js'
+import { useTheme } from '../composables/useTheme.js'
 import JobCardIntegrated from '../components/jobs/JobCardIntegrated.vue'
 import JobDetailModal from '../components/jobs/JobDetailModal.vue'
+import ThemeToggle from '../components/common/ThemeToggle.vue'
 
 const router = useRouter()
 
 const jobsStore = useJobsStore()
+const { isDark } = useTheme()
 
 const featuredJobs = computed(() => jobsStore.featuredJobs)
 const isLoading = computed(() => jobsStore.isLoading)
@@ -77,6 +80,8 @@ const navigateToJobs = () => router.push('/jobs')
         </div>
         <div class="nav-actions">
           <router-link to="/jobs" class="nav-link">Find Jobs</router-link>
+          <div class="nav-divider"></div>
+          <ThemeToggle />
           <div class="nav-divider"></div>
           <router-link to="/login" class="nav-link">Log In</router-link>
           <router-link to="/register/student" class="btn btn-primary btn-sm"
