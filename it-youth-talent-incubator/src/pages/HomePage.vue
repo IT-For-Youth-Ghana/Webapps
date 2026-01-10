@@ -63,8 +63,14 @@ const closeJobModal = () => {
 }
 
 const handleJobApply = () => {
-  // Navigate to student registration
+  // Navigate to student registration if not logged in
   router.push('/register/student')
+}
+
+const handleApplicationSuccess = (application) => {
+  showJobModal.value = false
+  selectedJob.value = null
+  alert('Application submitted successfully!')
 }
 
 const navigateToJobs = () => router.push('/jobs')
@@ -261,6 +267,7 @@ const navigateToJobs = () => router.push('/jobs')
       :job="selectedJob"
       @close="closeJobModal"
       @apply="handleJobApply"
+      @applied="handleApplicationSuccess"
     />
   </div>
 </template>

@@ -75,20 +75,17 @@ const handleCloseModal = () => {
 }
 
 const handleApply = async (job) => {
-  applyingToJob.value = true
-  try {
-    // Navigate to application form or show application modal
-    // For now, we'll just log and close
-    console.log('Applying to job:', job._id)
-    // In real implementation, this would navigate to application page
-    // or open an application modal
-    alert(`Application for "${job.title}" would be submitted here.`)
-    handleCloseModal()
-  } catch (err) {
-    console.error('Error applying to job:', err)
-  } finally {
-    applyingToJob.value = false
+  // The modal now handles the application internally
+  // This is just a fallback for external application URLs
+  if (job?.application_url) {
+    window.open(job.application_url, '_blank')
   }
+}
+
+const handleApplicationSuccess = (application) => {
+  showJobModal.value = false
+  jobsStore.clearSelectedJob()
+  alert(`Successfully applied to ${selectedJob.value?.title || 'the job'}!`)
 }
 
 const toggleFilters = () => {
@@ -128,7 +125,7 @@ onMounted(async () => {
           :loading="isLoading"
           placeholder="Search by job title, company, skills..."
         />
-        
+
         <!-- Mobile Filter Toggle -->
         <button @click="toggleFilters" class="filter-toggle-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -193,10 +190,10 @@ onMounted(async () => {
             {{ hasActiveFilters ? 'Search Results' : 'All Jobs' }}
             <span v-if="!isLoading" class="results-count">({{ paginationInfo.totalJobs }})</span>
           </h2>
-          
+
           <div class="sort-controls">
             <label class="sort-label">Sort by:</label>
-            <select 
+            <select
               :value="filters.sort_by"
               @change="jobsStore.setFilter('sort_by', $event.target.value); handleApplyFilters()"
               class="sort-select"
@@ -261,11 +258,11 @@ onMounted(async () => {
         <!-- Load More -->
         <div v-if="paginationInfo.hasMore" class="load-more-section">
           <p class="showing-info">
-            Showing {{ paginationInfo.showing.from }}-{{ paginationInfo.showing.to }} 
+            Showing {{ paginationInfo.showing.from }}-{{ paginationInfo.showing.to }}
             of {{ paginationInfo.totalJobs }} jobs
           </p>
-          <button 
-            @click="handleLoadMore" 
+          <button
+            @click="handleLoadMore"
             class="load-more-btn"
             :disabled="isLoadingMore"
           >
@@ -283,6 +280,7 @@ onMounted(async () => {
       :loading="applyingToJob"
       @close="handleCloseModal"
       @apply="handleApply"
+      @applied="handleApplicationSuccess"
     />
   </div>
 </template>

@@ -149,16 +149,22 @@ const handleCloseModal = () => {
 
 const handleApply = async (job) => {
   if (!isAuthenticated.value) {
-    router.push({ path: '/login', query: { redirect: `/jobs/${job._id}` } })
+    router.push({ path: '/login', query: { redirect: `/jobs` } })
     return
   }
 
-  applyingToJob.value = true
-  try {
-    router.push(`/student/jobs/${job._id}/apply`)
-  } finally {
-    applyingToJob.value = false
+  // The modal now handles the application internally
+  // This is just a fallback for external application URLs
+  if (job?.application_url) {
+    window.open(job.application_url, '_blank')
   }
+}
+
+const handleApplicationSuccess = (application) => {
+  showJobModal.value = false
+  jobsStore.clearSelectedJob()
+  // Show success message or notification
+  alert(`Successfully applied to ${selectedJob.value?.title || 'the job'}!`)
 }
 
 const handleLoadMore = () => {
@@ -522,6 +528,7 @@ onMounted(async () => {
       :loading="applyingToJob"
       @close="handleCloseModal"
       @apply="handleApply"
+      @applied="handleApplicationSuccess"
     />
   </div>
 </template>
