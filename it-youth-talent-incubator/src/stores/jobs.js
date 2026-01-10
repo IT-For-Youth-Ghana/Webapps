@@ -211,7 +211,15 @@ export const useJobsStore = defineStore('jobs', () => {
 
     try {
       const params = buildQueryParams()
-      const response = await jobsAPI.listJobs(params)
+      
+      // Use search endpoint if there's a search query, otherwise use list endpoint
+      let response
+      if (searchQuery.value && searchQuery.value.trim()) {
+        response = await jobsAPI.searchJobs(searchQuery.value.trim(), params)
+      } else {
+        response = await jobsAPI.listJobs(params)
+      }
+      
       const result = apiUtils.unwrap(response)
 
       if (reset) {
@@ -223,7 +231,7 @@ export const useJobsStore = defineStore('jobs', () => {
       // Update pagination info
       if (result.pagination) {
         totalPages.value = result.pagination.totalPages || 1
-        totalJobs.value = result.pagination.total || jobs.value.length
+        totalJobs.value = result.pagination.totalItems || jobs.value.length
         hasMore.value = currentPage.value < totalPages.value
       } else {
         totalJobs.value = jobs.value.length
@@ -252,7 +260,15 @@ export const useJobsStore = defineStore('jobs', () => {
 
     try {
       const params = buildQueryParams()
-      const response = await jobsAPI.listJobs(params)
+      
+      // Use search endpoint if there's a search query, otherwise use list endpoint
+      let response
+      if (searchQuery.value && searchQuery.value.trim()) {
+        response = await jobsAPI.searchJobs(searchQuery.value.trim(), params)
+      } else {
+        response = await jobsAPI.listJobs(params)
+      }
+      
       const result = apiUtils.unwrap(response)
 
       const newJobs = result.data || result.jobs || result || []
