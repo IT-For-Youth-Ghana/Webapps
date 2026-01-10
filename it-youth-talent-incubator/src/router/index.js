@@ -26,13 +26,13 @@ const routes = [
     path: '/',
     name: 'Home',
     component: () => import('../pages/HomePage.vue'),
-    meta: { title: 'IT Youth Talent Incubator' }
+    meta: { title: 'IT Youth Talent Incubator', public: true }
   },
   {
     path: '/jobs',
     name: 'PublicJobs',
-    component: () => import('../pages/StudentJobsPageIntegrated.vue'),
-    meta: { title: 'Job Listings' }
+    component: () => import('../pages/JobsPage.vue'),
+    meta: { title: 'Job Listings', public: true }
   },
 
   // -------------------------

@@ -273,6 +273,27 @@ export const adminAPI = {
 // ===========================================
 export const apiUtils = {
   /**
+   * Unwrap API response to get the data
+   * Handles different response formats from the backend
+   * @param {Object} response - Axios response object
+   * @returns {Object} The unwrapped data
+   */
+  unwrap: (response) => {
+    // If response is already unwrapped data (not an axios response)
+    if (!response?.data && !response?.status) {
+      return response
+    }
+    // Axios wraps response in .data
+    const data = response.data
+    // Backend may wrap in { success: true, data: {...} }
+    if (data?.success && data?.data !== undefined) {
+      return data.data
+    }
+    // Or just return the data directly
+    return data
+  },
+
+  /**
    * Set auth token in localStorage and axios headers
    */
   setAuthToken: (token) => {
