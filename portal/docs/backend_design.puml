@@ -1,0 +1,606 @@
+@startuml Backend_Architecture
+
+
+title IT For Youth Ghana - Backend Modular Architecture
+
+' ==================== HIGH-LEVEL STRUCTURE ====================
+
+package "Backend Application (Express.js)" {
+  
+  package "Entry Point" {
+    component [server.js] as server
+    component [app.js] as app
+  }
+  
+  package "Core Layers" {
+    
+    rectangle "API Layer" as api_layer {
+      [Routes]
+      [Controllers]
+      [Middlewares]
+      [Validators]
+    }
+    
+    rectangle "Business Logic Layer" as business_layer {
+      [Services]
+      [Use Cases]
+      [Domain Logic]
+    }
+    
+    rectangle "Data Access Layer" as data_layer {
+      [Models]
+      [Repositories]
+      [Database Client]
+      [Query Builders]
+    }
+    
+    rectangle "Integration Layer" as integration_layer {
+      [External APIs]
+      [Moodle Client]
+      [Paystack Client]
+      [Email Client]
+      [Telegram Client]
+    }
+    
+    rectangle "Infrastructure Layer" as infra_layer {
+      [Config]
+      [Utils]
+      [Logging]
+      [Error Handling]
+      [Cache]
+    }
+  }
+}
+
+server --> app
+app --> api_layer
+api_layer --> business_layer
+business_layer --> data_layer
+business_layer --> integration_layer
+api_layer --> infra_layer
+business_layer --> infra_layer
+
+@enduml
+
+' ==================== DETAILED FOLDER STRUCTURE ====================
+
+@startuml Folder_Structure
+
+!theme plain
+
+title Backend Project Structure
+
+folder "src/" {
+  
+  folder "config/" {
+    file "database.js" as db_config
+    file "redis.js" as redis_config
+    file "email.js" as email_config
+    file "paystack.js" as paystack_config
+    file "moodle.js" as moodle_config
+    file "telegram.js" as telegram_config
+    file "index.js" as config_index
+  }
+  
+  folder "routes/" {
+    folder "api/" {
+      file "auth.routes.js" as auth_routes
+      file "student.routes.js" as student_routes
+      file "course.routes.js" as course_routes
+      file "payment.routes.js" as payment_routes
+      file "sso.routes.js" as sso_routes
+      file "admin.routes.js" as admin_routes
+      file "index.js" as api_index
+    }
+    folder "webhooks/" {
+      file "paystack.routes.js" as paystack_webhook
+      file "moodle.routes.js" as moodle_webhook
+    }
+  }
+  
+  folder "controllers/" {
+    file "auth.controller.js" as auth_ctrl
+    file "student.controller.js" as student_ctrl
+    file "course.controller.js" as course_ctrl
+    file "payment.controller.js" as payment_ctrl
+    file "sso.controller.js" as sso_ctrl
+    file "admin.controller.js" as admin_ctrl
+    file "webhook.controller.js" as webhook_ctrl
+  }
+  
+  folder "services/" {
+    file "auth.service.js" as auth_svc
+    file "user.service.js" as user_svc
+    file "course.service.js" as course_svc
+    file "enrollment.service.js" as enrollment_svc
+    file "payment.service.js" as payment_svc
+    file "email.service.js" as email_svc
+    file "notification.service.js" as notification_svc
+    file "sync.service.js" as sync_svc
+    file "sso.service.js" as sso_svc
+  }
+  
+  folder "integrations/" {
+    folder "moodle/" {
+      file "moodle.client.js" as moodle_client
+      file "moodle.service.js" as moodle_service
+      file "moodle.types.js" as moodle_types
+    }
+    folder "paystack/" {
+      file "paystack.client.js" as paystack_client
+      file "paystack.service.js" as paystack_service
+    }
+    folder "incubator/" {
+      file "incubator.client.js" as incubator_client
+      file "incubator.service.js" as incubator_service
+    }
+    folder "email/" {
+      file "email.client.js" as email_client
+      file "templates.js" as email_templates
+    }
+  }
+  
+  folder "models/" {
+    file "user.model.js" as user_model
+    file "course.model.js" as course_model
+    file "enrollment.model.js" as enrollment_model
+    file "payment.model.js" as payment_model
+    file "admin.model.js" as admin_model
+    file "verification.model.js" as verification_model
+  }
+  
+  folder "repositories/" {
+    file "user.repository.js" as user_repo
+    file "course.repository.js" as course_repo
+    file "enrollment.repository.js" as enrollment_repo
+    file "payment.repository.js" as payment_repo
+  }
+  
+  folder "middlewares/" {
+    file "auth.middleware.js" as auth_mw
+    file "error.middleware.js" as error_mw
+    file "validation.middleware.js" as validation_mw
+    file "rateLimit.middleware.js" as ratelimit_mw
+    file "cors.middleware.js" as cors_mw
+    file "logger.middleware.js" as logger_mw
+  }
+  
+  folder "validators/" {
+    file "auth.validator.js" as auth_validator
+    file "course.validator.js" as course_validator
+    file "payment.validator.js" as payment_validator
+  }
+  
+  folder "utils/" {
+    file "jwt.util.js" as jwt_util
+    file "crypto.util.js" as crypto_util
+    file "logger.js" as logger
+    file "response.js" as response
+    file "asyncHandler.js" as async_handler
+    file "errors.js" as errors
+  }
+  
+  folder "database/" {
+    folder "migrations/" {
+      file "001_create_users.js" as migration1
+      file "002_create_courses.js" as migration2
+      file "003_create_enrollments.js" as migration3
+    }
+    folder "seeds/" {
+      file "dev_data.js" as seed_data
+    }
+    file "client.js" as db_client
+  }
+  
+  file "app.js" as app_file
+  file "server.js" as server_file
+}
+
+folder "bot/" {
+  folder "commands/" {
+    file "stats.js" as bot_stats
+    file "export.js" as bot_export
+    file "teacher.js" as bot_teacher
+    file "sync.js" as bot_sync
+  }
+  folder "handlers/" {
+    file "message.handler.js" as msg_handler
+    file "auth.handler.js" as auth_handler
+  }
+  file "bot.js" as bot_main
+}
+
+file ".env" as env
+file "package.json" as package
+file "README.md" as readme
+
+@enduml
+
+' ==================== LAYER INTERACTION ====================
+
+@startuml Layer_Interaction
+
+!theme plain
+
+title Request Flow Through Layers
+
+actor Client
+participant "Route" as route
+participant "Middleware" as middleware
+participant "Validator" as validator
+participant "Controller" as controller
+participant "Service" as service
+participant "Repository" as repository
+participant "Database" as db
+participant "External API" as external
+
+Client -> route : HTTP Request
+activate route
+
+route -> middleware : authenticate()
+activate middleware
+middleware --> route : user data
+deactivate middleware
+
+route -> validator : validate(schema)
+activate validator
+validator --> route : validated data
+deactivate validator
+
+route -> controller : handleRequest()
+activate controller
+
+controller -> service : businessLogic()
+activate service
+
+service -> repository : findOne()
+activate repository
+repository -> db : SELECT query
+activate db
+db --> repository : data
+deactivate db
+repository --> service : domain object
+deactivate repository
+
+service -> external : API call
+activate external
+external --> service : response
+deactivate external
+
+service --> controller : result
+deactivate service
+
+controller --> route : formatted response
+deactivate controller
+
+route --> Client : JSON response
+deactivate route
+
+@enduml
+
+' ==================== DEPENDENCY INJECTION ====================
+
+@startuml Dependency_Injection
+
+!theme plain
+
+title Dependency Injection Pattern
+
+class "Container" as container {
+  +register(name, factory)
+  +resolve(name)
+  +singleton(name, factory)
+}
+
+class "UserService" as user_service {
+  -userRepository
+  -emailService
+  +constructor(dependencies)
+  +createUser()
+  +findUser()
+}
+
+class "UserRepository" as user_repo {
+  -dbClient
+  +constructor(dbClient)
+  +create()
+  +findById()
+  +findByEmail()
+}
+
+class "EmailService" as email_service {
+  -emailClient
+  +constructor(emailClient)
+  +sendVerification()
+  +sendWelcome()
+}
+
+container --> user_service : creates
+container --> user_repo : creates
+container --> email_service : creates
+
+user_service --> user_repo : uses
+user_service --> email_service : uses
+
+note right of container
+  **Benefits:**
+  - Testable (mock dependencies)
+  - Loose coupling
+  - Single Responsibility
+  - Easy to swap implementations
+end note
+
+@enduml
+
+' ==================== ERROR HANDLING FLOW ====================
+
+@startuml Error_Handling
+
+!theme plain
+
+title Centralized Error Handling
+
+participant "Controller" as ctrl
+participant "Service" as svc
+participant "Repository" as repo
+participant "Error Middleware" as error_mw
+participant "Logger" as logger
+participant Client
+
+ctrl -> svc : performAction()
+activate svc
+
+svc -> repo : getData()
+activate repo
+
+repo -> repo : Query fails
+repo -> repo : throw new DatabaseError()
+
+repo --> svc : DatabaseError
+deactivate repo
+
+svc -> svc : throw new AppError()
+
+svc --> ctrl : AppError
+deactivate svc
+
+ctrl --> error_mw : next(error)
+activate error_mw
+
+error_mw -> logger : log error
+activate logger
+logger --> error_mw : logged
+deactivate logger
+
+error_mw -> error_mw : determine status code\nformat error response
+
+error_mw --> Client : {success: false, error: {...}}
+deactivate error_mw
+
+note over error_mw
+  **Error Types:**
+  - ValidationError (400)
+  - UnauthorizedError (401)
+  - ForbiddenError (403)
+  - NotFoundError (404)
+  - ConflictError (409)
+  - DatabaseError (500)
+  - ExternalAPIError (502)
+end note
+
+@enduml
+
+@enduml
+
+' ==================== SERVICE PATTERNS ====================
+
+@startuml Service_Patterns
+
+!theme plain
+
+title Service Layer Patterns
+
+package "Services Architecture" {
+  
+  class "BaseService" as base_service {
+    #logger
+    #constructor()
+    #handleError()
+    #validateInput()
+  }
+  
+  class "AuthService" as auth_service {
+    -userRepository
+    -emailService
+    -jwtUtil
+    +startRegistration()
+    +verifyCode()
+    +completeRegistration()
+    +login()
+    +refreshToken()
+  }
+  
+  class "EnrollmentService" as enrollment_service {
+    -enrollmentRepository
+    -courseRepository
+    -userRepository
+    -moodleService
+    -incubatorService
+    -notificationService
+    +enrollStudent()
+    +updateProgress()
+    +completeEnrollment()
+  }
+  
+  class "SyncService" as sync_service {
+    -moodleService
+    -courseRepository
+    -userRepository
+    +syncCoursesFromMoodle()
+    +syncUserToMoodle()
+    +syncUserToIncubator()
+  }
+  
+  base_service <|-- auth_service
+  base_service <|-- enrollment_service
+  base_service <|-- sync_service
+}
+
+note bottom of base_service
+  **Base Service provides:**
+  - Common logging
+  - Error handling patterns
+  - Input validation
+  - Transaction management
+end note
+
+@enduml
+
+' ==================== REPOSITORY PATTERN ====================
+
+@startuml Repository_Pattern
+
+!theme plain
+
+title Repository Pattern Implementation
+
+interface "IRepository<T>" as i_repo {
+  +create(data: T): Promise<T>
+  +findById(id: number): Promise<T | null>
+  +findOne(criteria: object): Promise<T | null>
+  +findMany(criteria: object): Promise<T[]>
+  +update(id: number, data: Partial<T>): Promise<T>
+  +delete(id: number): Promise<boolean>
+}
+
+class "BaseRepository<T>" as base_repo {
+  #dbClient
+  #tableName
+  +constructor(dbClient, tableName)
+  +create(data)
+  +findById(id)
+  +findOne(criteria)
+  +findMany(criteria)
+  +update(id, data)
+  +delete(id)
+  #buildWhereClause(criteria)
+  #mapToModel(row)
+}
+
+class "UserRepository" as user_repo {
+  +findByEmail(email)
+  +findWithEnrollments(id)
+  +updateMoodleId(id, moodleId)
+}
+
+class "EnrollmentRepository" as enrollment_repo {
+  +findByUserAndCourse(userId, courseId)
+  +findWithCourseDetails(id)
+  +updateProgress(id, progress)
+}
+
+i_repo <|.. base_repo
+base_repo <|-- user_repo
+base_repo <|-- enrollment_repo
+
+note right of base_repo
+  **Benefits:**
+  - Encapsulates data access
+  - Consistent query patterns
+  - Easy to test (mockable)
+  - Database agnostic
+end note
+
+@enduml
+
+' ==================== MIDDLEWARE CHAIN ====================
+
+@startuml Middleware_Chain
+
+!theme plain
+
+title Middleware Chain Architecture
+
+package "Middleware Pipeline" {
+  
+  component [CORS] as cors
+  component [Logger] as logger
+  component [Rate Limiter] as rate_limit
+  component [Body Parser] as body_parser
+  component [Authentication] as auth
+  component [Authorization] as authz
+  component [Validation] as validation
+  component [Controller] as controller
+  component [Error Handler] as error_handler
+}
+
+cors --> logger
+logger --> rate_limit
+rate_limit --> body_parser
+body_parser --> auth
+auth --> authz
+authz --> validation
+validation --> controller
+controller --> error_handler
+
+note top of cors
+  **Global Middlewares**
+  Applied to all routes
+end note
+
+note bottom of auth
+  **Route-Specific Middlewares**
+  Applied conditionally
+end note
+
+@enduml
+
+' ==================== CACHING STRATEGY ====================
+
+@startuml Caching_Strategy
+
+!theme plain
+
+title Redis Caching Strategy
+
+package "Cache Layer" {
+  
+  class "CacheService" as cache_service {
+    -redisClient
+    +get(key)
+    +set(key, value, ttl)
+    +delete(key)
+    +invalidate(pattern)
+  }
+  
+  rectangle "Cache Keys" as cache_keys {
+    course:list:{filters_hash}
+    course:{id}
+    user:{id}:enrollments
+    stats:daily
+    moodle:courses
+  }
+  
+  rectangle "TTL Strategy" as ttl {
+    Course list: 1 hour
+    Course details: 1 hour
+    User enrollments: 15 minutes
+    Stats: 1 hour
+    Moodle courses: 4 hours
+    Session data: 7 days
+  }
+}
+
+cache_service --> cache_keys
+cache_service --> ttl
+
+note right of cache_service
+  **Cache Invalidation:**
+  - On course update
+  - On enrollment change
+  - On user update
+  - Manual admin flush
+end note
+
+@enduml
+

@@ -1,0 +1,585 @@
+@startuml Database_Schema
+
+
+title IT For Youth Ghana - Database Schema (PostgreSQL)
+
+' ==================== ENTITIES ====================
+
+entity "users" as users {
+  * id : SERIAL <<PK>>
+  --
+  * email : VARCHAR(255) <<UNIQUE>>
+  * password_hash : VARCHAR(255)
+  first_name : VARCHAR(100)
+  last_name : VARCHAR(100)
+  phone : VARCHAR(20)
+  date_of_birth : DATE
+  role : VARCHAR(20) <<DEFAULT 'student'>>
+  --
+  moodle_user_id : INTEGER
+  incubator_user_id : VARCHAR(50)
+  --
+  temp_password : VARCHAR(255)
+  email_verified : BOOLEAN <<DEFAULT false>>
+  status : VARCHAR(20) <<DEFAULT 'active'>>
+  --
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "verification_codes" as verification {
+  * id : SERIAL <<PK>>
+  --
+  * email : VARCHAR(255) <<UNIQUE>>
+  * code : VARCHAR(6)
+  registration_data : JSONB
+  * expires_at : TIMESTAMP
+  verified : BOOLEAN <<DEFAULT false>>
+  --
+  * created_at : TIMESTAMP
+}
+
+entity "courses" as courses {
+  * id : SERIAL <<PK>>
+  --
+  moodle_course_id : INTEGER <<UNIQUE>>
+  * title : VARCHAR(255)
+  description : TEXT
+  short_description : VARCHAR(500)
+  --
+  * price : DECIMAL(10, 2)
+  currency : VARCHAR(3) <<DEFAULT 'GHS'>>
+  --
+  duration_weeks : INTEGER
+  level : VARCHAR(20)
+  category : VARCHAR(100)
+  --
+  thumbnail_url : VARCHAR(500)
+  status : VARCHAR(20) <<DEFAULT 'active'>>
+  --
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "enrollments" as enrollments {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : INTEGER <<FK>>
+  * course_id : INTEGER <<FK>>
+  --
+  payment_reference : VARCHAR(100)
+  payment_status : VARCHAR(20) <<DEFAULT 'pending'>>
+  enrollment_status : VARCHAR(20) <<DEFAULT 'pending'>>
+  --
+  progress_percentage : INTEGER <<DEFAULT 0>>
+  --
+  enrolled_at : TIMESTAMP
+  completed_at : TIMESTAMP
+  last_accessed : TIMESTAMP
+  --
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+  --
+  UNIQUE(user_id, course_id)
+}
+
+entity "payments" as payments {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : INTEGER <<FK>>
+  enrollment_id : INTEGER <<FK>>
+  --
+  * amount : DECIMAL(10, 2)
+  currency : VARCHAR(3) <<DEFAULT 'GHS'>>
+  --
+  * paystack_reference : VARCHAR(100) <<UNIQUE>>
+  paystack_access_code : VARCHAR(100)
+  authorization_url : TEXT
+  --
+  status : VARCHAR(20) <<DEFAULT 'pending'>>
+  payment_method : VARCHAR(50)
+  --
+  metadata : JSONB
+  --
+  paid_at : TIMESTAMP
+  * created_at : TIMESTAMP
+}
+
+entity "course_teachers" as teachers {
+  * id : SERIAL <<PK>>
+  --
+  * course_id : INTEGER <<FK>>
+  * teacher_id : INTEGER <<FK>>
+  --
+  permissions : JSONB
+  --
+  * assigned_at : TIMESTAMP
+  removed_at : TIMESTAMP
+  --
+  UNIQUE(course_id, teacher_id)
+}
+
+entity "admins" as admins {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : INTEGER <<FK>>
+  --
+  telegram_chat_id : VARCHAR(50) <<UNIQUE>>
+  telegram_username : VARCHAR(100)
+  --
+  role : VARCHAR(20) <<DEFAULT 'moderator'>>
+  permissions : JSONB
+  --
+  last_login : TIMESTAMP
+  * created_at : TIMESTAMP
+}
+
+entity "course_modules" as modules {
+  * id : SERIAL <<PK>>
+  --
+  * course_id : INTEGER <<FK>>
+  moodle_module_id : INTEGER
+  --
+  * title : VARCHAR(255)
+  description : TEXT
+  --
+  module_type : VARCHAR(50)
+  order_index : INTEGER
+  --
+  is_required : BOOLEAN <<DEFAULT true>>
+  --
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+}
+
+entity "student_progress" as progress {
+  * id : SERIAL <<PK>>
+  --
+  * enrollment_id : INTEGER <<FK>>
+  * module_id : INTEGER <<FK>>
+  --
+  status : VARCHAR(20) <<DEFAULT 'not_started'>>
+  score : DECIMAL(5, 2)
+  --
+  started_at : TIMESTAMP
+  completed_at : TIMESTAMP
+  --
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+  --
+  UNIQUE(enrollment_id, module_id)
+}
+
+entity "notifications" as notifications {
+  * id : SERIAL <<PK>>
+  --
+  * user_id : INTEGER <<FK>>
+  --
+  * type : VARCHAR(50)
+  * title : VARCHAR(255)
+  message : TEXT
+  --
+  link : VARCHAR(500)
+  metadata : JSONB
+  --
+  is_read : BOOLEAN <<DEFAULT false>>
+  read_at : TIMESTAMP
+  --
+  * created_at : TIMESTAMP
+}
+
+entity "audit_logs" as audit {
+  * id : SERIAL <<PK>>
+  --
+  user_id : INTEGER <<FK>>
+  admin_id : INTEGER <<FK>>
+  --
+  * action : VARCHAR(100)
+  entity_type : VARCHAR(50)
+  entity_id : INTEGER
+  --
+  old_values : JSONB
+  new_values : JSONB
+  --
+  ip_address : VARCHAR(45)
+  user_agent : TEXT
+  --
+  * created_at : TIMESTAMP
+}
+
+entity "email_logs" as email_logs {
+  * id : SERIAL <<PK>>
+  --
+  user_id : INTEGER <<FK>>
+  --
+  * to_email : VARCHAR(255)
+  * subject : VARCHAR(500)
+  * template : VARCHAR(100)
+  --
+  status : VARCHAR(20) <<DEFAULT 'pending'>>
+  provider_id : VARCHAR(100)
+  --
+  sent_at : TIMESTAMP
+  opened_at : TIMESTAMP
+  clicked_at : TIMESTAMP
+  --
+  error_message : TEXT
+  --
+  * created_at : TIMESTAMP
+}
+
+entity "system_settings" as settings {
+  * id : SERIAL <<PK>>
+  --
+  * key : VARCHAR(100) <<UNIQUE>>
+  * value : TEXT
+  description : TEXT
+  --
+  is_public : BOOLEAN <<DEFAULT false>>
+  --
+  * updated_at : TIMESTAMP
+  updated_by : INTEGER <<FK>>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+users ||--o{ enrollments : "enrolls in"
+courses ||--o{ enrollments : "has"
+enrollments ||--o{ payments : "paid by"
+users ||--o{ payments : "makes"
+
+courses ||--o{ teachers : "taught by"
+users ||--o{ teachers : "teaches"
+
+users ||--o{ admins : "can be"
+
+courses ||--o{ modules : "contains"
+enrollments ||--o{ progress : "tracks"
+modules ||--o{ progress : "completed in"
+
+users ||--o{ notifications : "receives"
+users ||--o{ audit : "performs"
+admins ||--o{ audit : "admin action"
+users ||--o{ email_logs : "sent to"
+users ||--o{ settings : "updated by"
+
+users ||--o{ verification : "verifies"
+
+' ==================== INDEXES ====================
+
+note right of users
+  **Indexes:**
+  - email (UNIQUE)
+  - role
+  - moodle_user_id
+  - incubator_user_id
+  - created_at
+  
+  **Roles:**
+  - student
+  - teacher
+  - admin
+end note
+
+note right of enrollments
+  **Indexes:**
+  - user_id, course_id (UNIQUE)
+  - payment_status
+  - enrollment_status
+  - enrolled_at
+  
+  **Statuses:**
+  Payment: pending, completed, failed
+  Enrollment: pending, enrolled, completed, dropped
+end note
+
+note right of courses
+  **Indexes:**
+  - moodle_course_id (UNIQUE)
+  - status
+  - category
+  - created_at
+  
+  **Levels:**
+  - beginner
+  - intermediate
+  - advanced
+end note
+
+note right of payments
+  **Indexes:**
+  - paystack_reference (UNIQUE)
+  - user_id
+  - status
+  - created_at
+  
+  **Statuses:**
+  - pending
+  - success
+  - failed
+  - cancelled
+end note
+
+@enduml
+
+' ==================== MONGODB SCHEMA (INCUBATOR) ====================
+
+@startuml MongoDB_Schema
+
+!theme plain
+
+title Incubator Database - MongoDB Collections
+
+map "users" as incubator_users {
+  _id => ObjectId
+  email => String (indexed)
+  firstName => String
+  lastName => String
+  centralUserId => Number (indexed)
+  authMethod => String (local|sso)
+  password => String (null for SSO)
+  bio => String
+  skills => Array[String]
+  resume => {url, filename}
+  portfolio => Array[{title, url}]
+  createdAt => Date
+  updatedAt => Date
+}
+
+map "jobs" as jobs {
+  _id => ObjectId
+  title => String
+  company => String
+  description => String
+  requirements => Array[String]
+  type => String (internship|job)
+  location => String
+  remote => Boolean
+  salary => {min, max, currency}
+  postedBy => ObjectId (ref: users)
+  status => String (active|closed)
+  applicants => Array[ObjectId]
+  createdAt => Date
+  expiresAt => Date
+}
+
+map "applications" as applications {
+  _id => ObjectId
+  jobId => ObjectId (ref: jobs)
+  userId => ObjectId (ref: users)
+  status => String
+  coverLetter => String
+  resumeUrl => String
+  appliedAt => Date
+  reviewedAt => Date
+  reviewedBy => ObjectId
+  notes => String
+}
+
+incubator_users::_id --> applications::userId
+jobs::_id --> applications::jobId
+incubator_users::_id --> jobs::postedBy
+
+note right of incubator_users
+  **SSO Integration:**
+  - centralUserId links to PostgreSQL
+  - authMethod = 'sso' for auto-created users
+  - No password required for SSO users
+end note
+
+@enduml
+
+' ==================== VIEWS AND MATERIALIZED VIEWS ====================
+
+@startuml Database_Views
+
+!theme plain
+
+title Useful Database Views
+
+rectangle "enrollment_summary" as enroll_view {
+  **Materialized View** (Refresh: Hourly)
+  ....
+  SELECT
+    e.id,
+    u.first_name,
+    u.last_name,
+    u.email,
+    c.title as course_title,
+    e.enrollment_status,
+    e.progress_percentage,
+    e.enrolled_at,
+    e.completed_at,
+    p.amount,
+    p.status as payment_status
+  FROM enrollments e
+  JOIN users u ON e.user_id = u.id
+  JOIN courses c ON e.course_id = c.id
+  LEFT JOIN payments p ON e.id = p.enrollment_id
+}
+
+rectangle "course_statistics" as course_stats {
+  **View**
+  ....
+  SELECT
+    c.id,
+    c.title,
+    COUNT(DISTINCT e.user_id) as total_students,
+    COUNT(CASE WHEN e.enrollment_status = 'completed' 
+          THEN 1 END) as completed_count,
+    AVG(e.progress_percentage) as avg_progress,
+    SUM(p.amount) as total_revenue
+  FROM courses c
+  LEFT JOIN enrollments e ON c.id = e.course_id
+  LEFT JOIN payments p ON e.id = p.enrollment_id
+  WHERE p.status = 'success'
+  GROUP BY c.id, c.title
+}
+
+rectangle "active_students" as active_students {
+  **View**
+  ....
+  SELECT
+    u.*,
+    COUNT(e.id) as enrolled_courses,
+    MAX(e.last_accessed) as last_activity
+  FROM users u
+  JOIN enrollments e ON u.id = e.user_id
+  WHERE e.enrollment_status = 'enrolled'
+  GROUP BY u.id
+  HAVING MAX(e.last_accessed) > NOW() - INTERVAL '30 days'
+}
+
+rectangle "teacher_courses" as teacher_view {
+  **View**
+  ....
+  SELECT
+    u.id as teacher_id,
+    u.first_name,
+    u.last_name,
+    u.email,
+    c.id as course_id,
+    c.title,
+    COUNT(e.id) as student_count
+  FROM users u
+  JOIN course_teachers ct ON u.id = ct.teacher_id
+  JOIN courses c ON ct.course_id = c.id
+  LEFT JOIN enrollments e ON c.id = e.course_id
+  WHERE ct.removed_at IS NULL
+  GROUP BY u.id, c.id
+}
+
+note bottom of enroll_view
+  **Used by:**
+  - Admin dashboard
+  - Excel exports
+  - Telegram bot stats
+end note
+
+note bottom of course_stats
+  **Used by:**
+  - Course analytics
+  - Revenue reports
+  - Performance tracking
+end note
+
+@enduml
+
+' ==================== DATABASE TRIGGERS ====================
+
+@startuml Database_Triggers
+
+!theme plain
+
+title Database Triggers & Functions
+
+package "Automated Actions" {
+  
+  card "update_enrollment_progress" as trigger1 {
+    **Trigger:** AFTER INSERT/UPDATE ON student_progress
+    ....
+    Automatically calculates and updates
+    enrollments.progress_percentage
+    based on completed modules
+  }
+  
+  card "log_audit_trail" as trigger2 {
+    **Trigger:** AFTER UPDATE ON users, courses, enrollments
+    ....
+    Automatically logs changes to audit_logs
+    table for compliance and tracking
+  }
+  
+  card "update_timestamps" as trigger3 {
+    **Trigger:** BEFORE UPDATE ON all tables
+    ....
+    Automatically sets updated_at = NOW()
+    before any UPDATE operation
+  }
+  
+  card "validate_enrollment" as trigger4 {
+    **Trigger:** BEFORE INSERT ON enrollments
+    ....
+    Validates:
+    - User exists
+    - Course exists and is active
+    - No duplicate enrollment
+    - Payment exists (if required)
+  }
+  
+  card "send_notification" as trigger5 {
+    **Trigger:** AFTER INSERT ON enrollments
+    (when status = 'enrolled')
+    ....
+    Creates notification record for user
+    about successful enrollment
+  }
+}
+
+database "PostgreSQL" as db
+
+db --> trigger1
+db --> trigger2
+db --> trigger3
+db --> trigger4
+db --> trigger5
+
+note right of trigger1
+  **Example:**
+  ....
+  CREATE OR REPLACE FUNCTION calculate_progress()
+  RETURNS TRIGGER AS $$
+  DECLARE
+    total_modules INT;
+    completed_modules INT;
+    progress_pct DECIMAL(5,2);
+  BEGIN
+    SELECT COUNT(*) INTO total_modules
+    FROM course_modules
+    WHERE course_id = (
+      SELECT course_id FROM enrollments 
+      WHERE id = NEW.enrollment_id
+    );
+    
+    SELECT COUNT(*) INTO completed_modules
+    FROM student_progress
+    WHERE enrollment_id = NEW.enrollment_id
+      AND status = 'completed';
+    
+    progress_pct = (completed_modules::DECIMAL / total_modules) * 100;
+    
+    UPDATE enrollments
+    SET progress_percentage = progress_pct,
+        enrollment_status = CASE
+          WHEN progress_pct = 100 THEN 'completed'
+          ELSE enrollment_status
+        END
+    WHERE id = NEW.enrollment_id;
+    
+    RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+end note
+
+@enduml
+

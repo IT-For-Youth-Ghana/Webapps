@@ -1,0 +1,454 @@
+@startuml IT_For_Youth_Sequence_Diagrams
+
+
+title IT For Youth Ghana - Key Sequence Flows
+
+' ==================== STUDENT REGISTRATION & ENROLLMENT FLOW ====================
+
+== Student Registration & Course Enrollment ==
+
+actor Student
+participant "Student Portal\n(Next.js)" as Portal
+participant "Central API\n(Express)" as API
+participant "Email Service" as Email
+participant "PostgreSQL" as DB
+participant "Paystack" as Paystack
+participant "Moodle API" as Moodle
+participant "Incubator API" as Incubator
+participant "Telegram Bot" as Telegram
+
+Student -> Portal: 1. Visit registration page
+activate Portal
+
+Portal -> API: 2. POST /api/auth/register/start\n{email, firstName, lastName}
+activate API
+
+API -> DB: 3. INSERT verification_code\n(email, code, partial_data)
+activate DB
+DB --> API: Code saved
+deactivate DB
+
+API -> Email: 4. Send verification email\n(6-digit code)
+activate Email
+Email --> Student: Email received
+deactivate Email
+
+API --> Portal: 5. {success: true, message: "Check email"}
+deactivate API
+
+Portal --> Student: "Check your email for code"
+deactivate Portal
+
+...User checks email and returns...
+
+Student -> Portal: 6. Enter verification code
+activate Portal
+
+Portal -> API: 7. POST /api/auth/register/verify\n{email, code}
+activate API
+
+API -> DB: 8. SELECT verification_code WHERE email = ?
+activate DB
+DB --> API: Code validated
+deactivate DB
+
+API -> DB: 9. UPDATE verification_code SET verified = true
+activate DB
+DB --> API: Updated
+deactivate DB
+
+API --> Portal: 10. {success: true, temp_token: "..."}
+deactivate API
+
+Portal --> Student: "Code verified! Complete profile"
+deactivate Portal
+
+...Student completes profile...
+
+Student -> Portal: 11. Complete profile & select course\n{phone, dob, course_id}
+activate Portal
+
+Portal -> API: 12. POST /api/auth/register/complete\n{temp_token, phone, dob, course_id}
+activate API
+
+API -> DB: 13. INSERT INTO users\n(auto-generate password)
+activate DB
+DB --> API: User created (id: 123)
+deactivate DB
+
+API -> DB: 14. INSERT INTO enrollments\n(status: pending)
+activate DB
+DB --> API: Enrollment created
+deactivate DB
+
+API -> Paystack: 15. Initialize payment\n{amount, email, metadata}
+activate Paystack
+Paystack --> API: {authorization_url, reference}
+deactivate Paystack
+
+API --> Portal: 16. {payment_url, reference}
+deactivate API
+
+Portal -> Student: 17. Redirect to Paystack
+deactivate Portal
+
+Student -> Paystack: 18. Complete payment
+activate Paystack
+Paystack --> Student: Payment successful
+deactivate Paystack
+
+...Paystack sends webhook...
+
+Paystack -> API: 19. POST /api/webhooks/paystack\n{event: charge.success, reference}
+activate API
+
+API -> DB: 20. UPDATE enrollments\nSET payment_status = 'completed'
+activate DB
+DB --> API: Updated
+deactivate DB
+
+API -> DB: 21. SELECT user, course data
+activate DB
+DB --> API: User & course info
+deactivate DB
+
+API -> Moodle: 22. Create Moodle user\ncore_user_create_users
+activate Moodle
+Moodle --> API: {moodle_user_id: 456}
+deactivate Moodle
+
+API -> DB: 23. UPDATE users\nSET moodle_user_id = 456
+activate DB
+DB --> API: Updated
+deactivate DB
+
+API -> Moodle: 24. Enroll in course\nenrol_manual_enrol_users
+activate Moodle
+Moodle --> API: Enrollment successful
+deactivate Moodle
+
+API -> Incubator: 25. POST /api/internal/users/create\n{email, name, central_user_id}
+activate Incubator
+Incubator --> API: {incubator_user_id: "ObjectId"}
+deactivate Incubator
+
+API -> DB: 26. UPDATE users\nSET incubator_user_id
+activate DB
+DB --> API: Updated
+deactivate DB
+
+API -> Email: 27. Send welcome email\n(credentials, portal link)
+activate Email
+Email --> Student: Welcome email received
+deactivate Email
+
+API -> Telegram: 28. Notify admins\n(new enrollment)
+activate Telegram
+Telegram --> API: Message sent
+deactivate Telegram
+
+API --> Paystack: 29. Webhook processed
+deactivate API
+
+@enduml
+
+' ==================== SSO FLOW ====================
+
+@startuml SSO_Flow
+
+!theme plain
+
+title SSO Flow - Student Accessing Moodle/Incubator
+
+actor Student
+participant "Student Portal" as Portal
+participant "Central API" as API
+participant "Moodle" as Moodle
+participant "Incubator" as Incubator
+
+== SSO to Moodle ==
+
+Student -> Portal: 1. Click "Launch Course"
+activate Portal
+
+Portal -> API: 2. POST /api/sso/generate\n{target: "moodle", user_id}
+activate API
+
+API -> API: 3. Generate JWT SSO token\n(exp: 5 minutes)
+note right: Token contains:\n- user_id\n- email\n- moodle_user_id\n- roles
+
+API --> Portal: 4. {redirect_url: "lms.../auth/sso?token=..."}
+deactivate API
+
+Portal -> Student: 5. Redirect to Moodle
+deactivate Portal
+
+Student -> Moodle: 6. GET /auth/sso?token=...
+activate Moodle
+
+Moodle -> Moodle: 7. Validate JWT signature
+note right: Uses shared SSO_SECRET
+
+Moodle -> Moodle: 8. Extract user_id from token\nCreate session
+
+Moodle --> Student: 9. Redirect to course dashboard\n(logged in)
+deactivate Moodle
+
+== SSO to Incubator ==
+
+Student -> Portal: 10. Click "View Jobs"
+activate Portal
+
+Portal -> API: 11. POST /api/sso/generate\n{target: "incubator"}
+activate API
+
+API -> API: 12. Generate JWT SSO token
+
+API --> Portal: 13. {redirect_url: "incubator.../auth/sso?token=..."}
+deactivate API
+
+Portal -> Student: 14. Redirect to Incubator
+deactivate Portal
+
+Student -> Incubator: 15. GET /auth/sso?token=...
+activate Incubator
+
+Incubator -> Incubator: 16. Validate JWT signature
+note right: Uses shared SSO_SECRET
+
+Incubator -> Incubator: 17. Find or create user\nby central_user_id
+
+Incubator -> Incubator: 18. Create session cookie
+
+Incubator --> Student: 19. Redirect to dashboard\n(logged in)
+deactivate Incubator
+
+@enduml
+
+' ==================== TELEGRAM BOT - ADD TEACHER FLOW ====================
+
+@startuml Telegram_Add_Teacher
+
+!theme plain
+
+title Telegram Bot - Add Teacher to Course Flow
+
+actor Admin
+participant "Telegram Bot" as Bot
+participant "Central API" as API
+participant "PostgreSQL" as DB
+participant "Moodle API" as Moodle
+participant "Email Service" as Email
+participant Teacher
+
+== Add Teacher Command ==
+
+Admin -> Bot: 1. /add_teacher john@example.com 5
+activate Bot
+
+Bot -> Bot: 2. Verify admin authentication
+note right: Check stored\nchat_id mapping
+
+Bot -> API: 3. POST /api/admin/teachers/assign\n{email, course_id: 5}
+activate API
+
+API -> DB: 4. SELECT * FROM users\nWHERE email = ? AND role = 'teacher'
+activate DB
+DB --> API: Teacher not found
+deactivate DB
+
+API -> API: 5. Generate secure password
+
+API -> DB: 6. INSERT INTO users\n{email, role: 'teacher', ...}
+activate DB
+DB --> API: Teacher created (id: 789)
+deactivate DB
+
+API -> Moodle: 7. Create teacher user\ncore_user_create_users
+activate Moodle
+Moodle --> API: {moodle_user_id: 999}
+deactivate Moodle
+
+API -> DB: 8. UPDATE users\nSET moodle_user_id = 999
+activate DB
+DB --> API: Updated
+deactivate DB
+
+API -> DB: 9. SELECT course WHERE id = 5
+activate DB
+DB --> API: {moodle_course_id: 10}
+deactivate DB
+
+API -> Moodle: 10. Assign teacher to course\nenrol_manual_enrol_users\n(roleid: 3 = Teacher)
+activate Moodle
+Moodle --> API: Enrollment successful
+deactivate Moodle
+
+API -> DB: 11. INSERT INTO course_teachers\n{course_id: 5, teacher_id: 789}
+activate DB
+DB --> API: Assignment recorded
+deactivate DB
+
+API -> Email: 12. Send teacher welcome email\n(credentials, Moodle URL)
+activate Email
+Email --> Teacher: Welcome email
+deactivate Email
+
+API --> Bot: 13. {success: true, credentials: {...}}
+deactivate API
+
+Bot --> Admin: 14. ✅ Teacher added!\n\nCredentials:\nUsername: john_teacher\nPassword: [temp_pass]\n\n⚠️ Email sent to john@example.com
+deactivate Bot
+
+@enduml
+
+' ==================== COURSE COMPLETION WEBHOOK ====================
+
+@startuml Course_Completion_Flow
+
+!theme plain
+
+title Course Completion - Moodle to Central System Sync
+
+participant "Moodle" as Moodle
+participant "Central API" as API
+participant "PostgreSQL" as DB
+participant "Student Portal" as Portal
+participant "Telegram Bot" as Telegram
+participant Student
+
+== Student Completes Course ==
+
+Moodle -> Moodle: 1. Student completes\nlast activity
+
+Moodle -> Moodle: 2. Course completion\ncriteria met
+
+Moodle -> API: 3. POST /api/webhooks/moodle/completion\n{user_id, course_id, completed_at}
+activate API
+
+API -> DB: 4. SELECT enrollment WHERE\nuser_id = ? AND course_id = ?
+activate DB
+DB --> API: Enrollment found
+deactivate DB
+
+API -> DB: 5. UPDATE enrollments SET\nenrollment_status = 'completed',\nprogress_percentage = 100,\ncompleted_at = NOW()
+activate DB
+DB --> API: Updated
+deactivate DB
+
+API -> Telegram: 6. Notify admins\n(course completion)
+activate Telegram
+Telegram --> API: Notification sent
+deactivate Telegram
+
+API --> Moodle: 7. Webhook acknowledged
+deactivate API
+
+...Student logs into portal...
+
+Student -> Portal: 8. View dashboard
+activate Portal
+
+Portal -> API: 9. GET /api/student/enrollments
+activate API
+
+API -> DB: 10. SELECT enrollments\nWHERE user_id = ?
+activate DB
+DB --> API: Enrollments with status
+deactivate DB
+
+API --> Portal: 11. [{course, status: 'completed', progress: 100}]
+deactivate API
+
+Portal --> Student: 12. Display "Course Completed! 🎉"\n+ Certificate download option
+deactivate Portal
+
+@enduml
+
+' ==================== TELEGRAM BOT - EXPORT FLOW ====================
+
+@startuml Telegram_Export_Flow
+
+!theme plain
+
+title Telegram Bot - Export Students Data
+
+actor Admin
+participant "Telegram Bot" as Bot
+participant "Central API" as API
+participant "PostgreSQL" as DB
+
+== Export Command ==
+
+Admin -> Bot: 1. /export 5 excel
+activate Bot
+
+Bot -> Bot: 2. Verify admin authentication
+
+Bot -> API: 3. POST /api/admin/export\n{course_id: 5, format: 'excel'}
+activate API
+
+API -> DB: 4. SELECT users, enrollments, payments\nJOIN WHERE course_id = 5
+activate DB
+DB --> API: Student data retrieved
+deactivate DB
+
+API -> API: 5. Generate Excel file\n(using exceljs library)
+note right: Columns:\n- Name\n- Email\n- Enrollment Date\n- Payment Status\n- Progress\n- Completion Date
+
+API --> Bot: 6. Return file buffer\n{filename, buffer}
+deactivate API
+
+Bot -> Admin: 7. Send Excel file\n"Students_Course_5.xlsx"
+deactivate Bot
+
+Admin -> Admin: 8. Download file
+
+@enduml
+
+@startuml Payment_Webhook_Security
+
+!theme plain
+
+title Paystack Webhook - Security Validation
+
+participant "Paystack" as Paystack
+participant "Central API" as API
+participant "PostgreSQL" as DB
+
+== Webhook Received ==
+
+Paystack -> API: 1. POST /api/webhooks/paystack\nHeaders: x-paystack-signature\nBody: {event, data}
+activate API
+
+API -> API: 2. Verify signature\nHMAC SHA512 validation
+note right: hash = crypto\n.createHmac('sha512', SECRET_KEY)\n.update(JSON.stringify(body))\n.digest('hex')
+
+alt Signature valid
+    API -> DB: 3. Check if reference exists\nSELECT * FROM payments WHERE reference = ?
+    activate DB
+    DB --> API: Payment found
+    deactivate DB
+    
+    alt Payment not already processed
+        API -> DB: 4. UPDATE payment status
+        activate DB
+        DB --> API: Updated
+        deactivate DB
+        
+        API -> API: 5. Process enrollment\n(create Moodle user, etc.)
+        
+        API --> Paystack: 6. 200 OK
+    else Payment already processed
+        API --> Paystack: 7. 200 OK (idempotent)
+    end
+    
+else Signature invalid
+    API --> Paystack: 8. 400 Bad Request\n(Invalid signature)
+    note right: Log security incident
+end
+
+deactivate API
+
+@enduml
+

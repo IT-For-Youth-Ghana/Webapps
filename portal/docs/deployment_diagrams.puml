@@ -1,0 +1,429 @@
+@startuml Deployment_Architecture
+
+!theme plain
+
+title IT For Youth Ghana - Deployment Architecture
+
+' ==================== CLOUD INFRASTRUCTURE ====================
+
+cloud "Cloud Infrastructure" {
+  
+  ' Frontend Hosting
+  node "Vercel / Netlify" as FrontendHost {
+    artifact "Main Site\n(Vite build)" as MainSiteDeploy
+    artifact "Student Portal\n(Next.js)" as PortalDeploy
+  }
+  
+  ' Backend Hosting
+  node "VPS / Railway / Render" as BackendHost {
+    component "Central API\n(Express + Node.js)" as APIDeploy {
+      [Auth Service]
+      [Payment Service]
+      [SSO Service]
+      [Sync Service]
+    }
+    
+    component "Telegram Bot\n(Node.js)" as BotDeploy
+  }
+  
+  ' LMS Hosting
+  node "VPS / Managed Moodle Host" as LMSHost {
+    component "Moodle\n(PHP + Apache/Nginx)" as MoodleDeploy
+  }
+  
+  ' Incubator Hosting
+  node "VPS / Cloud Platform" as IncubatorHost {
+    component "Incubator App\n(Node.js + MongoDB)" as IncubatorDeploy
+  }
+  
+  ' Database Hosting
+  node "Database Cluster" as DBCluster {
+    database "PostgreSQL\n(Central DB)" as PostgresDB {
+      [users]
+      [courses]
+      [enrollments]
+      [payments]
+    }
+    
+    database "MongoDB\n(Incubator)" as MongoDBDeploy {
+      [users]
+      [jobs]
+      [applications]
+    }
+    
+    database "Moodle DB\n(PostgreSQL/MySQL)" as MoodleDB {
+      [mdl_user]
+      [mdl_course]
+      [mdl_enrol]
+    }
+  }
+  
+  ' Caching Layer
+  node "Redis Cache" as RedisCache {
+    [Session Store]
+    [Rate Limiting]
+    [Job Queue]
+  }
+}
+
+' ==================== EXTERNAL SERVICES ====================
+
+cloud "External Services" {
+  component "Paystack API" as PaystackAPI
+  component "Email Service\n(SendGrid/SMTP)" as EmailAPI
+  component "Telegram API" as TelegramAPI
+}
+
+' ==================== CDN & SECURITY ====================
+
+node "CDN & Security Layer" as CDN {
+  component "Cloudflare" as CloudflareCDN {
+    [DDoS Protection]
+    [SSL/TLS]
+    [DNS]
+    [WAF]
+  }
+}
+
+' ==================== CONNECTIONS ====================
+
+CloudflareCDN --> FrontendHost : HTTPS
+CloudflareCDN --> BackendHost : HTTPS
+CloudflareCDN --> LMSHost : HTTPS
+CloudflareCDN --> IncubatorHost : HTTPS
+
+MainSiteDeploy --> APIDeploy : API Calls
+PortalDeploy --> APIDeploy : API Calls
+MoodleDeploy --> APIDeploy : Webhooks
+IncubatorDeploy --> APIDeploy : SSO Validation
+
+APIDeploy --> PostgresDB : Read/Write
+APIDeploy --> MoodleDB : Sync via API
+APIDeploy --> MongoDBDeploy : Sync via Incubator API
+BotDeploy --> PostgresDB : Read/Write
+
+APIDeploy --> RedisCache : Session & Cache
+PortalDeploy --> RedisCache : Session Store
+
+APIDeploy --> PaystackAPI : Payment
+APIDeploy --> EmailAPI : Notifications
+BotDeploy --> TelegramAPI : Messages
+
+' ==================== NOTES ====================
+
+note right of FrontendHost
+  **Frontend Deployments:**
+  - Main Site: Static build
+  - Portal: Server-side rendered
+  - Auto-deploy on git push
+  - Environment: Production
+end note
+
+note right of BackendHost
+  **Backend Configuration:**
+  - Node.js v18+
+  - PM2 process manager
+  - Auto-restart on failure
+  - Load balancing (if needed)
+  - Environment variables via .env
+end note
+
+note right of DBCluster
+  **Database Setup:**
+  - PostgreSQL: Primary + Replica
+  - MongoDB: Replica Set
+  - Automated backups (daily)
+  - Point-in-time recovery
+end note
+
+note bottom of RedisCache
+  **Caching Strategy:**
+  - User sessions (TTL: 7 days)
+  - Course data (TTL: 1 hour)
+  - Rate limiting (100 req/min)
+  - Background jobs (Bull queue)
+end note
+
+@enduml
+
+' ==================== ENVIRONMENT CONFIGURATION ====================
+
+@startuml Environment_Configuration
+
+!theme plain
+
+title Environment Variables & Configuration
+
+package "Student Portal (.env)" {
+  card "NEXT_PUBLIC_API_URL" as PortalAPI
+  card "NEXT_PUBLIC_PAYSTACK_KEY" as PortalPaystack
+  card "SESSION_SECRET" as PortalSession
+}
+
+package "Central API (.env)" {
+  card "DATABASE_URL" as APIDB
+  card "MOODLE_URL" as APIMoodle
+  card "MOODLE_TOKEN" as APIMoodleToken
+  card "INCUBATOR_URL" as APIIncubator
+  card "PAYSTACK_SECRET_KEY" as APIPaystackSecret
+  card "SSO_SECRET" as APISSO
+  card "JWT_SECRET" as APIJWT
+  card "EMAIL_SERVICE_KEY" as APIEmail
+  card "TELEGRAM_BOT_TOKEN" as APITelegramToken
+  card "REDIS_URL" as APIRedis
+}
+
+package "Moodle (config.php)" {
+  card "CFG->dbhost" as MoodleDBHost
+  card "CFG->dbname" as MoodleDBName
+  card "CFG->wwwroot" as MoodleWWW
+  card "Web Services Enabled" as MoodleWS
+}
+
+package "Incubator (.env)" {
+  card "MONGODB_URI" as IncubatorDB
+  card "SSO_SECRET" as IncubatorSSO
+  card "JWT_SECRET" as IncubatorJWT
+  card "CENTRAL_API_URL" as IncubatorCentralAPI
+}
+
+package "Telegram Bot (.env)" {
+  card "BOT_TOKEN" as BotToken
+  card "CENTRAL_API_URL" as BotAPI
+  card "ADMIN_CHAT_IDS" as BotAdmins
+}
+
+' Shared Secrets
+APISSO .up.> IncubatorSSO : Must Match
+BotAPI --> APIDB : Points to same API
+APIIncubator --> IncubatorDB : API endpoint
+
+@enduml
+
+' ==================== DNS CONFIGURATION ====================
+
+@startuml DNS_Configuration
+
+!theme plain
+
+title DNS & Domain Configuration
+
+package "Domain: itforyouthghana.org" {
+  
+  card "Root Domain\nitforyouthghana.org" as RootDomain {
+    rectangle "A Record → Vercel/Netlify IP" as RootA
+  }
+  
+  card "Student Portal\nportal.itforyouthghana.org" as PortalDomain {
+    rectangle "CNAME → Vercel/Netlify" as PortalCNAME
+  }
+  
+  card "LMS\nlms.itforyouthghana.org" as LMSDomain {
+    rectangle "A Record → VPS IP" as LMSA
+  }
+  
+  card "Incubator\nincubator.itforyouthghana.org" as IncubatorDomain {
+    rectangle "A Record → VPS IP" as IncubatorA
+  }
+  
+  card "API\napi.itforyouthghana.org" as APIDomain {
+    rectangle "A Record → Backend VPS IP" as APIA
+  }
+}
+
+note right of RootDomain
+  **SSL Certificates:**
+  - Let's Encrypt (auto-renew)
+  - Cloudflare SSL (Full)
+  - HTTPS enforcement
+end note
+
+@enduml
+
+' ==================== SCALING ARCHITECTURE ====================
+
+@startuml Scaling_Strategy
+
+!theme plain
+
+title Future Scaling Strategy
+
+package "Phase 1: MVP (Week 1)" {
+  node "Single VPS" as MVP {
+    [API]
+    [Moodle]
+    [Incubator]
+    [PostgreSQL]
+    [MongoDB]
+  }
+}
+
+package "Phase 2: Horizontal Scaling (Month 2-3)" {
+  node "Load Balancer" as LB {
+    [Nginx/HAProxy]
+  }
+  
+  node "API Server 1" as API1
+  node "API Server 2" as API2
+  
+  database "Managed PostgreSQL\n(AWS RDS/DigitalOcean)" as ManagedDB
+  database "Managed MongoDB\n(MongoDB Atlas)" as ManagedMongo
+  
+  LB --> API1
+  LB --> API2
+  API1 --> ManagedDB
+  API2 --> ManagedDB
+  API1 --> ManagedMongo
+  API2 --> ManagedMongo
+}
+
+package "Phase 3: Microservices (Month 6+)" {
+  node "API Gateway" as Gateway
+  
+  node "Auth Service" as AuthMS
+  node "Payment Service" as PaymentMS
+  node "Course Service" as CourseMS
+  node "Notification Service" as NotificationMS
+  
+  Gateway --> AuthMS
+  Gateway --> PaymentMS
+  Gateway --> CourseMS
+  Gateway --> NotificationMS
+}
+
+MVP -down-> LB : Scale when > 1000 users
+LB -down-> Gateway : Scale when > 10,000 users
+
+@enduml
+
+' ==================== BACKUP & DISASTER RECOVERY ====================
+
+@startuml Backup_Strategy
+
+!theme plain
+
+title Backup & Disaster Recovery Plan
+
+database "Production DB" as ProdDB
+
+storage "Daily Backups" as DailyBackup {
+  [Backup Day 1]
+  [Backup Day 2]
+  [Backup Day 3]
+  [...]
+  [Backup Day 30]
+}
+
+storage "Weekly Backups" as WeeklyBackup {
+  [Week 1]
+  [Week 2]
+  [Week 3]
+  [Week 4]
+}
+
+storage "Monthly Backups" as MonthlyBackup {
+  [Month 1]
+  [Month 2]
+  [Month 3]
+  [...]
+  [Month 12]
+}
+
+cloud "Offsite Storage\n(AWS S3 / Google Cloud)" as OffsiteBackup
+
+ProdDB --> DailyBackup : Automated\n(3 AM daily)
+DailyBackup --> WeeklyBackup : Retain 4 weeks
+WeeklyBackup --> MonthlyBackup : Retain 12 months
+MonthlyBackup --> OffsiteBackup : Geographic redundancy
+
+note right of ProdDB
+  **Backup Schedule:**
+  - Daily: Full backup (3 AM)
+  - Retention: 30 days
+  - Weekly consolidation
+  - Monthly long-term storage
+  
+  **Recovery Time Objective (RTO):**
+  - 2 hours for critical data
+  
+  **Recovery Point Objective (RPO):**
+  - Max 24 hours data loss
+end note
+
+node "Disaster Recovery" as DR {
+  [Standby Database]
+  [Failover Scripts]
+  [Health Monitoring]
+}
+
+ProdDB .down.> DR : Continuous replication
+
+@enduml
+
+' ==================== MONITORING & LOGGING ====================
+
+@startuml Monitoring_Architecture
+
+!theme plain
+
+title Monitoring & Logging Infrastructure
+
+package "Application Layer" {
+  [Central API]
+  [Moodle]
+  [Incubator]
+  [Telegram Bot]
+}
+
+package "Monitoring Tools" {
+  component "Application Monitoring" as AppMon {
+    [PM2 Monitoring]
+    [New Relic / DataDog]
+    [Uptime Robot]
+  }
+  
+  component "Log Aggregation" as LogAgg {
+    [Winston Logger]
+    [LogDNA / Papertrail]
+    [ELK Stack (future)]
+  }
+  
+  component "Error Tracking" as ErrorTrack {
+    [Sentry]
+    [Rollbar]
+  }
+  
+  component "Performance Monitoring" as PerfMon {
+    [Response Time]
+    [Database Queries]
+    [API Latency]
+  }
+}
+
+package "Alerting" {
+  [Email Alerts]
+  [Telegram Alerts]
+  [Slack Integration]
+}
+
+[Central API] --> AppMon
+[Central API] --> LogAgg
+[Central API] --> ErrorTrack
+[Central API] --> PerfMon
+
+AppMon --> [Email Alerts] : Critical errors
+ErrorTrack --> [Telegram Alerts] : 500 errors
+PerfMon --> [Slack Integration] : Performance degradation
+
+note bottom of LogAgg
+  **Log Levels:**
+  - ERROR: System failures
+  - WARN: Deprecated APIs
+  - INFO: User actions
+  - DEBUG: Development only
+  
+  **Retention:** 30 days
+end note
+
+@enduml
+

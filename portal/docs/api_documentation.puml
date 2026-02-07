@@ -1,0 +1,806 @@
+@startuml API_Endpoints
+
+!theme plain
+
+title IT For Youth Ghana - API Endpoints Documentation
+
+' ==================== AUTHENTICATION ENDPOINTS ====================
+
+package "Authentication API" as AuthAPI {
+  
+  card "/api/auth/register/start" as register_start {
+    **POST** - Start registration
+    ....
+    **Request:**
+    {
+      "email": "student@example.com",
+      "first_name": "John",
+      "last_name": "Doe"
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "message": "Verification code sent"
+    }
+  }
+  
+  card "/api/auth/register/verify" as register_verify {
+    **POST** - Verify email code
+    ....
+    **Request:**
+    {
+      "email": "student@example.com",
+      "code": "123456"
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "temp_token": "eyJhbGc..."
+    }
+  }
+  
+  card "/api/auth/register/complete" as register_complete {
+    **POST** - Complete registration
+    ....
+    **Headers:**
+    Authorization: Bearer {temp_token}
+    ....
+    **Request:**
+    {
+      "phone": "+233...",
+      "date_of_birth": "2000-01-01",
+      "course_id": 5
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "user_id": 123,
+      "payment_url": "https://checkout.paystack.com/..."
+    }
+  }
+  
+  card "/api/auth/login" as login {
+    **POST** - User login
+    ....
+    **Request:**
+    {
+      "email": "student@example.com",
+      "password": "password123"
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "token": "eyJhbGc...",
+      "user": {
+        "id": 123,
+        "email": "...",
+        "first_name": "John",
+        "role": "student"
+      }
+    }
+  }
+  
+  card "/api/auth/refresh" as refresh {
+    **POST** - Refresh JWT token
+    ....
+    **Headers:**
+    Authorization: Bearer {old_token}
+    ....
+    **Response:** 200 OK
+    {
+      "token": "eyJhbGc..."
+    }
+  }
+  
+  card "/api/auth/logout" as logout {
+    **POST** - Logout user
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Response:** 200 OK
+    {
+      "success": true
+    }
+  }
+}
+
+' ==================== STUDENT ENDPOINTS ====================
+
+package "Student API" as StudentAPI {
+  
+  card "/api/student/profile" as profile {
+    **GET** - Get student profile
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Response:** 200 OK
+    {
+      "id": 123,
+      "email": "...",
+      "first_name": "John",
+      "last_name": "Doe",
+      "phone": "+233...",
+      "enrollments_count": 3,
+      "completed_courses": 1
+    }
+  }
+  
+  card "/api/student/enrollments" as enrollments {
+    **GET** - Get student enrollments
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Query Params:**
+    ?status=enrolled&limit=10
+    ....
+    **Response:** 200 OK
+    {
+      "enrollments": [
+        {
+          "id": 1,
+          "course": {
+            "id": 5,
+            "title": "Web Development",
+            "thumbnail": "..."
+          },
+          "progress": 75,
+          "status": "enrolled",
+          "enrolled_at": "2026-01-15"
+        }
+      ]
+    }
+  }
+  
+  card "/api/student/progress/:enrollment_id" as student_progress {
+    **GET** - Get detailed progress
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Response:** 200 OK
+    {
+      "enrollment_id": 1,
+      "course": {...},
+      "progress_percentage": 75,
+      "modules": [
+        {
+          "id": 1,
+          "title": "Introduction",
+          "status": "completed",
+          "score": 95
+        }
+      ]
+    }
+  }
+  
+  card "/api/student/notifications" as notifications {
+    **GET** - Get notifications
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Response:** 200 OK
+    {
+      "notifications": [
+        {
+          "id": 1,
+          "type": "enrollment",
+          "title": "Welcome to Web Dev!",
+          "is_read": false,
+          "created_at": "..."
+        }
+      ],
+      "unread_count": 3
+    }
+  }
+}
+
+' ==================== COURSE ENDPOINTS ====================
+
+package "Course API" as CourseAPI {
+  
+  card "/api/courses" as courses_list {
+    **GET** - List all courses
+    ....
+    **Query Params:**
+    ?category=programming&level=beginner&page=1
+    ....
+    **Response:** 200 OK
+    {
+      "courses": [
+        {
+          "id": 5,
+          "title": "Web Development",
+          "description": "...",
+          "price": 500,
+          "duration_weeks": 12,
+          "level": "beginner",
+          "thumbnail": "...",
+          "enrolled_count": 150
+        }
+      ],
+      "total": 10,
+      "page": 1
+    }
+  }
+  
+  card "/api/courses/:id" as course_detail {
+    **GET** - Get course details
+    ....
+    **Response:** 200 OK
+    {
+      "id": 5,
+      "title": "Web Development",
+      "description": "Full description...",
+      "price": 500,
+      "modules": [
+        {
+          "id": 1,
+          "title": "HTML Basics",
+          "order": 1
+        }
+      ],
+      "teachers": [
+        {
+          "name": "John Teacher",
+          "bio": "..."
+        }
+      ]
+    }
+  }
+}
+
+' ==================== PAYMENT ENDPOINTS ====================
+
+package "Payment API" as PaymentAPI {
+  
+  card "/api/payments/initialize" as payment_init {
+    **POST** - Initialize payment
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Request:**
+    {
+      "enrollment_id": 1,
+      "amount": 500
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "authorization_url": "https://checkout.paystack.com/...",
+      "reference": "ref_xyz123",
+      "access_code": "..."
+    }
+  }
+  
+  card "/api/payments/verify/:reference" as payment_verify {
+    **GET** - Verify payment
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "payment": {
+        "reference": "ref_xyz123",
+        "amount": 500,
+        "status": "success",
+        "paid_at": "..."
+      },
+      "enrollment": {
+        "status": "enrolled"
+      }
+    }
+  }
+  
+  card "/api/payments/history" as payment_history {
+    **GET** - Payment history
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Response:** 200 OK
+    {
+      "payments": [
+        {
+          "id": 1,
+          "reference": "ref_xyz123",
+          "amount": 500,
+          "course": "Web Development",
+          "status": "success",
+          "paid_at": "..."
+        }
+      ]
+    }
+  }
+}
+
+' ==================== SSO ENDPOINTS ====================
+
+package "SSO API" as SSOAPI {
+  
+  card "/api/sso/generate" as sso_generate {
+    **POST** - Generate SSO token
+    ....
+    **Headers:**
+    Authorization: Bearer {token}
+    ....
+    **Request:**
+    {
+      "target": "moodle", // or "incubator"
+      "redirect": "/course/5"
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "redirect_url": "https://lms.../auth/sso?token=..."
+    }
+  }
+  
+  card "/api/sso/validate" as sso_validate {
+    **POST** - Validate SSO token
+    ....
+    **Request:**
+    {
+      "token": "eyJhbGc..."
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "valid": true,
+      "user": {
+        "id": 123,
+        "email": "...",
+        "moodle_user_id": 456
+      }
+    }
+  }
+}
+
+' ==================== ADMIN ENDPOINTS ====================
+
+package "Admin API" as AdminAPI {
+  
+  card "/api/admin/stats" as admin_stats {
+    **GET** - System statistics
+    ....
+    **Headers:**
+    Authorization: Bearer {admin_token}
+    ....
+    **Response:** 200 OK
+    {
+      "total_students": 500,
+      "active_enrollments": 450,
+      "completed_courses": 120,
+      "total_revenue": 250000,
+      "today": {
+        "new_students": 5,
+        "new_enrollments": 8,
+        "revenue": 4000
+      }
+    }
+  }
+  
+  card "/api/admin/export" as admin_export {
+    **POST** - Export student data
+    ....
+    **Headers:**
+    Authorization: Bearer {admin_token}
+    ....
+    **Request:**
+    {
+      "type": "students", // or "enrollments", "payments"
+      "course_id": 5, // optional
+      "format": "excel", // or "csv"
+      "filters": {
+        "status": "enrolled",
+        "date_from": "2026-01-01"
+      }
+    }
+    ....
+    **Response:** 200 OK
+    Content-Type: application/vnd.openxmlformats
+    Content-Disposition: attachment; filename="students.xlsx"
+    [File Buffer]
+  }
+  
+  card "/api/admin/teachers/assign" as assign_teacher {
+    **POST** - Assign teacher to course
+    ....
+    **Headers:**
+    Authorization: Bearer {admin_token}
+    ....
+    **Request:**
+    {
+      "email": "teacher@example.com",
+      "course_id": 5,
+      "first_name": "John",
+      "last_name": "Doe"
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "teacher_id": 789,
+      "moodle_user_id": 999,
+      "credentials": {
+        "username": "john_teacher",
+        "temp_password": "..."
+      }
+    }
+  }
+  
+  card "/api/admin/teachers" as teachers_list {
+    **GET** - List teachers
+    ....
+    **Headers:**
+    Authorization: Bearer {admin_token}
+    ....
+    **Query Params:**
+    ?course_id=5
+    ....
+    **Response:** 200 OK
+    {
+      "teachers": [
+        {
+          "id": 789,
+          "name": "John Doe",
+          "email": "...",
+          "courses": [
+            {
+              "id": 5,
+              "title": "Web Dev"
+            }
+          ]
+        }
+      ]
+    }
+  }
+  
+  card "/api/admin/courses/sync" as sync_courses {
+    **POST** - Sync courses from Moodle
+    ....
+    **Headers:**
+    Authorization: Bearer {admin_token}
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "synced_count": 10,
+      "new_courses": 2,
+      "updated_courses": 8
+    }
+  }
+  
+  card "/api/admin/bot/verify" as bot_verify {
+    **POST** - Verify Telegram bot admin
+    ....
+    **Request:**
+    {
+      "chat_id": "123456789",
+      "code": "ABC123"
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "admin_token": "eyJhbGc...",
+      "admin": {
+        "id": 1,
+        "name": "...",
+        "role": "super_admin"
+      }
+    }
+  }
+}
+
+' ==================== WEBHOOK ENDPOINTS ====================
+
+package "Webhooks" as Webhooks {
+  
+  card "/api/webhooks/paystack" as webhook_paystack {
+    **POST** - Paystack webhook
+    ....
+    **Headers:**
+    x-paystack-signature: {signature}
+    ....
+    **Request:**
+    {
+      "event": "charge.success",
+      "data": {
+        "reference": "ref_xyz123",
+        "amount": 50000,
+        "customer": {...},
+        "metadata": {
+          "user_id": 123,
+          "enrollment_id": 1
+        }
+      }
+    }
+    ....
+    **Response:** 200 OK
+  }
+  
+  card "/api/webhooks/moodle/completion" as webhook_moodle {
+    **POST** - Moodle course completion
+    ....
+    **Headers:**
+    x-moodle-secret: {secret}
+    ....
+    **Request:**
+    {
+      "user_id": 456,
+      "course_id": 10,
+      "completed_at": "2026-02-04T10:30:00Z"
+    }
+    ....
+    **Response:** 200 OK
+    {
+      "success": true,
+      "updated": true
+    }
+  }
+}
+
+' ==================== MOODLE API INTEGRATION ====================
+
+package "Moodle API (External)" as MoodleAPI {
+  
+  card "core_user_create_users" as moodle_create_user {
+    **Moodle Web Service**
+    ....
+    **Request:**
+    {
+      "users": [{
+        "username": "john123",
+        "password": "temp_pass",
+        "firstname": "John",
+        "lastname": "Doe",
+        "email": "john@example.com"
+      }]
+    }
+    ....
+    **Response:**
+    [{
+      "id": 456,
+      "username": "john123"
+    }]
+  }
+  
+  card "enrol_manual_enrol_users" as moodle_enrol {
+    **Moodle Web Service**
+    ....
+    **Request:**
+    {
+      "enrolments": [{
+        "roleid": 5, // Student
+        "userid": 456,
+        "courseid": 10
+      }]
+    }
+  }
+  
+  card "core_course_get_courses" as moodle_courses {
+    **Moodle Web Service**
+    ....
+    **Response:**
+    [{
+      "id": 10,
+      "fullname": "Web Development",
+      "summary": "...",
+      "categoryid": 1
+    }]
+  }
+  
+  card "core_completion_get_course_completion_status" as moodle_completion {
+    **Moodle Web Service**
+    ....
+    **Request:**
+    {
+      "courseid": 10,
+      "userid": 456
+    }
+    ....
+    **Response:**
+    {
+      "completionstatus": {
+        "completed": true,
+        "timecompleted": 1738670400
+      }
+    }
+  }
+}
+
+' ==================== RELATIONSHIPS ====================
+
+AuthAPI -down-> StudentAPI : "After login"
+StudentAPI -down-> SSOAPI : "Launch course/jobs"
+PaymentAPI --> Webhooks : "Confirmation"
+AdminAPI --> MoodleAPI : "Sync & Manage"
+Webhooks --> StudentAPI : "Update status"
+
+note right of AuthAPI
+  **Authentication Flow:**
+  1. Start registration
+  2. Verify email
+  3. Complete profile
+  4. Initialize payment
+  5. Webhook confirms
+  6. User enrolled
+end note
+
+note bottom of Webhooks
+  **Security:**
+  - Paystack: Verify HMAC signature
+  - Moodle: Shared secret validation
+  - IP whitelist (optional)
+end note
+
+note left of MoodleAPI
+  **Authentication:**
+  - Token-based (wstoken)
+  - Generated in Moodle admin
+  - Stored in env variables
+end note
+
+@enduml
+
+' ==================== ERROR RESPONSES ====================
+
+@startuml Error_Responses
+
+!theme plain
+
+title Standard Error Response Format
+
+package "Error Handling" {
+  
+  card "400 Bad Request" as err400 {
+    {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Invalid email format",
+        "field": "email"
+      }
+    }
+  }
+  
+  card "401 Unauthorized" as err401 {
+    {
+      "success": false,
+      "error": {
+        "code": "UNAUTHORIZED",
+        "message": "Invalid or expired token"
+      }
+    }
+  }
+  
+  card "403 Forbidden" as err403 {
+    {
+      "success": false,
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "Insufficient permissions"
+      }
+    }
+  }
+  
+  card "404 Not Found" as err404 {
+    {
+      "success": false,
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Course not found",
+        "resource": "course",
+        "id": 999
+      }
+    }
+  }
+  
+  card "422 Unprocessable Entity" as err422 {
+    {
+      "success": false,
+      "error": {
+        "code": "DUPLICATE_ENROLLMENT",
+        "message": "Student already enrolled in this course"
+      }
+    }
+  }
+  
+  card "500 Internal Server Error" as err500 {
+    {
+      "success": false,
+      "error": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error occurred",
+        "request_id": "req_abc123"
+      }
+    }
+  }
+}
+
+note bottom of err500
+  **Production:**
+  - Don't expose stack traces
+  - Log full error server-side
+  - Return request_id for tracking
+end note
+
+@enduml
+
+' ==================== RATE LIMITING ====================
+
+@startuml Rate_Limiting
+
+!theme plain
+
+title API Rate Limiting Strategy
+
+package "Rate Limits" {
+  
+  rectangle "Public Endpoints" as public_limits {
+    **No Authentication Required**
+    ....
+    /api/courses - 100 req/hour
+    /api/courses/:id - 100 req/hour
+    ....
+    **Headers in Response:**
+    X-RateLimit-Limit: 100
+    X-RateLimit-Remaining: 95
+    X-RateLimit-Reset: 1738674000
+  }
+  
+  rectangle "Student Endpoints" as student_limits {
+    **Authentication Required**
+    ....
+    /api/student/* - 300 req/hour
+    /api/payments/* - 50 req/hour
+    /api/sso/generate - 20 req/hour
+    ....
+    **Per User Limit**
+  }
+  
+  rectangle "Admin Endpoints" as admin_limits {
+    **Admin Authentication**
+    ....
+    /api/admin/stats - 100 req/hour
+    /api/admin/export - 10 req/hour
+    /api/admin/* - 500 req/hour
+    ....
+    **Higher limits for admins**
+  }
+  
+  rectangle "Webhook Endpoints" as webhook_limits {
+    **External Services**
+    ....
+    /api/webhooks/* - No limit
+    (IP whitelist only)
+  }
+}
+
+database "Redis" as redis_cache
+
+public_limits --> redis_cache : Store counts
+student_limits --> redis_cache : Store counts
+admin_limits --> redis_cache : Store counts
+
+note right of redis_cache
+  **Implementation:**
+  - Key: api:{endpoint}:{user_id}:{hour}
+  - TTL: 1 hour
+  - Increment on each request
+  - Return 429 if limit exceeded
+end note
+
+@enduml
+

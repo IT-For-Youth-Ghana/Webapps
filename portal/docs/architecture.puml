@@ -1,0 +1,199 @@
+@startuml IT_For_Youth_Ghana_Architecture
+
+!define RECTANGLE class
+!theme plain
+
+title IT For Youth Ghana - Complete System Architecture
+
+' Color definitions
+skinparam component {
+  BackgroundColor<<Frontend>> LightBlue
+  BackgroundColor<<Backend>> LightGreen
+  BackgroundColor<<Database>> LightYellow
+  BackgroundColor<<External>> LightCoral
+  BackgroundColor<<Bot>> Plum
+}
+
+' ==================== FRONTEND LAYER ====================
+
+package "Frontend Layer" {
+  component [Main Marketing Site\n(itforyouthghana.org)\nVite.js] as MainSite <<Frontend>>
+  
+  component [Student Portal\n(portal.itforyouthghana.org)\nNext.js] as Portal <<Frontend>> {
+    [Registration Flow]
+    [Payment Integration]
+    [Student Dashboard]
+    [SSO Token Handler]
+  }
+  
+  component [Moodle LMS\n(lms.itforyouthghana.org)\nPHP] as Moodle <<Frontend>>
+  
+  component [Talent Incubator\n(incubator.itforyouthghana.org)\nNode.js] as Incubator <<Frontend>>
+}
+
+' ==================== BACKEND LAYER ====================
+
+package "Backend Layer" {
+  component [Central API Server\nExpress.js + Node.js] as API <<Backend>> {
+    [Auth Service]
+    [Payment Service]
+    [User Service]
+    [Course Service]
+    [SSO Service]
+    [Sync Service]
+    [Email Service]
+    [Notification Service]
+  }
+  
+  component [Telegram Bot\nnode-telegram-bot-api] as TelegramBot <<Bot>> {
+    [Admin Auth]
+    [Statistics]
+    [Export Service]
+    [Teacher Management]
+    [Notifications]
+  }
+}
+
+' ==================== DATABASE LAYER ====================
+
+package "Database Layer" {
+  database "PostgreSQL\n(Central Database)" as PostgresDB <<Database>> {
+    frame "Tables" {
+      [users]
+      [courses]
+      [enrollments]
+      [payments]
+      [verification_codes]
+      [course_teachers]
+      [admins]
+    }
+  }
+  
+  database "MongoDB\n(Incubator DB)" as MongoDB <<Database>> {
+    frame "Collections" {
+      [users (incubator)]
+      [jobs]
+      [applications]
+    }
+  }
+  
+  database "Moodle Database\nPostgreSQL/MySQL" as MoodleDB <<Database>> {
+    frame "Tables" {
+      [mdl_user]
+      [mdl_course]
+      [mdl_enrol]
+      [mdl_grade]
+    }
+  }
+}
+
+' ==================== EXTERNAL SERVICES ====================
+
+package "External Services" {
+  component [Paystack\nPayment Gateway] as Paystack <<External>>
+  component [Email Service\n(SMTP/SendGrid)] as EmailService <<External>>
+  component [Telegram API] as TelegramAPI <<External>>
+}
+
+' ==================== USER ACTORS ====================
+
+actor "Student" as Student
+actor "Teacher/Moderator" as Teacher
+actor "Admin" as Admin
+
+' ==================== CONNECTIONS - USERS ====================
+
+Student --> MainSite : Browse courses
+Student --> Portal : Register & Login
+Student --> Moodle : Access courses\n(via SSO)
+Student --> Incubator : View jobs\n(via SSO)
+
+Teacher --> Moodle : Upload resources\nGrade students
+
+Admin --> TelegramBot : Manage system
+
+' ==================== CONNECTIONS - FRONTEND TO BACKEND ====================
+
+MainSite ..> Portal : Redirect to\nlogin/register
+
+Portal --> API : REST API calls\n(auth, courses,\nenrollments)
+Portal --> Paystack : Initialize payment
+Portal ..> Moodle : SSO redirect
+Portal ..> Incubator : SSO redirect
+
+Moodle --> API : Webhooks\n(course completion)
+Moodle <--> API : REST API\n(user/course sync)
+
+Incubator --> API : SSO validation
+Incubator <--> API : User sync
+
+' ==================== CONNECTIONS - BACKEND TO DATABASE ====================
+
+API --> PostgresDB : Read/Write
+TelegramBot --> PostgresDB : Read/Write\n(via API)
+
+API --> MongoDB : User sync\n(via Incubator API)
+API --> MoodleDB : Read/Write\n(via Moodle API)
+
+Moodle --> MoodleDB : Read/Write
+Incubator --> MongoDB : Read/Write
+
+' ==================== CONNECTIONS - EXTERNAL SERVICES ====================
+
+Paystack --> API : Webhooks\n(payment confirmation)
+API --> EmailService : Send emails\n(verification, welcome)
+TelegramBot --> TelegramAPI : Bot commands\nNotifications
+API --> TelegramAPI : Send notifications
+
+' ==================== NOTES ====================
+
+note right of Portal
+  **Registration Flow:**
+  1. Email verification code
+  2. Complete profile
+  3. Select course & pay
+  4. Auto-enroll in Moodle
+  5. Auto-create Incubator account
+end note
+
+note right of API
+  **Core Responsibilities:**
+  - JWT authentication
+  - Payment processing
+  - User/course synchronization
+  - SSO token generation
+  - Email notifications
+  - Webhook handling
+end note
+
+note right of TelegramBot
+  **Admin Commands:**
+  /stats - View statistics
+  /export - Export student data
+  /add_teacher - Assign teacher
+  /sync_courses - Sync from Moodle
+  /notifications - Toggle alerts
+end note
+
+note bottom of PostgresDB
+  **Single Source of Truth**
+  for authentication and
+  core business logic
+end note
+
+' ==================== DATA FLOW ANNOTATIONS ====================
+
+note on link
+  <b>Student Registration Flow:</b>
+  1. Portal → API: Start registration
+  2. API → EmailService: Send verification
+  3. Portal → API: Verify code
+  4. Portal → Paystack: Initialize payment
+  5. Paystack → API: Webhook (success)
+  6. API → MoodleDB: Create user + enroll
+  7. API → MongoDB: Create incubator user
+  8. API → EmailService: Send credentials
+  9. API → Telegram: Notify admin
+end note
+
+@enduml
