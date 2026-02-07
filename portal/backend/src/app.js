@@ -11,6 +11,8 @@ import { apiRateLimiter } from './middlewares/rateLimit.middleware.js';
 import routes from './routes/index.js';
 import config from './config/index.js';
 import logger from './utils/logger.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger.config.js';
 
 // Create Express app
 const app = express();
@@ -59,6 +61,20 @@ app.get('/health', (req, res) => {
 
 app.get('/ping', (req, res) => {
     res.status(200).json({ message: 'pong' });
+});
+
+/**
+ * API Documentation
+ */
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'ITFY Portal API Docs',
+}));
+
+// Swagger JSON spec endpoint
+app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
 });
 
 /**
