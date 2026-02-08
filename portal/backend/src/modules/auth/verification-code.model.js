@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import BaseModel from "../../modules/shared/base.model.js";
+import BaseModel, { JSON_TYPE } from "../../modules/shared/base.model.js";
 
 class VerificationCode extends BaseModel {
     /**
@@ -19,12 +19,12 @@ VerificationCode.init(
         },
 
         code: {
-            type: DataTypes.STRING(6),
+            type: DataTypes.STRING(255),
             allowNull: false,
         },
 
         registrationData: {
-            type: DataTypes.JSONB,
+            type: JSON_TYPE,
             field: 'registration_data',
         },
 

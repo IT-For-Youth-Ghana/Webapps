@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import BaseModel from "../../modules/shared/base.model.js";
+import BaseModel, { JSON_TYPE } from "../../modules/shared/base.model.js";
 
 class Notification extends BaseModel {
     /**
@@ -17,7 +17,7 @@ Notification.init(
     {
         // Foreign keys
         userId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'user_id',
             references: {
@@ -48,7 +48,7 @@ Notification.init(
         },
 
         metadata: {
-            type: DataTypes.JSONB,
+            type: JSON_TYPE,
             defaultValue: {},
         },
 

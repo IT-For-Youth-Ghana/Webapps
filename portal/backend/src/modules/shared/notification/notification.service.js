@@ -5,6 +5,7 @@
 
 import Notification from '../../notification/notification.model.js';
 import logger from '../../../utils/logger.js';
+import { emitToUser } from '../../../realtime/socket.js';
 
 class NotificationService {
     /**
@@ -22,6 +23,7 @@ class NotificationService {
             });
 
             logger.info(`Notification created for user ${userId}`, { type, title });
+            emitToUser(userId, "notification:new", notification.toJSON());
 
             return notification;
         } catch (error) {

@@ -19,7 +19,7 @@ StudentProgress.init(
     {
         // Foreign keys
         enrollmentId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'enrollment_id',
             references: {
@@ -29,7 +29,7 @@ StudentProgress.init(
         },
 
         moduleId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'module_id',
             references: {

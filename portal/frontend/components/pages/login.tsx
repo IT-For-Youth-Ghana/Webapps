@@ -1,52 +1,74 @@
+/**
+ * Login Page Route
+ * /login
+ */
+
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import CursorFollowBackground from '@/components/ui/cursor-follow-background'
 import InteractiveEyes from '@/components/ui/interactive-eyes'
+import { useAuth } from '@/hooks/auth-context'
+import { useToast } from '@/hooks/use-toast'
 
-interface LoginPageProps {
-  onLogin: (email: string) => void
-}
+export default function LoginPage() {
+  const router = useRouter()
+  const { login, isAuthenticated } = useAuth()
+  const { toast } = useToast()
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, router])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      onLogin(email)
+
+    try {
+      await login({ email, password })
+
+      toast({
+        title: 'Login successful',
+        description: 'Welcome back to ITFY Portal!',
+      })
+
+      router.push('/dashboard')
+    } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: error instanceof Error ? error.message : 'Invalid email or password',
+        variant: 'destructive',
+      })
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
 
   return (
     <main className="relative w-full min-h-screen overflow-hidden flex items-center justify-center">
-      {/* Interactive cursor-following background */}
       <CursorFollowBackground intensity="medium" />
-
-      {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
 
-      {/* Login Card with glassmorphism */}
       <Card
         className="relative z-10 w-full max-w-md mx-4 p-8 glass-card animate-scale-in hover-lift"
-        style={{
-          borderRadius: '1.5rem',
-        }}
+        style={{ borderRadius: '1.5rem' }}
       >
-        {/* Interactive Eyes - positioned above the logo */}
         <div className="flex justify-center mb-6">
           <InteractiveEyes size="md" irisColor="hsl(213, 99%, 37%)" />
         </div>
 
-        {/* Logo Area */}
         <div className="text-center mb-8">
           <div
             className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary to-primary/80 text-white rounded-2xl mb-4 shadow-lg glow-primary animate-float"
@@ -67,7 +89,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </p>
         </div>
 
-        {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <label className="block text-sm font-medium text-foreground mb-2">
@@ -79,6 +100,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
               className="w-full h-12 px-4 input-modern bg-white/50 border-gray-200/50 rounded-xl focus:bg-white transition-all duration-300"
             />
           </div>
@@ -94,6 +116,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
               className="w-full h-12 px-4 input-modern bg-white/50 border-gray-200/50 rounded-xl focus:bg-white transition-all duration-300"
             />
           </div>
@@ -115,14 +138,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </Button>
         </form>
 
-        {/* Footer Links */}
         <div
           className="mt-8 pt-6 border-t border-border/50 text-center space-y-3 animate-fade-in-up"
           style={{ animationDelay: '0.5s' }}
         >
           <p className="text-sm">
             <a
-              href="#"
+              href="/forgot-password"
               className="text-primary font-medium hover:underline hover:text-primary/80 transition-colors"
             >
               Forgot password?
@@ -131,7 +153,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
             <a
-              href="#"
+              href="/register"
               className="text-primary font-semibold hover:underline hover:text-primary/80 transition-colors"
             >
               Create one
@@ -139,7 +161,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </p>
         </div>
 
-        {/* Decorative corner accents */}
         <div className="absolute top-0 left-0 w-20 h-20 overflow-hidden rounded-tl-3xl pointer-events-none">
           <div className="absolute -top-10 -left-10 w-20 h-20 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-xl" />
         </div>
@@ -148,7 +169,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </div>
       </Card>
 
-      {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background/50 to-transparent pointer-events-none" />
     </main>
   )

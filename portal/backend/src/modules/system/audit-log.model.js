@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import BaseModel from "../../modules/shared/base.model.js";
+import BaseModel, { JSON_TYPE } from "../../modules/shared/base.model.js";
 
 class AuditLog extends BaseModel {
     /**
@@ -15,7 +15,7 @@ AuditLog.init(
     {
         // User who performed the action
         userId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: true,
             field: 'user_id',
             references: {
@@ -25,7 +25,7 @@ AuditLog.init(
         },
 
         adminId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: true,
             field: 'admin_id',
             references: {
@@ -54,12 +54,12 @@ AuditLog.init(
 
         // Changes
         oldValues: {
-            type: DataTypes.JSONB,
+            type: JSON_TYPE,
             field: 'old_values',
         },
 
         newValues: {
-            type: DataTypes.JSONB,
+            type: JSON_TYPE,
             field: 'new_values',
         },
 

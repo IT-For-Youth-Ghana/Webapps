@@ -13,7 +13,46 @@ import { NotFoundError, ValidationError } from "../../utils/errors.js";
 import logger from "../../utils/logger.js";
 import moodleService from "../../integrations/moodle/moodle.service.js";
 
+const normalizeSlug = (value) => {
+    if (!value) return "";
+    return value
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+};
+
+const isUuid = (value) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value
+    );
+
 class CourseService {
+    async generateUniqueSlug(baseSlug, excludeId = null) {
+        if (!baseSlug) {
+            throw new ValidationError("Invalid course slug");
+        }
+
+        let slug = baseSlug;
+        let counter = 1;
+
+        while (true) {
+            const existing = await Course.findOne({
+                where: {
+                    slug,
+                    ...(excludeId ? { id: { [Op.ne]: excludeId } } : {}),
+                },
+            });
+
+            if (!existing) {
+                return slug;
+            }
+
+            slug = `${baseSlug}-${counter}`;
+            counter += 1;
+        }
+    }
 
     /**
      * Get all courses with filters
@@ -56,8 +95,13 @@ class CourseService {
     /**
      * Get course by ID with details
      */
-    async getCourseById(courseId) {
-        const course = await Course.findByPk(courseId, {
+    async getCourseById(courseIdOrSlug) {
+        const lookup = isUuid(courseIdOrSlug)
+            ? { id: courseIdOrSlug }
+            : { slug: courseIdOrSlug };
+
+        const course = await Course.findOne({
+            where: lookup,
             include: [
                 {
                     model: User,
@@ -79,7 +123,7 @@ class CourseService {
 
         // Get enrollment count
         const enrollmentCount = await Enrollment.count({
-            where: { courseId },
+            where: { courseId: course.id },
         });
 
         const courseData = course.toJSON();
@@ -101,7 +145,10 @@ class CourseService {
             );
         }
 
-        const course = await Course.create(data);
+        const baseSlug = normalizeSlug(data.slug || data.title);
+        const slug = await this.generateUniqueSlug(baseSlug);
+
+        const course = await Course.create({ ...data, slug });
 
         logger.info(`Course created: ${course.id}`);
 
@@ -118,7 +165,14 @@ class CourseService {
             throw new NotFoundError("Course not found");
         }
 
-        await course.update(data);
+        const updateData = { ...data };
+
+        if (updateData.slug) {
+            const normalizedSlug = normalizeSlug(updateData.slug);
+            updateData.slug = await this.generateUniqueSlug(normalizedSlug, courseId);
+        }
+
+        await course.update(updateData);
 
         logger.info(`Course updated: ${courseId}`);
 
@@ -180,10 +234,14 @@ class CourseService {
                 });
                 updated++;
             } else {
+                const baseSlug = normalizeSlug(moodleCourse.fullname);
+                const slug = await this.generateUniqueSlug(baseSlug);
+
                 // Create new course
                 await Course.create({
                     moodleCourseId: moodleCourse.id,
                     title: moodleCourse.fullname,
+                    slug,
                     description: moodleCourse.summary,
                     price: 0, // Set manually later
                     status: "draft", // Require manual activation

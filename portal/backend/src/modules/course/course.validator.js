@@ -12,6 +12,16 @@ const courseValidator = {
             .withMessage('Invalid course ID'),
     ],
 
+    getCourseByIdOrSlug: [
+        param('id')
+            .custom((value) => {
+                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+                const isSlug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(value);
+                return isUuid || isSlug;
+            })
+            .withMessage('Invalid course ID or slug'),
+    ],
+
     createCourse: [
         body('title')
             .trim()
@@ -67,6 +77,12 @@ const courseValidator = {
             .optional()
             .isIn(['draft', 'active', 'archived'])
             .withMessage('Invalid status'),
+
+        body('slug')
+            .optional()
+            .trim()
+            .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/i)
+            .withMessage('Slug can only contain letters, numbers, and hyphens'),
     ],
 
     updateCourse: [
@@ -100,6 +116,12 @@ const courseValidator = {
             .optional()
             .isIn(['draft', 'active', 'archived'])
             .withMessage('Invalid status'),
+
+        body('slug')
+            .optional()
+            .trim()
+            .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/i)
+            .withMessage('Slug can only contain letters, numbers, and hyphens'),
     ],
 
     listCourses: [

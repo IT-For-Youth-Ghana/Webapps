@@ -8,6 +8,7 @@ import Enrollment from "../enrollment/enrollment.model.js";
 import Course from "../course/course.model.js";
 import VerificationCode from "../auth/verification-code.model.js";
 import Notification from "../notification/notification.model.js";
+import { emitToUser } from "../../realtime/socket.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { Op } from "sequelize";
@@ -58,8 +59,10 @@ class UserService {
      */
     async verifyCode(email, code) {
         const verification = await VerificationCode.findOne({
-            where: { email },
+            where: { email, code },
         });
+
+        console.log("Verification record:", verification?.toJSON());
 
         if (!verification) {
             throw new ValidationError("Invalid verification code");
@@ -143,6 +146,7 @@ class UserService {
                     { transaction }
                 );
 
+
                 // Initialize payment
                 const paymentService = (await import("../payment/payment.service.js")).default;
                 payment = await paymentService.initialize({
@@ -157,6 +161,7 @@ class UserService {
 
             return {
                 user: newUser,
+                temporaryPassword: autoPassword,
                 enrollment,
                 payment,
             };
@@ -164,6 +169,33 @@ class UserService {
 
         // Clean up verification code
         await verification.destroy();
+
+        // Attempt to create or sync Moodle account for the new user (non-blocking)
+        try {
+            const { default: moodleService } = await import("../../integrations/moodle/moodle.service.js");
+
+            if (moodleService.enabled) {
+                try {
+                    const moodleUser = await moodleService.getOrCreateUser({
+                        username: `${result.user.email.split("@")[0]}_${result.user.id}`,
+                        password: result.user.tempPassword || autoPassword,
+                        firstname: result.user.firstName,
+                        lastname: result.user.lastName,
+                        email: result.user.email,
+                    });
+
+                    // Update our user record with Moodle ID
+                    await this.updateMoodleId(result.user.id, moodleUser.id);
+                } catch (mErr) {
+                    logger.warn("Failed to sync new user to Moodle (non-fatal)", {
+                        userId: result.user.id,
+                        error: mErr?.message || mErr,
+                    });
+                }
+            }
+        } catch (importErr) {
+            logger.debug("Moodle service import skipped or failed", { error: importErr?.message });
+        }
 
         return {
             userId: result.user.id,
@@ -382,20 +414,25 @@ class UserService {
     /**
      * Get user notifications
      */
-    async getNotifications(userId, unreadOnly = false) {
+    async getNotifications(userId, filters = {}) {
+        const { page = 1, limit = 20, unreadOnly = false } = filters;
         const where = { userId };
 
         if (unreadOnly) {
             where.isRead = false;
         }
 
-        const notifications = await Notification.findAll({
+        const result = await Notification.paginate({
+            page,
+            limit,
             where,
             order: [["createdAt", "DESC"]],
-            limit: 50,
         });
 
-        return notifications.map((n) => n.toJSON());
+        return {
+            notifications: result.data.map((n) => n.toJSON()),
+            pagination: result.pagination,
+        };
     }
 
     /**
@@ -411,6 +448,21 @@ class UserService {
         }
 
         await notification.update({ isRead: true, readAt: new Date() });
+        emitToUser(userId, "notification:read", { id: notificationId });
+
+        return { success: true };
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    async markAllNotificationsRead(userId) {
+        await Notification.update(
+            { isRead: true, readAt: new Date() },
+            { where: { userId, isRead: false } }
+        );
+
+        emitToUser(userId, "notification:read-all", { userId });
 
         return { success: true };
     }

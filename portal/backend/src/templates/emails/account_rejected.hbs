@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Status</title>
+</head>
+<body style="margin:0; padding:0; background:#f3f4f6; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#111827;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f4f6; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#6b7280,#374151); padding:26px 32px; color:#fff;">
+              <div style="font-size:18px; letter-spacing:0.3px;">{{appName}}</div>
+              <div style="font-size:24px; font-weight:700; margin-top:6px;">Application Update</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px;">
+              <p style="margin:0 0 8px 0; font-size:18px;">Hi {{name}},</p>
+              <p style="margin:0 0 16px 0; color:#4b5563;">Thank you for your interest. At this time, your application was not approved.</p>
+              <div style="background:#f3f4f6; border:1px solid #e5e7eb; border-radius:12px; padding:14px; color:#374151; font-size:13px;">
+                {{reason}}
+              </div>
+              <p style="margin:14px 0 0 0; color:#6b7280;">You’re welcome to apply again in the future.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px; background:#f9fafb; border-top:1px solid #eef2f7;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="color:#9ca3af; font-size:12px;">© {{currentYear}} {{appName}}. All rights reserved.</td>
+                  <td align="right" style="color:#9ca3af; font-size:12px;">{{supportEmail}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

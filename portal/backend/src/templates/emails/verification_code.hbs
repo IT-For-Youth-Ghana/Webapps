@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email</title>
+</head>
+<body style="margin:0; padding:0; background:#f6f7fb; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#1f2937;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f7fb; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#111827,#2563eb); padding:24px 32px; color:#fff;">
+              <div style="font-size:18px; letter-spacing:0.3px;">{{appName}}</div>
+              <div style="font-size:24px; font-weight:700; margin-top:6px;">Email Verification</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px;">
+              <p style="margin:0 0 8px 0; font-size:18px;">Hello {{firstName}},</p>
+              <p style="margin:0 0 20px 0; color:#4b5563;">Use the verification code below to complete your registration.</p>
+
+              <div style="background:#f1f5ff; border:1px solid #dbeafe; border-radius:12px; padding:18px; text-align:center; margin:20px 0;">
+                <div style="font-size:14px; text-transform:uppercase; letter-spacing:1px; color:#2563eb;">Your Code</div>
+                <div style="font-size:36px; font-weight:800; letter-spacing:6px; color:#1d4ed8; margin-top:6px;">{{code}}</div>
+              </div>
+
+              <p style="margin:0 0 6px 0; color:#6b7280;">This code expires in 15 minutes.</p>
+              <p style="margin:0; color:#6b7280;">If you didn't request this, you can safely ignore this email.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px; background:#f9fafb; border-top:1px solid #eef2f7;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="color:#9ca3af; font-size:12px;">© {{currentYear}} {{appName}}. All rights reserved.</td>
+                  <td align="right" style="color:#9ca3af; font-size:12px;">Support: {{supportEmail}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

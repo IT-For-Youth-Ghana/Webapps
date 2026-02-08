@@ -8,19 +8,19 @@ import { body, param, query } from 'express-validator';
 const paymentValidator = {
     getPaymentById: [
         param('id')
-            .isInt({ min: 1 })
+            .isUUID()
             .withMessage('Invalid payment ID'),
     ],
 
     initializePayment: [
         body('enrollmentId')
             .optional()
-            .isInt({ min: 1 })
+            .isUUID()
             .withMessage('Invalid enrollment ID'),
 
         body('courseId')
             .optional()
-            .isInt({ min: 1 })
+            .isUUID()
             .withMessage('Invalid course ID'),
 
         body().custom((value, { req }) => {

@@ -29,6 +29,7 @@ class PaymentController {
                 authorizationUrl: result.authorizationUrl,
                 reference: result.reference,
                 accessCode: result.accessCode,
+                enrollmentId: result.enrollmentId,
                 isFree: result.isFree,
             },
         });

@@ -18,7 +18,7 @@ const corsOptions = {
 
         const allowedOrigins = config.cors.origin === '*' 
             ? [origin] 
-            : config.cors.origin.split(',').map(o => o.trim());
+            : config.cors.origins.map(o => o.trim());
 
         if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
             callback(null, true);

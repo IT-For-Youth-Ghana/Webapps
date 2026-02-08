@@ -47,7 +47,7 @@ SystemSetting.init(
         },
 
         updatedBy: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: true,
             field: 'updated_by',
             references: {

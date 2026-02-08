@@ -8,6 +8,7 @@ import userService from '../../user/user.service.js';
 import { successResponse, errorResponse } from '../../../utils/response.js';
 import asyncHandler from '../../../utils/asyncHandler.js';
 import logger from '../../../utils/logger.js';
+import emailService from '../email/email.service.js';
 
 class AuthController {
     /**
@@ -42,6 +43,8 @@ class AuthController {
      * Verify email code
      */
     verifyCode = asyncHandler(async (req, res) => {
+
+        console.log(req.body)
         const { email, code } = req.body;
 
         if (!email || !code) {
@@ -67,7 +70,7 @@ class AuthController {
     completeRegistration = asyncHandler(async (req, res) => {
         const { tempToken, phone, dateOfBirth, courseId } = req.body;
 
-        if (!tempToken || !phone || !dateOfBirth || !courseId) {
+        if (!tempToken || !phone || !dateOfBirth) {
             return errorResponse(res, {
                 statusCode: 400,
                 message: 'Missing required fields',
@@ -80,6 +83,9 @@ class AuthController {
             dateOfBirth,
             courseId,
         });
+
+        console.log('Registration completed:', result);
+
 
         return successResponse(res, {
             statusCode: 201,

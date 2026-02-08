@@ -12,7 +12,7 @@ EmailLog.init(
     {
         // Recipient
         userId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: true,
             field: 'user_id',
             references: {

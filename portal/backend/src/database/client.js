@@ -6,13 +6,14 @@
 import { Sequelize } from "sequelize";
 import logger from "../utils/logger.js"; // Assuming you have a logger
 
+const dbDialect = process.env.DB_DIALECT || "mysql";
+
 // Database configuration
 const config = {
-  dialect: "postgres",
+  dialect: dbDialect,
   host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT) || 5432,
-  username: process.env.DB_USER || "johnny",
-  password: process.env.DB_PASSWORD || "itfyouth",
+  username: process.env.DB_USER || "itfy",
+  password: process.env.DB_PASSWORD || "password",
   database: process.env.DB_NAME || "itfyportal",
   
   // Connection pool configuration
@@ -51,18 +52,22 @@ const config = {
   },
   
   // Dialect-specific options
-  dialectOptions: {
-    ssl: process.env.DB_SSL === "true" ? {
-      require: true,
-      rejectUnauthorized: false, // For self-signed certificates (use carefully)
-    } : false,
-    
-    // Statement timeout (30 seconds)
-    statement_timeout: 30000,
-    
-    // Idle timeout
-    idle_in_transaction_session_timeout: 60000,
-  },
+  dialectOptions:
+    dbDialect === "postgres"
+      ? {
+          ssl:
+            process.env.DB_SSL === "true"
+              ? {
+                  require: true,
+                  rejectUnauthorized: false, // For self-signed certificates (use carefully)
+                }
+              : false,
+          // Statement timeout (30 seconds)
+          statement_timeout: 30000,
+          // Idle timeout (Postgres only)
+          idle_in_transaction_session_timeout: 60000,
+        }
+      : {},
   
   // Timezone
   timezone: process.env.DB_TIMEZONE || "+00:00", // UTC by default
@@ -224,6 +229,8 @@ process.on("SIGINT", async () => {
   await closeConnection();
   process.exit(0);
 });
+
+sequelize.sync()
 
 export default sequelize;
 

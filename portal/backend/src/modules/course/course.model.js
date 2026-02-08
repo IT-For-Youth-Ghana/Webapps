@@ -55,7 +55,7 @@ Course.init(
     {
         // Course info
         moodleCourseId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: true,
             unique: true,
             field: 'moodle_course_id',
@@ -68,6 +68,18 @@ Course.init(
                 len: {
                     args: [3, 255],
                     msg: 'Title must be between 3 and 255 characters',
+                },
+            },
+        },
+
+        slug: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            unique: true,
+            validate: {
+                len: {
+                    args: [1, 255],
+                    msg: 'Slug must be between 1 and 255 characters',
                 },
             },
         },
@@ -149,6 +161,7 @@ Course.init(
         tableName: 'courses',
         indexes: [
             { fields: ['moodle_course_id'] },
+            { unique: true, fields: ['slug'] },
             { fields: ['status'] },
             { fields: ['category'] },
             { fields: ['level'] },

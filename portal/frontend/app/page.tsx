@@ -1,26 +1,35 @@
+/**
+ * Updated Root Page
+ * Routes to login or dashboard based on authentication state
+ */
+
 'use client'
 
-import { useState } from 'react'
-import LoginPage from '@/components/pages/login'
-import Dashboard from '@/components/pages/dashboard'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/auth-context'
 
 export default function Page() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userEmail, setUserEmail] = useState('')
+  const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
 
-  const handleLogin = (email: string) => {
-    setUserEmail(email)
-    setIsAuthenticated(true)
-  }
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.push('/dashboard')
+      } else {
+        router.push('/login')
+      }
+    }
+  }, [isAuthenticated, isLoading, router])
 
-  const handleLogout = () => {
-    setIsAuthenticated(false)
-    setUserEmail('')
-  }
-
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />
-  }
-
-  return <Dashboard userEmail={userEmail} onLogout={handleLogout} />
+  // Show loading state while checking authentication
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  )
 }

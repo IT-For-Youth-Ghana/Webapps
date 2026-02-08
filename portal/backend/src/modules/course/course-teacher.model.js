@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import BaseModel from "../../modules/shared/base.model.js";
+import BaseModel, { JSON_TYPE } from "../../modules/shared/base.model.js";
 
 class CourseTeacher extends BaseModel {
     /**
@@ -16,7 +16,7 @@ CourseTeacher.init(
     {
         // Foreign keys
         courseId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'course_id',
             references: {
@@ -27,7 +27,7 @@ CourseTeacher.init(
         },
 
         teacherId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'teacher_id',
             references: {
@@ -39,7 +39,7 @@ CourseTeacher.init(
 
         // Permissions (e.g., ['edit_content', 'grade_assignments', 'manage_students'])
         permissions: {
-            type: DataTypes.JSONB,
+            type: JSON_TYPE,
             defaultValue: [],
             allowNull: false,
         },

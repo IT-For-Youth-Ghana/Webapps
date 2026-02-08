@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import BaseModel from "../../modules/shared/base.model.js";
+import BaseModel, { JSON_TYPE } from "../../modules/shared/base.model.js";
 
 class Admin extends BaseModel {
     /**
@@ -12,7 +12,7 @@ Admin.init(
     {
         // Foreign keys
         userId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'user_id',
             references: {
@@ -42,7 +42,7 @@ Admin.init(
         },
 
         permissions: {
-            type: DataTypes.JSONB,
+            type: JSON_TYPE,
             defaultValue: [],
         },
 

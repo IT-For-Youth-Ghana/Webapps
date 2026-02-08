@@ -12,7 +12,7 @@ CourseModule.init(
     {
         // Foreign keys
         courseId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'course_id',
             references: {
@@ -23,7 +23,7 @@ CourseModule.init(
 
         // External IDs
         moodleModuleId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: true,
             field: 'moodle_module_id',
         },

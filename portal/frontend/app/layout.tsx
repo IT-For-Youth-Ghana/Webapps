@@ -1,6 +1,13 @@
-import React from "react"
+/**
+ * Updated Root Layout
+ * Wraps application with AuthProvider
+ */
+
+import React from 'react'
 import type { Metadata } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
+import { AuthProvider } from '@/hooks/auth-context'
+import { Toaster } from '@/components/ui/toaster'
 
 import './globals.css'
 
@@ -29,7 +36,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
+      </body>
     </html>
   )
 }

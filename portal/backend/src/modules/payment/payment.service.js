@@ -19,16 +19,22 @@ class PaymentService {
     /**
      * Resolve user, enrollment, and course context for a payment
      */
-    async resolveContext({ userId, enrollmentId, courseId }) {
+    async resolveContext({ userId, enrollmentId, courseId, transaction }) {
         if (!userId) {
             throw new ValidationError("User ID is required");
         }
+
+        console.log("Resolving payment context:", { userId, enrollmentId, courseId });
 
         let enrollment = null;
         let resolvedCourseId = courseId;
 
         if (enrollmentId) {
-            enrollment = await Enrollment.findByPk(enrollmentId);
+            enrollment = await Enrollment.findOne({
+                where: { id: enrollmentId },
+                transaction,
+            });
+
             if (!enrollment) {
                 throw new NotFoundError("Enrollment not found");
             }
@@ -45,8 +51,8 @@ class PaymentService {
         }
 
         const [course, user] = await Promise.all([
-            Course.findByPk(resolvedCourseId),
-            User.findByPk(userId),
+            Course.findByPk(resolvedCourseId, { transaction }),
+            User.findByPk(userId, { transaction }),
         ]);
 
         if (!course) {
@@ -74,9 +80,18 @@ class PaymentService {
             userId,
             enrollmentId,
             courseId,
+            transaction,
         });
 
         const { course, user } = context;
+        let resolvedEnrollmentId = context.enrollmentId;
+        let enrollment = context.enrollment;
+
+        if (!resolvedEnrollmentId) {
+            const enrollmentService = (await import("../enrollment/enrollment.service.js")).default;
+            enrollment = await enrollmentService.createPending(userId, context.courseId, { transaction });
+            resolvedEnrollmentId = enrollment.id;
+        }
 
         // Check for free course
         if (course.isFree()) {
@@ -84,7 +99,7 @@ class PaymentService {
             const payment = await Payment.create(
                 {
                     userId: user.id,
-                    enrollmentId: context.enrollmentId,
+                    enrollmentId: resolvedEnrollmentId,
                     amount: 0,
                     currency: course.currency || "GHS",
                     paystackReference: `free_${uuidv4().replace(/-/g, "")}`,
@@ -94,6 +109,7 @@ class PaymentService {
                     metadata: {
                         course_id: context.courseId,
                         course_title: course.title,
+                        enrollment_id: resolvedEnrollmentId,
                         free_enrollment: true,
                     },
                 },
@@ -107,6 +123,7 @@ class PaymentService {
                 authorizationUrl: null,
                 reference: payment.paystackReference,
                 accessCode: null,
+                enrollmentId: resolvedEnrollmentId,
                 isFree: true,
             };
         }
@@ -122,7 +139,7 @@ class PaymentService {
             callbackUrl: `${process.env.FRONTEND_URL}/payment/callback`,
             metadata: {
                 user_id: user.id,
-                enrollment_id: context.enrollmentId,
+                enrollment_id: resolvedEnrollmentId,
                 course_id: context.courseId,
                 course_title: course.title,
             },
@@ -132,7 +149,7 @@ class PaymentService {
         const payment = await Payment.create(
             {
                 userId: user.id,
-                enrollmentId: context.enrollmentId,
+                enrollmentId: resolvedEnrollmentId,
                 amount: course.price,
                 currency: course.currency || "GHS",
                 paystackReference: reference,
@@ -154,6 +171,7 @@ class PaymentService {
             authorizationUrl: payment.authorizationUrl,
             reference: payment.paystackReference,
             accessCode: payment.paystackAccessCode,
+            enrollmentId: resolvedEnrollmentId,
             isFree: false,
         };
     }
@@ -162,9 +180,6 @@ class PaymentService {
      * Verify payment (after callback or webhook)
      */
     async verifyPayment(reference) {
-        // Verify with Paystack
-        const paystackData = await paystackService.verifyTransaction(reference);
-
         // Get payment record
         const payment = await Payment.findOne({
             where: { paystackReference: reference },
@@ -181,6 +196,38 @@ class PaymentService {
         if (!payment) {
             throw new NotFoundError("Payment not found");
         }
+
+        const isFreePayment =
+            payment.paymentMethod === "free" ||
+            payment.amount === 0 ||
+            payment.paystackReference?.startsWith("free_") ||
+            payment?.metadata?.free_enrollment === true;
+
+        if (isFreePayment) {
+            if (!payment.isSuccessful()) {
+                await payment.update({
+                    status: "success",
+                    paymentMethod: "free",
+                    paidAt: new Date(),
+                });
+            }
+
+            if (payment.enrollment && payment.enrollment.enrollmentStatus !== "enrolled") {
+                const enrollmentService = (await import("../enrollment/enrollment.service.js")).default;
+                await enrollmentService.completeEnrollment(payment.enrollmentId, reference);
+            }
+
+            return {
+                success: true,
+                status: "success",
+                amount: payment.amount,
+                paymentId: payment.id,
+                enrollmentId: payment.enrollmentId,
+            };
+        }
+
+        // Verify with Paystack
+        const paystackData = await paystackService.verifyTransaction(reference);
 
         // Already processed
         if (payment.status === "success") {

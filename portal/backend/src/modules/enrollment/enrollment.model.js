@@ -71,7 +71,7 @@ Enrollment.init(
     {
         // Foreign keys
         userId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'user_id',
             references: {
@@ -81,7 +81,7 @@ Enrollment.init(
         },
 
         courseId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING(36),
             allowNull: false,
             field: 'course_id',
             references: {

@@ -5,6 +5,10 @@
 
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../../database/client.js";
+import { UUIDV4 } from "sequelize";
+
+export const JSON_TYPE =
+  sequelize.getDialect() === "postgres" ? DataTypes.JSONB : DataTypes.JSON;
 
 class BaseModel extends Model {
   /**
@@ -14,9 +18,9 @@ class BaseModel extends Model {
     // Add common timestamps to all models
     const baseAttributes = {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING(36),
         primaryKey: true,
-        autoIncrement: true,
+        defaultValue: UUIDV4,
       },
       ...attributes,
       createdAt: {

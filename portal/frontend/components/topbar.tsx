@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useNotifications } from '@/hooks/use-user'
+import { useRouter } from 'next/navigation'
 
 interface TopBarProps {
   userName: string
@@ -11,6 +13,29 @@ interface TopBarProps {
 
 export default function TopBar({ userName, onLogout, onMenuToggle }: TopBarProps) {
   const [profileOpen, setProfileOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const router = useRouter()
+  const { notifications, isLoading, markAsRead, markAllAsRead } = useNotifications({
+    limit: 10,
+    unreadOnly: false,
+  })
+  const unreadCount = notifications.filter((n) => !n.isRead).length
+
+  const resolveNotificationLink = (link?: string | null) => {
+    if (!link) return null
+    if (link.startsWith('/dashboard')) return link
+    if (link.startsWith('/')) return `/dashboard${link}`
+    return `/dashboard/${link}`
+  }
+
+  const handleNotificationClick = async (id: string, link?: string | null) => {
+    await markAsRead(id)
+    const resolved = resolveNotificationLink(link)
+    if (resolved) {
+      router.push(resolved)
+      setNotificationsOpen(false)
+    }
+  }
 
   return (
     <div className="h-16 bg-white border-b border-border flex items-center justify-between px-4 md:px-8 shadow-sm">
@@ -33,10 +58,93 @@ export default function TopBar({ userName, onLogout, onMenuToggle }: TopBarProps
       {/* Right side */}
       <div className="flex items-center gap-4">
         {/* Notifications */}
-        <button className="p-2 hover:bg-muted rounded-lg transition-colors relative">
-          <span className="text-xl">🔔</span>
-          <span className="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full"></span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            className="p-2 hover:bg-muted rounded-lg transition-colors relative"
+            aria-label="Notifications"
+          >
+            <span className="text-xl">🔔</span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-white text-xs rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notificationsOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-border z-50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <p className="text-sm font-semibold text-foreground">Notifications</p>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={async () => {
+                      await markAllAsRead()
+                    }}
+                    className="text-xs text-primary hover:text-primary/80"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-80 overflow-auto">
+                {isLoading && (
+                  <div className="px-4 py-6 text-sm text-muted-foreground">Loading...</div>
+                )}
+
+                {!isLoading && notifications.length === 0 && (
+                  <div className="px-4 py-6 text-sm text-muted-foreground">
+                    No notifications yet
+                  </div>
+                )}
+
+                {!isLoading && notifications.length > 0 && (
+                  <div className="divide-y divide-border">
+                    {notifications.map((notification) => (
+                      <button
+                        key={notification.id}
+                        onClick={() => handleNotificationClick(notification.id, notification.link)}
+                        className={`w-full text-left px-4 py-3 hover:bg-muted transition-colors ${
+                          notification.isRead ? 'bg-white' : 'bg-secondary/10'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-foreground">
+                              {notification.title}
+                            </p>
+                            {notification.message && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {notification.message}
+                              </p>
+                            )}
+                          </div>
+                          {!notification.isRead && (
+                            <span className="mt-1 w-2 h-2 bg-secondary rounded-full flex-shrink-0"></span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-2">
+                          {new Date(notification.createdAt).toLocaleString()}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => {
+                  router.push('/dashboard/notifications')
+                  setNotificationsOpen(false)
+                }}
+                className="w-full text-center text-sm py-2 border-t border-border text-primary hover:text-primary/80"
+              >
+                View all notifications
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Profile Dropdown */}
         <div className="relative">

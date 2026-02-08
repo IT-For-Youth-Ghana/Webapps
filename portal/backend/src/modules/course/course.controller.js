@@ -22,7 +22,7 @@ class CourseController {
 
         const courses = await cacheService.getOrSet(
             cacheKey,
-            () => courseService.getAll({
+            () => courseService.getAllCourses({
                 page: parseInt(page),
                 limit: parseInt(limit),
                 category,
@@ -71,7 +71,7 @@ class CourseController {
 
         const courses = await cacheService.getOrSet(
             cacheKey,
-            () => courseService.getPopular(parseInt(limit)),
+            () => courseService.getPopularCourses(parseInt(limit)),
             cacheService.ttl.popularCourses
         );
 
@@ -93,7 +93,7 @@ class CourseController {
 
         const course = await cacheService.getOrSet(
             cacheKey,
-            () => courseService.getById(id),
+            () => courseService.getCourseById(id),
             cacheService.ttl.courses
         );
 
@@ -115,7 +115,7 @@ class CourseController {
     createCourse = asyncHandler(async (req, res) => {
         const courseData = req.body;
 
-        const course = await courseService.create(courseData, req.userId);
+        const course = await courseService.createCourse(courseData, req.userId);
 
         // Invalidate course caches
         await cacheService.invalidateCourses();
@@ -137,7 +137,7 @@ class CourseController {
         const { id } = req.params;
         const courseData = req.body;
 
-        const course = await courseService.update(id, courseData, req.userId);
+        const course = await courseService.updateCourse(id, courseData, req.userId);
 
         // Invalidate course caches
         await cacheService.invalidateCourses();
@@ -158,7 +158,7 @@ class CourseController {
     deleteCourse = asyncHandler(async (req, res) => {
         const { id } = req.params;
 
-        await courseService.delete(id, req.userId);
+        await courseService.deleteCourse(id, req.userId);
 
         // Invalidate course caches
         await cacheService.invalidateCourses();
@@ -195,7 +195,7 @@ class CourseController {
      * Get course statistics (admin only)
      */
     getCourseStats = asyncHandler(async (req, res) => {
-        const stats = await courseService.getStats();
+        const stats = await courseService.getCourseStats();
 
         return successResponse(res, {
             statusCode: 200,

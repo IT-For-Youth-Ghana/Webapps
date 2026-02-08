@@ -1,5 +1,7 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
+
 interface SidebarProps {
   activePage: string
   onPageChange: (page: string) => void
@@ -8,13 +10,30 @@ interface SidebarProps {
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
+  { id: 'browse', label: 'Browse Courses', icon: '🔍' },
   { id: 'courses', label: 'My Courses', icon: '📚' },
+  { id: 'notifications', label: 'Notifications', icon: '🔔' },
   { id: 'payments', label: 'Payments', icon: '💳' },
   { id: 'profile', label: 'Profile', icon: '👤' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ]
 
 export default function Sidebar({ activePage, onPageChange, isOpen }: SidebarProps) {
+  const pathname = usePathname()
+
+  // Determine the active page based on the pathname
+  const getActivePage = () => {
+    if (pathname.includes('/browse')) return 'browse'
+    if (pathname.includes('/courses')) return 'courses'
+    if (pathname.includes('/notifications')) return 'notifications'
+    if (pathname.includes('/payments')) return 'payments'
+    if (pathname.includes('/profile')) return 'profile'
+    if (pathname.includes('/settings')) return 'settings'
+    if (pathname.includes('/dashboard')) return 'dashboard'
+    return activePage
+  }
+
+  const currentActivePage = getActivePage()
   return (
     <>
       {/* Desktop Sidebar */}
@@ -36,7 +55,7 @@ export default function Sidebar({ activePage, onPageChange, isOpen }: SidebarPro
               key={item.id}
               onClick={() => onPageChange(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                activePage === item.id
+                currentActivePage === item.id
                   ? 'bg-white/20 text-white'
                   : 'text-white/70 hover:bg-white/10 hover:text-white'
               }`}
@@ -81,7 +100,7 @@ export default function Sidebar({ activePage, onPageChange, isOpen }: SidebarPro
                   key={item.id}
                   onClick={() => onPageChange(item.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    activePage === item.id
+                    currentActivePage === item.id
                       ? 'bg-white/20 text-white'
                       : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`}

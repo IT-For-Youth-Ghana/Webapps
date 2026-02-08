@@ -16,7 +16,7 @@ class EnrollmentController {
     getMyEnrollments = asyncHandler(async (req, res) => {
         const { page = 1, limit = 20, status } = req.query;
 
-        const enrollments = await enrollmentService.getByUser(req.userId, {
+        const enrollments = await enrollmentService.getStudentEnrollments(req.userId, {
             page: parseInt(page),
             limit: parseInt(limit),
             status,
@@ -36,7 +36,7 @@ class EnrollmentController {
     getEnrollmentDetails = asyncHandler(async (req, res) => {
         const { id } = req.params;
 
-        const enrollment = await enrollmentService.getById(id, req.userId);
+        const enrollment = await enrollmentService.getEnrollmentDetails(id, req.userId);
 
         return successResponse(res, {
             statusCode: 200,
@@ -129,7 +129,7 @@ class EnrollmentController {
         const { courseId } = req.params;
         const { page = 1, limit = 50, status } = req.query;
 
-        const enrollments = await enrollmentService.getByCourse(courseId, {
+        const enrollments = await enrollmentService.getCourseEnrollments(courseId, {
             page: parseInt(page),
             limit: parseInt(limit),
             status,
@@ -147,7 +147,7 @@ class EnrollmentController {
      * Get enrollment statistics (admin)
      */
     getEnrollmentStats = asyncHandler(async (req, res) => {
-        const stats = await enrollmentService.getStats();
+        const stats = await enrollmentService.getEnrollmentStats();
 
         return successResponse(res, {
             statusCode: 200,

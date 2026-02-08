@@ -147,8 +147,7 @@ router.get('/popular', courseController.getPopularCourses);
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
- *         description: Course ID
+ *         description: Course ID or slug
  *     responses:
  *       200:
  *         description: Course retrieved successfully
@@ -168,7 +167,7 @@ router.get('/popular', courseController.getPopularCourses);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:id', validate(courseValidator.getCourseById), courseController.getCourseById);
+router.get('/:id', validate(courseValidator.getCourseByIdOrSlug), courseController.getCourseById);
 
 // ==========================================
 // Admin Routes

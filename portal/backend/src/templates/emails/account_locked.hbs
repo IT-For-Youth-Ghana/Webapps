@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Locked</title>
+</head>
+<body style="margin:0; padding:0; background:#fff1f2; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#111827;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fff1f2; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#e11d48,#f97316); padding:26px 32px; color:#fff;">
+              <div style="font-size:18px; letter-spacing:0.3px;">{{appName}}</div>
+              <div style="font-size:24px; font-weight:700; margin-top:6px;">Account Temporarily Locked</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px;">
+              <p style="margin:0 0 8px 0; font-size:18px;">Hi {{name}},</p>
+              <p style="margin:0 0 14px 0; color:#4b5563;">For your security, we temporarily locked your account after multiple failed login attempts.</p>
+              <div style="background:#ffe4e6; border:1px solid #fecdd3; border-radius:12px; padding:14px; color:#9f1239; font-size:13px;">
+                You can try again after {{duration}} minutes.
+              </div>
+              <p style="margin:14px 0 0 0; color:#6b7280;">If this wasn't you, reset your password right away.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px; background:#f9fafb; border-top:1px solid #eef2f7;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="color:#9ca3af; font-size:12px;">© {{currentYear}} {{appName}}. All rights reserved.</td>
+                  <td align="right" style="color:#9ca3af; font-size:12px;">{{supportEmail}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

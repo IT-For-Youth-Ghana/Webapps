@@ -24,7 +24,7 @@ class EnrollmentService {
         const { transaction } = options;
 
         // Verify course exists and is active
-        const course = await Course.findByPk(courseId);
+        const course = await Course.findByPk(courseId, { transaction });
 
         if (!course) {
             throw new NotFoundError("Course not found");
@@ -34,9 +34,29 @@ class EnrollmentService {
             throw new ValidationError("Course is not active");
         }
 
+        // If Moodle integration is enabled, ensure course exists in Moodle
+        try {
+            if (moodleService.enabled) {
+                if (!course.moodleCourseId) {
+                    throw new ValidationError("Course is temporarily unavailable on LMS");
+                }
+
+                const moodleCourse = await moodleService.getCourseById(course.moodleCourseId);
+
+                if (!moodleCourse) {
+                    throw new ValidationError("Course is temporarily unavailable on LMS");
+                }
+            }
+        } catch (err) {
+            if (err instanceof ValidationError) throw err;
+            logger.error("Moodle course validation failed", { courseId: course.id, error: err?.message });
+            throw new ValidationError("Course is temporarily unavailable on LMS");
+        }
+
         // Check for duplicate enrollment
         const existing = await Enrollment.findOne({
             where: { userId, courseId },
+            transaction,
         });
 
         if (existing) {
@@ -188,7 +208,9 @@ class EnrollmentService {
         const { status, page = 1, limit = 10 } = filters;
 
         const where = { userId };
-        if (status) where.enrollmentStatus = status;
+        if (status) {
+            where.enrollmentStatus = status === "active" ? "enrolled" : status;
+        }
 
         const result = await Enrollment.paginate({
             page,
@@ -209,7 +231,7 @@ class EnrollmentService {
     /**
      * Get enrollment details with progress
      */
-    async getEnrollmentDetails(userId, enrollmentId) {
+    async getEnrollmentDetails(enrollmentId, userId) {
         const enrollment = await Enrollment.findOne({
             where: { id: enrollmentId, userId },
             include: [
@@ -253,8 +275,10 @@ class EnrollmentService {
     /**
      * Update module progress
      */
-    async updateModuleProgress(enrollmentId, moduleId, data) {
-        const enrollment = await Enrollment.findByPk(enrollmentId);
+    async updateModuleProgress(enrollmentId, moduleId, data, userId) {
+        const enrollment = await Enrollment.findOne({
+            where: { id: enrollmentId, ...(userId ? { userId } : {}) },
+        });
 
         if (!enrollment) {
             throw new NotFoundError("Enrollment not found");
@@ -267,9 +291,11 @@ class EnrollmentService {
         });
 
         // Update progress
+        const score = data.score !== undefined ? data.score : data.progress;
+
         await progress.update({
             status: data.status || progress.status,
-            score: data.score !== undefined ? data.score : progress.score,
+            score: score !== undefined ? score : progress.score,
             startedAt: data.status === "in_progress" && !progress.startedAt ? new Date() : progress.startedAt,
             completedAt: data.status === "completed" && !progress.completedAt ? new Date() : progress.completedAt,
         });
@@ -334,7 +360,9 @@ class EnrollmentService {
         const { page = 1, limit = 20, status } = filters;
 
         const where = { courseId };
-        if (status) where.enrollmentStatus = status;
+        if (status) {
+            where.enrollmentStatus = status === "active" ? "enrolled" : status;
+        }
 
         const result = await Enrollment.paginate({
             page,
@@ -356,9 +384,9 @@ class EnrollmentService {
     /**
      * Drop enrollment
      */
-    async dropEnrollment(userId, enrollmentId) {
+    async dropEnrollment(enrollmentId, userId, reason = null) {
         const enrollment = await Enrollment.findOne({
-            where: { id: enrollmentId, userId },
+            where: { id: enrollmentId, ...(userId ? { userId } : {}) },
         });
 
         if (!enrollment) {
@@ -373,7 +401,7 @@ class EnrollmentService {
             enrollmentStatus: "dropped",
         });
 
-        logger.info(`Enrollment ${enrollmentId} dropped by user ${userId}`);
+        logger.info(`Enrollment ${enrollmentId} dropped by user ${userId}`, { reason });
 
         return { success: true };
     }
@@ -381,14 +409,58 @@ class EnrollmentService {
     /**
      * Get enrollment by ID
      */
-    async findById(enrollmentId) {
-        const enrollment = await Enrollment.findByPk(enrollmentId);
+    async findById(enrollmentId, userId = null) {
+        const enrollment = userId
+            ? await Enrollment.findOne({ where: { id: enrollmentId, userId } })
+            : await Enrollment.findByPk(enrollmentId);
 
         if (!enrollment) {
             throw new NotFoundError("Enrollment not found");
         }
 
         return enrollment;
+    }
+
+    /**
+     * Get enrollment certificate (if completed)
+     */
+    async getCertificate(enrollmentId, userId) {
+        const enrollment = await Enrollment.findOne({
+            where: { id: enrollmentId, userId },
+        });
+
+        if (!enrollment) {
+            throw new NotFoundError("Enrollment not found");
+        }
+
+        if (enrollment.enrollmentStatus !== "completed") {
+            throw new ValidationError("Course not completed");
+        }
+
+        return {
+            certificateUrl: `/certificates?course=${enrollment.courseId}`,
+            issuedAt: enrollment.completedAt || new Date(),
+        };
+    }
+
+    /**
+     * Get enrollment statistics (Admin)
+     */
+    async getEnrollmentStats() {
+        const [totalEnrollments, activeEnrollments, completedEnrollments, droppedEnrollments] =
+            await Promise.all([
+                Enrollment.count(),
+                Enrollment.count({ where: { enrollmentStatus: "enrolled" } }),
+                Enrollment.count({ where: { enrollmentStatus: "completed" } }),
+                Enrollment.count({ where: { enrollmentStatus: "dropped" } }),
+            ]);
+
+        return {
+            totalEnrollments,
+            activeEnrollments,
+            completedEnrollments,
+            droppedEnrollments,
+        };
     }
 
     /**

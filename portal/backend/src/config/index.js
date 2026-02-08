@@ -105,16 +105,18 @@ const config = {
     email: {
         provider: process.env.EMAIL_PROVIDER || 'console',
         from: {
-            name: process.env.EMAIL_FROM_NAME || 'IT For Youth Ghana',
-            address: process.env.EMAIL_FROM_ADDRESS || 'noreply@itforyouthghana.org',
+            name: process.env.EMAIL_FROM || 'IT For Youth Ghana',
+            address: process.env.EMAIL_FROM || 'noreply@itforyouthghana.org',
         },
         smtp: {
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT) || 587,
-            user: process.env.SMTP_USER,
-            password: process.env.SMTP_PASSWORD,
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT) || 587,
+            user: process.env.EMAIL_USER,
+            password: process.env.EMAIL_PASSWORD,
         },
     },
+
+    testAddress: process.env.TEST_EMAIL || 'johnametepeagboku@live.com',
 
     // Security Configuration
     security: {

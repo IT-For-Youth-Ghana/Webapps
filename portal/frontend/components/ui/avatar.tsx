@@ -1,50 +1,80 @@
-'use client'
-
 import * as React from 'react'
-import * as AvatarPrimitive from '@radix-ui/react-avatar'
-
 import { cn } from '@/lib/utils'
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn(
-      'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full',
-      className,
-    )}
-    {...props}
-  />
-))
-Avatar.displayName = AvatarPrimitive.Root.displayName
+interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
+  src?: string
+  alt?: string
+  fallback?: string
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  status?: 'online' | 'offline' | 'away' | 'busy'
+}
 
-const AvatarImage = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn('aspect-square h-full w-full', className)}
-    {...props}
-  />
-))
-AvatarImage.displayName = AvatarPrimitive.Image.displayName
+const sizeClasses = {
+  sm: 'h-8 w-8 text-xs',
+  md: 'h-10 w-10 text-sm',
+  lg: 'h-12 w-12 text-base',
+  xl: 'h-16 w-16 text-lg',
+}
 
-const AvatarFallback = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Fallback>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Fallback
-    ref={ref}
-    className={cn(
-      'flex h-full w-full items-center justify-center rounded-full bg-muted',
-      className,
-    )}
-    {...props}
-  />
-))
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
+const statusColors = {
+  online: 'bg-green-500',
+  offline: 'bg-gray-400',
+  away: 'bg-yellow-500',
+  busy: 'bg-red-500',
+}
 
-export { Avatar, AvatarImage, AvatarFallback }
+const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
+  ({ className, src, alt, fallback, size = 'md', status, ...props }, ref) => {
+    const [imageError, setImageError] = React.useState(false)
+
+    // Generate initials from fallback text
+    const getInitials = (text?: string) => {
+      if (!text) return '?'
+      const words = text.split(' ')
+      if (words.length >= 2) {
+        return `${words[0][0]}${words[1][0]}`.toUpperCase()
+      }
+      return text.slice(0, 2).toUpperCase()
+    }
+
+    return (
+      <div
+        ref={ref}
+        className={cn('relative inline-block', className)}
+        {...props}
+      >
+        <div
+          className={cn(
+            'relative flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary/80 text-white font-semibold',
+            sizeClasses[size]
+          )}
+        >
+          {src && !imageError ? (
+            <img
+              src={src}
+              alt={alt || 'Avatar'}
+              className="h-full w-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <span className="select-none">{getInitials(fallback || alt)}</span>
+          )}
+        </div>
+
+        {/* Status indicator */}
+        {status && (
+          <span
+            className={cn(
+              'absolute bottom-0 right-0 block h-3 w-3 rounded-full border-2 border-background',
+              statusColors[status]
+            )}
+            aria-label={status}
+          />
+        )}
+      </div>
+    )
+  }
+)
+Avatar.displayName = 'Avatar'
+
+export { Avatar }

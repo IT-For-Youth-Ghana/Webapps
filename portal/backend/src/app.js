@@ -13,6 +13,8 @@ import config from './config/index.js';
 import logger from './utils/logger.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger.config.js';
+import moodleService from './integrations/moodle/moodle.service.js';
+import incubatorService from './integrations/incubator/incubator.service.js';
 
 // Create Express app
 const app = express();
@@ -57,6 +59,30 @@ app.get('/health', (req, res) => {
         uptime: process.uptime(),
         environment: config.server.env,
     });
+});
+
+// In your health endpoint
+app.get('/health/integrations', async (req, res) => {
+    const results = {
+        moodle: 'unconfigured',
+        incubator: 'unconfigured',
+    };
+
+    try {
+        await moodleService.testConnection();
+        results.moodle = 'connected';
+    } catch (error) {
+        results.moodle = 'error';
+    }
+
+    try {
+        await incubatorService.testConnection();
+        results.incubator = 'connected';
+    } catch (error) {
+        results.incubator = 'error';
+    }
+
+    res.json({ success: true, integrations: results });
 });
 
 app.get('/ping', (req, res) => {
