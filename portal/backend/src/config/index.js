@@ -84,13 +84,15 @@ const config = {
         url: process.env.MOODLE_URL,
         token: process.env.MOODLE_TOKEN,
         enabled: !!process.env.MOODLE_URL && !!process.env.MOODLE_TOKEN,
+        syncInterval: parseInt(process.env.MOODLE_SYNC_INTERVAL) || 60 * 1000, // 1 minute default
+        batchSize: parseInt(process.env.MOODLE_BATCH_SIZE) || 50,
     },
 
     // Paystack Integration
     paystack: {
         secretKey: process.env.PAYSTACK_SECRET_KEY,
         publicKey: process.env.PAYSTACK_PUBLIC_KEY,
-        callbackUrl: process.env.PAYSTACK_CALLBACK_URL || `${process.env.FRONTEND_URL}/payment/callback`,
+        callbackUrl: process.env.PAYSTACK_CALLBACK_URL || `${process.env.FRONTEND_URL}/dashboard/payments/verify`,
         enabled: !!process.env.PAYSTACK_SECRET_KEY,
     },
 

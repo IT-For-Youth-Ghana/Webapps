@@ -456,6 +456,25 @@ class CourseService {
 
         return categories.map((c) => c.category);
     }
+
+    /**
+     * Get courses stats
+     */
+    async getCoursesStats() {
+        const totalCourses = await Course.count();
+        const activeCourses = await Course.count({ where: { status: "active" } });
+        const inactiveCourses = await Course.count({ where: { status: "inactive" } });
+        const totalEnrollments = await Enrollment.count();
+        const totalTeachers = await User.count({ where: { role: "teacher" } });
+
+        return {
+            totalCourses,
+            activeCourses,
+            inactiveCourses,
+            totalEnrollments,
+            totalTeachers,
+        };
+    }
 }
 
 export default new CourseService();

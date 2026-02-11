@@ -218,83 +218,6 @@ router.get('/verify/:reference', authenticate, validate(paymentValidator.verifyP
  */
 router.get('/history', authenticate, validate(paymentValidator.listPayments), paymentController.getPaymentHistory);
 
-/**
- * @openapi
- * /payments/{id}:
- *   get:
- *     tags:
- *       - Payments
- *     summary: Get payment details
- *     description: Retrieve details of a specific payment
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Payment ID
- *     responses:
- *       200:
- *         description: Payment retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/Payment'
- *       404:
- *         description: Payment not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/:id', authenticate, validate(paymentValidator.getPaymentById), paymentController.getPaymentDetails);
-
-/**
- * @openapi
- * /payments/{id}/retry:
- *   post:
- *     tags:
- *       - Payments
- *     summary: Retry failed payment
- *     description: Retry a failed payment
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Payment ID
- *     responses:
- *       200:
- *         description: Payment retry initiated
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         authorizationUrl:
- *                           type: string
- *                         reference:
- *                           type: string
- */
-router.post('/:id/retry', authenticate, validate(paymentValidator.getPaymentById), paymentController.retryPayment);
-
 // ==========================================
 // Admin Routes
 // ==========================================
@@ -404,5 +327,85 @@ router.get('/admin/stats', authenticate, requireRole(['admin']), paymentControll
  *                           $ref: '#/components/schemas/PaginationInfo'
  */
 router.get('/admin/all', authenticate, requireRole(['admin']), validate(paymentValidator.listPayments), paymentController.getAllPayments);
+
+/**
+ * @openapi
+ * /payments/{id}:
+ *   get:
+ *     tags:
+ *       - Payments
+ *     summary: Get payment details
+ *     description: Retrieve details of a specific payment
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Payment ID
+ *     responses:
+ *       200:
+ *         description: Payment retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Payment'
+ *       404:
+ *         description: Payment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/:id', authenticate, validate(paymentValidator.getPaymentById), paymentController.getPaymentDetails);
+
+/**
+ * @openapi
+ * /payments/{id}/retry:
+ *   post:
+ *     tags:
+ *       - Payments
+ *     summary: Retry failed payment
+ *     description: Retry a failed payment
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Payment ID
+ *     responses:
+ *       200:
+ *         description: Payment retry initiated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         authorizationUrl:
+ *                           type: string
+ *                         reference:
+ *                           type: string
+ */
+router.post('/:id/retry', authenticate, validate(paymentValidator.getPaymentById), paymentController.retryPayment);
+
+
+
 
 export default router;

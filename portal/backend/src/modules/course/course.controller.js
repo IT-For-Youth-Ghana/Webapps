@@ -195,7 +195,7 @@ class CourseController {
      * Get course statistics (admin only)
      */
     getCourseStats = asyncHandler(async (req, res) => {
-        const stats = await courseService.getCourseStats();
+        const stats = await courseService.getCoursesStats();
 
         return successResponse(res, {
             statusCode: 200,

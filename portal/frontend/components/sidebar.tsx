@@ -2,27 +2,30 @@
 
 import { usePathname } from 'next/navigation'
 
+interface MenuItem {
+  id: string
+  label: string
+  icon: string
+  path?: string // Optional path override
+}
+
 interface SidebarProps {
   activePage: string
   onPageChange: (page: string) => void
   isOpen: boolean
+  menuItems: MenuItem[]
 }
 
-const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
-  { id: 'browse', label: 'Browse Courses', icon: '🔍' },
-  { id: 'courses', label: 'My Courses', icon: '📚' },
-  { id: 'notifications', label: 'Notifications', icon: '🔔' },
-  { id: 'payments', label: 'Payments', icon: '💳' },
-  { id: 'profile', label: 'Profile', icon: '👤' },
-  { id: 'settings', label: 'Settings', icon: '⚙️' },
-]
-
-export default function Sidebar({ activePage, onPageChange, isOpen }: SidebarProps) {
+export default function Sidebar({ activePage, onPageChange, isOpen, menuItems }: SidebarProps) {
   const pathname = usePathname()
 
   // Determine the active page based on the pathname
   const getActivePage = () => {
+    // Check path overrides first
+    const activeItem = menuItems.find(item => item.path && pathname.startsWith(item.path))
+    if (activeItem) return activeItem.id
+
+    // Fallback to ID-based matching
     if (pathname.includes('/browse')) return 'browse'
     if (pathname.includes('/courses')) return 'courses'
     if (pathname.includes('/notifications')) return 'notifications'
@@ -49,16 +52,15 @@ export default function Sidebar({ activePage, onPageChange, isOpen }: SidebarPro
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onPageChange(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                currentActivePage === item.id
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentActivePage === item.id
                   ? 'bg-white/20 text-white'
                   : 'text-white/70 hover:bg-white/10 hover:text-white'
-              }`}
+                }`}
             >
               <span className="text-xl">{item.icon}</span>
               <span className="font-medium">{item.label}</span>
@@ -82,7 +84,7 @@ export default function Sidebar({ activePage, onPageChange, isOpen }: SidebarPro
           ></div>
 
           {/* Sidebar */}
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-primary text-white shadow-lg">
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-primary text-white shadow-lg flex flex-col">
             {/* Logo */}
             <div className="p-6 border-b border-primary/20">
               <div className="flex items-center gap-2">
@@ -94,16 +96,15 @@ export default function Sidebar({ activePage, onPageChange, isOpen }: SidebarPro
             </div>
 
             {/* Navigation */}
-            <nav className="p-4 space-y-2">
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => onPageChange(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    currentActivePage === item.id
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentActivePage === item.id
                       ? 'bg-white/20 text-white'
                       : 'text-white/70 hover:bg-white/10 hover:text-white'
-                  }`}
+                    }`}
                 >
                   <span className="text-xl">{item.icon}</span>
                   <span className="font-medium">{item.label}</span>

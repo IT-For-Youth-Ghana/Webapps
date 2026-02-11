@@ -18,7 +18,7 @@ import GlassmorphicBackground from '@/components/ui/glassmorphic-background'
 import { useCourse } from '@/hooks/use-courses'
 import { useAuth } from '@/hooks/auth-context'
 import { useToast } from '@/hooks/use-toast'
-import { useMyEnrollments } from '@/hooks/hooks'
+import { useMyEnrollments } from '@/hooks'
 import {
   BookOpen,
   Users,

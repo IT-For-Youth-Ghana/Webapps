@@ -131,20 +131,18 @@ export default function RegisterStep3Page() {
         tempToken,
         phone: formData.phone,
         dateOfBirth: formData.dateOfBirth,
-        courseId: formData.courseId,
+        courseId: formData.courseId || undefined,
       })
 
       toast({
         title: 'Registration successful',
-        description: 'Welcome to ITFY Portal!',
+        description: 'Welcome to ITFY Portal! You are now logged in.',
       })
 
-      // Log in user with their new account
-      try {
-        await login({ email, password: response.temporaryPassword })
-      } catch {
-        // Registration successful even if auto-login fails
-        // User can manually log in
+      // User is automatically logged in with the returned tokens
+      // Update auth context with the user data
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(response.user))
       }
 
       // Clear session storage
@@ -153,8 +151,12 @@ export default function RegisterStep3Page() {
       sessionStorage.removeItem('registration_lastName')
       sessionStorage.removeItem('registration_tempToken')
 
-      // Redirect to dashboard
-      router.push('/dashboard')
+      // Redirect to dashboard or payment page if there's a payment URL
+      if (response.paymentUrl) {
+        router.push(response.paymentUrl)
+      } else {
+        router.push('/dashboard')
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed'
       toast({

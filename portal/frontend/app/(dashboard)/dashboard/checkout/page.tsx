@@ -1,437 +1,421 @@
 /**
- * Checkout Page
- * /dashboard/checkout
+ * Enhanced Checkout Page
+ * Uses new payment hooks with free course detection and luxury UI
  * 
- * Handles course payment processing via Paystack
+ * Features:
+ * - Luxury gradient design
+ * - Framer Motion animations
+ * - Free course fast path
+ * - Responsive layout
+ * - Loading states
+ * - Error handling
+ * - Trust badges
  */
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { useAuth } from '@/hooks/auth-context'
-import { useToast } from '@/hooks/use-toast'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useInitializePayment } from '@/hooks/use-payments'
 import { useCourse } from '@/hooks/use-courses'
-import { useInitializePayment, useVerifyPayment } from '@/hooks/use-payments'
+import { useAuth } from '@/hooks/auth-context'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
+import {
+  BookOpen,
+  CreditCard,
+  ShieldCheck,
+  Users,
+  Clock,
+  CheckCircle,
+  Award,
+  ArrowLeft,
+  Loader2,
+} from 'lucide-react'
 
-interface CheckoutState {
-  step: 'review' | 'processing' | 'success' | 'error'
-  error?: string
-  reference?: string
-}
-
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user } = useAuth()
-  const { toast } = useToast()
-
-  // Get course ID from query params
   const courseId = searchParams.get('courseId')
-  const returnRef = searchParams.get('reference')
+  const { user } = useAuth()
 
-  // State
-  const [checkoutState, setCheckoutState] = useState<CheckoutState>({
-    step: 'review',
-  })
-  const [isLoadingCourse, setIsLoadingCourse] = useState(true)
-  const [courseData, setCourseData] = useState<any>(null)
-
-  // Hooks
-  const { course, isLoading: courseLoading } = useCourse(courseId || '')
+  const { course, isLoading: isCourseLoading } = useCourse(courseId)
   const { initializePayment, isInitializing } = useInitializePayment()
-  const { verifyPayment, isVerifying } = useVerifyPayment()
 
-  // Handle payment verification callback
+  const [error, setError] = useState<string | null>(null)
+
+  // Redirect if no course ID
   useEffect(() => {
-    if (returnRef) {
-      handleVerifyPayment(returnRef)
+    if (!courseId) {
+      router.push('/courses')
     }
-  }, [returnRef])
+  }, [courseId, router])
 
-  // Load course data
-  useEffect(() => {
-    if (course && !courseLoading) {
-      setCourseData(course)
-      setIsLoadingCourse(false)
-    }
-  }, [course, courseLoading])
+  // Handle payment initialization
+  const handleProceedToPayment = async () => {
+    if (!courseId) return
 
-  if (!user) {
-    return null
-  }
-
-  if (!courseId) {
-    return (
-      <div className="p-4 md:p-8">
-        <Card className="p-12 text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            No Course Selected
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Please select a course to proceed with payment.
-          </p>
-          <Button onClick={() => router.push('/dashboard/browse')}>
-            Browse Courses
-          </Button>
-        </Card>
-      </div>
-    )
-  }
-
-  const handleInitializePayment = async () => {
     try {
-      setCheckoutState({ step: 'processing' })
+      setError(null)
+      const result = await initializePayment({ courseId })
 
-      const response = await initializePayment({
-        courseId: courseId!,
-      })
-
-      // Redirect to Paystack payment URL
-      if (response.authorizationUrl) {
-        // Store reference for verification
-        sessionStorage.setItem('paymentReference', response.reference)
-        window.location.href = response.authorizationUrl
-        return
-      }
-
-      // Free course: verify locally to complete enrollment
-      if (response.reference) {
-        await handleVerifyPayment(response.reference)
+      if (result.isFree) {
+        // Free course - go directly to verification
+        router.push(`/dashboard/payment/verify?reference=${result.reference}`)
       } else {
-        throw new Error('Missing payment reference')
+        // Paid course - redirect to Paystack
+        window.location.href = result.authorizationUrl!
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to initialize payment'
-      setCheckoutState({
-        step: 'error',
-        error: errorMessage,
-      })
-      toast({
-        title: 'Payment Error',
-        description: errorMessage,
-        variant: 'destructive',
-      })
-    }
-  }
-
-  const handleVerifyPayment = async (reference: string) => {
-    try {
-      setCheckoutState({ step: 'processing', reference })
-
-      const result = await verifyPayment(reference)
-
-      if (result.status === 'success') {
-        setCheckoutState({ step: 'success', reference })
-        toast({
-          title: 'Payment Successful',
-          description: 'Your enrollment is complete. Redirecting...',
-        })
-
-        // Redirect to course after a delay
-        setTimeout(() => {
-          router.push('/dashboard/courses')
-        }, 2000)
-      } else {
-        setCheckoutState({
-          step: 'error',
-          error: result.message || 'Payment verification failed',
-        })
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Payment verification failed'
-      setCheckoutState({
-        step: 'error',
-        error: errorMessage,
-      })
+      setError(err instanceof Error ? err.message : 'Failed to initialize payment')
     }
   }
 
   // Loading state
-  if (isLoadingCourse || courseLoading) {
+  if (isCourseLoading) {
     return (
-      <div className="p-4 md:p-8">
-        <div className="max-w-2xl mx-auto">
-          <Card className="p-8">
-            <div className="animate-pulse space-y-4">
-              <div className="h-10 bg-muted rounded w-3/4" />
-              <div className="h-6 bg-muted rounded w-1/2" />
-              <div className="h-40 bg-muted rounded" />
-              <div className="h-12 bg-muted rounded" />
-            </div>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary" />
+          <p className="mt-4 text-gray-600">Loading course details...</p>
+        </motion.div>
       </div>
     )
   }
 
   // Course not found
-  if (!courseData) {
+  if (!course) {
     return (
-      <div className="p-4 md:p-8">
-        <Card className="p-12 text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            Course Not Found
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            The course you're trying to enroll in doesn't exist.
-          </p>
-          <Button onClick={() => router.push('/dashboard/browse')}>
-            Browse Courses
-          </Button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-red-600 font-semibold">Course not found</p>
+            <Button
+              onClick={() => router.push('/courses')}
+              className="mt-4"
+              variant="outline"
+            >
+              Browse Courses
+            </Button>
+          </CardContent>
         </Card>
       </div>
     )
   }
 
-  const courseSlug = courseData?.slug || courseId
+  const isFree = parseFloat(course.price as unknown as string) === 0 // Assuming price mimics string or number, check types later
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Success State */}
-        {checkoutState.step === 'success' && (
-          <Card className="p-8 text-center border-green-200 bg-green-50">
-            <div className="mb-4 text-6xl">✓</div>
-            <h1 className="text-3xl font-bold text-green-900 mb-2">
-              Payment Successful!
-            </h1>
-            <p className="text-green-700 mb-6">
-              Your enrollment has been confirmed. Redirecting to your courses...
-            </p>
-            <Button
-              onClick={() => router.push('/dashboard/courses')}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Go to My Courses
-            </Button>
-          </Card>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Course
+          </Button>
 
-        {/* Error State */}
-        {checkoutState.step === 'error' && (
-          <Card className="p-8 text-center border-red-200 bg-red-50">
-            <div className="mb-4 text-6xl">✗</div>
-            <h1 className="text-3xl font-bold text-red-900 mb-2">
-              Payment Failed
-            </h1>
-            <p className="text-red-700 mb-6">{checkoutState.error}</p>
-            <div className="flex gap-3 justify-center">
-              <Button
-                onClick={() => setCheckoutState({ step: 'review' })}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Try Again
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/dashboard/courses/${courseSlug}`)}
-              >
-                Back to Course
-              </Button>
-            </div>
-          </Card>
-        )}
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+            Complete Your Enrollment
+          </h1>
+          <p className="mt-2 text-gray-600">
+            You're one step away from starting your learning journey
+          </p>
+        </motion.div>
 
-        {/* Processing State */}
-        {checkoutState.step === 'processing' && (
-          <Card className="p-8 text-center">
-            <div className="mb-4">
-              <div className="inline-block">
-                <div className="animate-spin">
-                  <div className="text-4xl">⏳</div>
-                </div>
-              </div>
-            </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              Processing Payment
-            </h1>
-            <p className="text-muted-foreground">
-              Please wait while we process your payment...
-            </p>
-          </Card>
-        )}
-
-        {/* Review State */}
-        {checkoutState.step === 'review' && (
-          <>
-            {/* Header */}
-            <div className="mb-8">
-              <button
-                onClick={() => router.push(`/dashboard/courses/${courseSlug}`)}
-                className="flex items-center gap-2 text-primary hover:text-primary/80 mb-6 transition-colors"
-              >
-                ← Back to Course
-              </button>
-              <h1 className="text-3xl font-bold text-foreground">
-                Complete Your Enrollment
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Review your order and complete payment
-              </p>
-            </div>
-
-            {/* Order Summary */}
-            <Card className="p-6 mb-6">
-              <h2 className="text-xl font-bold text-foreground mb-6">
-                Order Summary
-              </h2>
-
-              {/* Course Card */}
-              <div className="border-b pb-6 mb-6">
-                <div className="flex gap-4">
-                  {/* Course Image */}
-                  <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-white/60 text-4xl">📚</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Course Details */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-2 space-y-6"
+          >
+            {/* Course Card */}
+            <Card className="overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex gap-6">
+                  {/* Course Icon */}
+                  <div className="flex-shrink-0">
+                    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <BookOpen className="w-10 h-10 text-primary" />
+                    </div>
                   </div>
 
                   {/* Course Info */}
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-foreground mb-1">
-                      {courseData.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      by {courseData.instructor}
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      {course.title}
+                    </h2>
+                    <p className="text-gray-600 line-clamp-2">
+                      {course.description}
                     </p>
-                    <div className="flex gap-2">
-                      <Badge variant="outline">{courseData.category}</Badge>
-                      <Badge variant="secondary">{courseData.level}</Badge>
+
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {isFree && (
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                          FREE
+                        </Badge>
+                      )}
+                      <Badge variant="outline">{course.level}</Badge>
+                      <Badge variant="outline">{course.category}</Badge>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Pricing Details */}
-              <div className="space-y-3 mb-6 pb-6 border-b">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Course Price</span>
-                  <span className="font-semibold text-foreground">
-                    {courseData.currency}{(courseData.price || 0).toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Processing Fee</span>
-                  <span className="font-semibold text-foreground">{courseData.currency}0.00</span>
-                </div>
-                <div className="flex justify-between pt-3 border-t">
-                  <span className="font-bold text-foreground">Total Amount</span>
-                  <span className="text-2xl font-bold text-primary">
-                    {courseData.currency}{(courseData.price || 0).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
-              {/* Student Info */}
-              <div className="bg-muted/50 p-4 rounded-lg mb-6">
-                <h4 className="font-semibold text-foreground mb-3">
-                  Enrollment Information
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Name:</span>{' '}
-                    <span className="font-medium text-foreground">
-                      {user.firstName} {user.lastName}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Email:</span>{' '}
-                    <span className="font-medium text-foreground">
-                      {user.email}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Benefits */}
-              <div className="mb-6">
-                <h4 className="font-semibold text-foreground mb-3">
-                  What You Get
-                </h4>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex gap-2">
-                    <span className="text-primary">✓</span>
-                    <span className="text-muted-foreground">
-                      Lifetime access to course materials
-                    </span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-primary">✓</span>
-                    <span className="text-muted-foreground">
-                      Certificate of completion
-                    </span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-primary">✓</span>
-                    <span className="text-muted-foreground">
-                      30-day money-back guarantee
-                    </span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Payment Terms */}
-              <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded mb-6">
-                {courseData.price
-                  ? (
-                    <>
-                      By clicking "Pay Now", you agree to enroll in this course and
-                      authorize the payment of{' '}
-                      <span className="font-semibold text-foreground">
-                        {courseData.currency}{(courseData.price || 0).toLocaleString()}
-                      </span>{' '}
-                      using Paystack.
-                    </>
-                  )
-                  : (
-                    <>
-                      By clicking "Enroll Free", you agree to enroll in this course.
-                    </>
-                  )}
-              </div>
-
-              {/* CTA Button */}
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={handleInitializePayment}
-                disabled={isInitializing}
-              >
-                {isInitializing ? (
-                  <>
-                    <span className="mr-2">⏳</span>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <span className="mr-2">💳</span>
-                    {courseData.price
-                      ? (
-                        <>Pay Now - {courseData.currency}{(courseData.price || 0).toLocaleString()}</>
-                      )
-                      : (
-                        <>Enroll Free</>
-                      )}
-                  </>
-                )}
-              </Button>
-
-              {/* Security Info */}
-              <div className="mt-4 text-center text-xs text-muted-foreground">
-                <p>
-                  {courseData.price
-                    ? '🔒 Secured by Paystack • Your payment information is encrypted'
-                    : 'Enrollment is free for this course'}
-                </p>
-              </div>
+              </CardContent>
             </Card>
-          </>
-        )}
+
+            {/* What's Included */}
+            <Card>
+              <CardHeader>
+                <CardTitle>What's Included</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Lifetime Access</p>
+                      <p className="text-sm text-gray-600">
+                        Learn at your own pace, forever
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Award className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Certificate</p>
+                      <p className="text-sm text-gray-600">
+                        Earn a certificate upon completion
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Community</p>
+                      <p className="text-sm text-gray-600">
+                        Join our student community
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">30-Day Guarantee</p>
+                      <p className="text-sm text-gray-600">
+                        Full refund if you're not satisfied
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Student Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Student Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Name</p>
+                    <p className="font-semibold">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-semibold">{user?.email}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Right Column - Order Summary (Sticky) */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-1"
+          >
+            <div className="sticky top-24">
+              <Card className="overflow-hidden border-2">
+                <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10">
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  {/* Price */}
+                  <div>
+                    <div className="flex justify-between items-baseline mb-2">
+                      <span className="text-gray-600">Course Price</span>
+                      {isFree ? (
+                        <span className="text-3xl font-bold text-green-600">FREE</span>
+                      ) : (
+                        <span className="text-3xl font-bold text-gray-900">
+                          {course.currency} {parseFloat(course.price as unknown as string).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    {!isFree && (
+                      <p className="text-sm text-gray-500">One-time payment</p>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Total */}
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-lg">Total</span>
+                    {isFree ? (
+                      <span className="text-2xl font-bold text-green-600">FREE</span>
+                    ) : (
+                      <span className="text-2xl font-bold text-gray-900">
+                        {course.currency} {parseFloat(course.price as unknown as string).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* CTA Button */}
+                  <Button
+                    onClick={handleProceedToPayment}
+                    disabled={isInitializing}
+                    className="w-full h-12 text-base font-semibold"
+                    size="lg"
+                  >
+                    <AnimatePresence mode="wait">
+                      {isInitializing ? (
+                        <motion.div
+                          key="loading"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="flex items-center gap-2"
+                        >
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Processing...
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="ready"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="flex items-center gap-2"
+                        >
+                          {isFree ? (
+                            <>
+                              <CheckCircle className="w-5 h-5" />
+                              Enroll for Free
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="w-5 h-5" />
+                              Proceed to Payment
+                            </>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Button>
+
+                  {/* Error Message */}
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="p-3 bg-red-50 border border-red-200 rounded-lg"
+                      >
+                        <p className="text-sm text-red-600">{error}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Security Badge */}
+                  {!isFree && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-600 pt-4">
+                      <ShieldCheck className="w-4 h-4 text-green-600" />
+                      <span>Secured by Paystack</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Trust Indicators */}
+              <div className="mt-6 space-y-4">
+                <div className="text-center text-sm text-gray-600">
+                  <p className="font-semibold">Trusted by 10,000+ students</p>
+                  <div className="flex items-center justify-center gap-1 mt-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg
+                        key={star}
+                        className="w-5 h-5 text-yellow-400 fill-current"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="mt-1">4.9/5 average rating</p>
+                </div>
+
+                {!isFree && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-900 text-center">
+                      <strong>30-Day Money-Back Guarantee</strong>
+                      <br />
+                      Not satisfied? Get a full refund, no questions asked.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    }>
+      <CheckoutPageContent />
+    </Suspense>
   )
 }

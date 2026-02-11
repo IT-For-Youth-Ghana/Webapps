@@ -16,7 +16,7 @@ import { Progress } from '@/components/ui/progress'
 import AntigravityBackground from '@/components/ui/antigravity-background'
 import GlassmorphicBackground from '@/components/ui/glassmorphic-background'
 import { useAuth } from '@/hooks/auth-context'
-import { useMyEnrollments } from '@/hooks/hooks'
+import { useMyEnrollments } from '@/hooks'
 import {
   BookOpen,
   Sparkles,
@@ -32,7 +32,7 @@ import {
 export default function MyCoursesPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { enrollments, isLoading } = useMyEnrollments({ status: 'enrolled' })
+  const { enrollments, isLoading } = useMyEnrollments({ status: 'active' })
 
   if (!user) {
     return null
@@ -45,7 +45,7 @@ export default function MyCoursesPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Layered Backgrounds */}
-      <AntigravityBackground 
+      <AntigravityBackground
         opacity="low"
         ringCount={4}
         particleColor="rgba(1, 82, 190, 0.8)"
@@ -57,7 +57,7 @@ export default function MyCoursesPage() {
 
       {/* Main Content */}
       <div className="relative z-10 p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
-        
+
         {/* Hero Header */}
         <div className="relative">
           <Card className="glass-card-premium border-white/20 overflow-hidden">
@@ -142,11 +142,11 @@ export default function MyCoursesPage() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  
+
                   {/* Category Badge */}
                   {enrollment.course?.category && (
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className="absolute top-4 left-4 glass-button"
                     >
                       {enrollment.course.category}
@@ -224,10 +224,15 @@ export default function MyCoursesPage() {
                       className="group-hover:bg-primary group-hover:scale-105 transition-all"
                       onClick={(e) => {
                         e.stopPropagation()
-                        router.push(`/dashboard/courses/${enrollment.course?.slug || enrollment.courseId}`)
+                        const moonleUrl = process.env.NEXT_PUBLIC_MOODLE_URL || 'https://lms.itforyouthghana.org'
+                        if (enrollment.course?.moodleCourseId) {
+                          window.open(`${moonleUrl}/course/view.php?id=${enrollment.course.moodleCourseId}`, '_blank')
+                        } else {
+                          router.push(`/dashboard/courses/${enrollment.course?.slug || enrollment.courseId}`)
+                        }
                       }}
                     >
-                      Continue
+                      Continue Learning
                       <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </div>

@@ -178,6 +178,26 @@ User.init(
             allowNull: true,
             field: 'temp_password',
         },
+
+        // Sync metadata
+        lastSyncedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'last_synced_at',
+        },
+
+        syncStatus: {
+            type: DataTypes.ENUM('pending', 'synced', 'error'),
+            defaultValue: 'pending',
+            allowNull: false,
+            field: 'sync_status',
+        },
+
+        lastSyncError: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            field: 'last_sync_error',
+        },
     },
     {
         tableName: 'users',
@@ -186,6 +206,8 @@ User.init(
             { fields: ['role'] },
             { fields: ['moodle_user_id'] },
             { fields: ['incubator_user_id'] },
+            { fields: ['sync_status'] },
+            { fields: ['last_synced_at'] },
         ],
         hooks: {
             // Hash password before creating user

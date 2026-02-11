@@ -12,6 +12,7 @@ import userRoutes from '../modules/user/user.routes.js';
 import courseRoutes from '../modules/course/course.routes.js';
 import enrollmentRoutes from '../modules/enrollment/enrollment.routes.js';
 import paymentRoutes from '../modules/payment/payment.routes.js';
+import queueAdminRoutes from '../modules/admin/queue-admin.routes.js';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/users', userRoutes);
 router.use('/courses', courseRoutes);
 router.use('/enrollments', enrollmentRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/admin/queues', queueAdminRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {

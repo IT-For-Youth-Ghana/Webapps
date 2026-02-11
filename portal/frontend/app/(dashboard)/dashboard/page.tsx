@@ -14,7 +14,7 @@ import { AnimatedCounter } from '@/components/ui/animated-counter'
 import AntigravityBackground from '@/components/ui/antigravity-background'
 import GlassmorphicBackground from '@/components/ui/glassmorphic-background'
 import { useAuth } from '@/hooks/auth-context'
-import { useMyEnrollments, useNotifications, usePayments } from '@/hooks/hooks'
+import { useMyEnrollments, useNotifications, usePayments } from '@/hooks'
 import { useRouter } from 'next/navigation'
 import { 
   BookOpen, 
@@ -125,6 +125,41 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        {/* LMS Access Notification for users without enrollments */}
+        {enrolledCourses.length === 0 && !enrollmentsLoading && (
+          <Card className="glass-card border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-orange-500/10 animate-fade-in-up animation-delay-300">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-amber-500/20 rounded-xl">
+                  <BookOpen className="w-6 h-6 text-amber-600" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <h3 className="font-semibold text-foreground">Ready to Start Learning?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    To access our Learning Management System (LMS) and begin your courses, you'll need to enroll in at least one course first.
+                    Browse our available courses and get started on your learning journey!
+                  </p>
+                  <div className="flex gap-3 mt-4">
+                    <Button
+                      onClick={() => router.push('/dashboard/browse')}
+                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    >
+                      Browse Courses
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push('/courses')}
+                    >
+                      My Courses
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Grid - Bento Style */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {/* Enrolled Courses */}
@@ -231,22 +266,41 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => window.open(process.env.NEXT_PUBLIC_MOODLE_URL || '#', '_blank')}
-                    className="w-full h-auto py-6 glass-button group hover:border-primary/50 hover:bg-primary/5"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="p-3 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
-                        <BookOpen className="w-6 h-6 text-primary" />
+                  {enrolledCourses.length > 0 ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(process.env.NEXT_PUBLIC_MOODLE_URL || '#', '_blank')}
+                      className="w-full h-auto py-6 glass-button group hover:border-primary/50 hover:bg-primary/5"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="p-3 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
+                          <BookOpen className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Learning Portal</p>
+                          <p className="text-xs text-muted-foreground">Access LMS</p>
+                        </div>
+                        <ExternalLink className="w-4 h-4 opacity-50" />
                       </div>
-                      <div>
-                        <p className="font-semibold">Learning Portal</p>
-                        <p className="text-xs text-muted-foreground">Access LMS</p>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push('/dashboard/browse')}
+                      className="w-full h-auto py-6 glass-button group hover:border-primary/50 hover:bg-primary/5"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="p-3 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
+                          <BookOpen className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Enroll in Courses</p>
+                          <p className="text-xs text-muted-foreground">Access LMS</p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 opacity-50" />
                       </div>
-                      <ExternalLink className="w-4 h-4 opacity-50" />
-                    </div>
-                  </Button>
+                    </Button>
+                  )}
 
                   <Button
                     variant="outline"
@@ -293,7 +347,7 @@ export default function DashboardPage() {
                     <BookOpen className="w-5 h-5 text-primary" />
                     Active Courses
                   </span>
-                  <Button variant="ghost" size="sm" onClick={() => router.push('/courses')}>
+                  <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/courses')}>
                     View All
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
@@ -310,7 +364,7 @@ export default function DashboardPage() {
                   <div className="text-center py-12">
                     <BookOpen className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
                     <p className="text-muted-foreground">No active courses yet</p>
-                    <Button variant="outline" className="mt-4" onClick={() => router.push('/courses')}>
+                    <Button variant="outline" className="mt-4" onClick={() => router.push('/dashboard/courses')}>
                       Browse Courses
                     </Button>
                   </div>
@@ -323,7 +377,7 @@ export default function DashboardPage() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {enrollment.courseName || `Course ${index + 1}`}
+                            {enrollment.course?.title || `Course ${index + 1}`}
                           </h4>
                           <Badge variant="outline" className="text-xs">
                             In Progress
@@ -336,7 +390,7 @@ export default function DashboardPage() {
                         />
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Last accessed: {new Date(enrollment.enrollmentDate).toLocaleDateString()}
+                          Last accessed: {enrollment.enrolledAt ? new Date(enrollment.enrolledAt).toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
                     ))}

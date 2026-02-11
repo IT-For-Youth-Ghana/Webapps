@@ -52,7 +52,10 @@ export const authenticate = async (req, res, next) => {
  * Check if user has required role
  */
 export const authorize = (...allowedRoles) => {
+
+    allowedRoles = allowedRoles.flat();
     return (req, res, next) => {
+
         try {
             if (!req.user) {
                 throw new UnauthorizedError('Authentication required');

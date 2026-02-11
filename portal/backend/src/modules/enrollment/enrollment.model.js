@@ -148,6 +148,26 @@ Enrollment.init(
             allowNull: true,
             field: 'last_accessed',
         },
+
+        // Sync metadata
+        lastSyncedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'last_synced_at',
+        },
+
+        syncStatus: {
+            type: DataTypes.ENUM('pending', 'synced', 'error'),
+            defaultValue: 'pending',
+            allowNull: false,
+            field: 'sync_status',
+        },
+
+        lastSyncError: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            field: 'last_sync_error',
+        },
     },
     {
         tableName: 'enrollments',
@@ -156,6 +176,8 @@ Enrollment.init(
             { fields: ['payment_status'] },
             { fields: ['enrollment_status'] },
             { fields: ['enrolled_at'] },
+            { fields: ['sync_status'] },
+            { fields: ['last_synced_at'] },
         ],
         hooks: {
             // Auto-set enrolledAt when status changes to 'enrolled'

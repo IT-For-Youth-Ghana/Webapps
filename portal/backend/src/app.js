@@ -8,6 +8,7 @@ import corsMiddleware from './middlewares/cors.middleware.js';
 import loggerMiddleware from './middlewares/logger.middleware.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { apiRateLimiter } from './middlewares/rateLimit.middleware.js';
+import { securityHeaders, compressionMiddleware, requestId, securityAudit } from './middlewares/security.middleware.js';
 import routes from './routes/index.js';
 import config from './config/index.js';
 import logger from './utils/logger.js';
@@ -26,6 +27,21 @@ const app = express();
 app.set('trust proxy', 1);
 
 /**
+ * Request ID for tracing
+ */
+app.use(requestId);
+
+/**
+ * Security headers
+ */
+app.use(securityHeaders);
+
+/**
+ * Compression
+ */
+app.use(compressionMiddleware);
+
+/**
  * Body parsers
  */
 app.use(express.json({ limit: '10mb' }));
@@ -42,6 +58,11 @@ app.use(corsMiddleware);
 app.use(loggerMiddleware);
 
 /**
+ * Security audit
+ */
+app.use(securityAudit);
+
+/**
  * Rate Limiting
  */
 if (config.rateLimit.enabled) {
@@ -51,35 +72,139 @@ if (config.rateLimit.enabled) {
 /**
  * Health Check Endpoint
  */
-app.get('/health', (req, res) => {
-    res.status(200).json({
+app.get('/health', async (req, res) => {
+    const health = {
         success: true,
         message: 'Server is healthy',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         environment: config.server.env,
-    });
+        version: process.env.npm_package_version || '1.0.0',
+        nodeVersion: process.version,
+        memory: process.memoryUsage(),
+        pid: process.pid,
+    };
+
+    // Check database connection
+    try {
+        const { testConnection } = await import('./database/client.js');
+        await testConnection();
+        health.database = 'connected';
+    } catch (error) {
+        health.database = 'error';
+        health.success = false;
+        health.message = 'Database connection failed';
+    }
+
+    // Check Redis if enabled
+    if (config.redis.enabled) {
+        try {
+            const { getRedisClient } = await import('./config/redis.js');
+            const redis = getRedisClient();
+            await redis.ping();
+            health.redis = 'connected';
+        } catch (error) {
+            health.redis = 'error';
+        }
+    }
+
+    const statusCode = health.success ? 200 : 503;
+    res.status(statusCode).json(health);
 });
 
-// In your health endpoint
+/**
+ * Detailed health check with integrations
+ */
+app.get('/health/detailed', async (req, res) => {
+    const results = {
+        success: true,
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        integrations: {
+            moodle: 'unconfigured',
+            incubator: 'unconfigured',
+            database: 'unknown',
+            redis: 'unconfigured',
+        },
+        system: {
+            memory: process.memoryUsage(),
+            cpu: process.cpuUsage(),
+            platform: process.platform,
+            arch: process.arch,
+        },
+    };
+
+    // Database check
+    try {
+        const { testConnection } = await import('./database/client.js');
+        await testConnection();
+        results.integrations.database = 'connected';
+    } catch (error) {
+        results.integrations.database = 'error';
+        results.success = false;
+    }
+
+    // Redis check
+    if (config.redis.enabled) {
+        try {
+            const { getRedisClient } = await import('./config/redis.js');
+            const redis = getRedisClient();
+            await redis.ping();
+            results.integrations.redis = 'connected';
+        } catch (error) {
+            results.integrations.redis = 'error';
+        }
+    }
+
+    // Moodle check
+    if (config.moodle.enabled) {
+        try {
+            await moodleService.testConnection();
+            results.integrations.moodle = 'connected';
+        } catch (error) {
+            results.integrations.moodle = 'error';
+        }
+    }
+
+    // Incubator check
+    if (config.incubator.enabled) {
+        try {
+            await incubatorService.testConnection();
+            results.integrations.incubator = 'connected';
+        } catch (error) {
+            results.integrations.incubator = 'error';
+        }
+    }
+
+    const statusCode = results.success ? 200 : 503;
+    res.status(statusCode).json(results);
+});
+
+/**
+ * Legacy integrations health check
+ */
 app.get('/health/integrations', async (req, res) => {
     const results = {
         moodle: 'unconfigured',
         incubator: 'unconfigured',
     };
 
-    try {
-        await moodleService.testConnection();
-        results.moodle = 'connected';
-    } catch (error) {
-        results.moodle = 'error';
+    if (config.moodle.enabled) {
+        try {
+            await moodleService.testConnection();
+            results.moodle = 'connected';
+        } catch (error) {
+            results.moodle = 'error';
+        }
     }
 
-    try {
-        await incubatorService.testConnection();
-        results.incubator = 'connected';
-    } catch (error) {
-        results.incubator = 'error';
+    if (config.incubator.enabled) {
+        try {
+            await incubatorService.testConnection();
+            results.incubator = 'connected';
+        } catch (error) {
+            results.incubator = 'error';
+        }
     }
 
     res.json({ success: true, integrations: results });

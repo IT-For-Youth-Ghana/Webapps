@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Enrollment Confirmation - {{appName}}</title>
+</head>
+<body style="margin:0; padding:0; background:#f5f3ff; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#111827;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f3ff; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#059669,#10b981); padding:26px 32px; color:#fff;">
+              <div style="font-size:18px; letter-spacing:0.3px;">{{appName}}</div>
+              <div style="font-size:24px; font-weight:700; margin-top:6px;">🎓 Course Enrollment Confirmed</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px;">
+              <p style="margin:0 0 8px 0; font-size:18px;">Hi {{firstName}},</p>
+              <p style="margin:0 0 16px 0; color:#4b5563;">Congratulations! You have been successfully enrolled in <strong>{{courseTitle}}</strong>.</p>
+
+              {{#if courseDescription}}
+              <div style="background:#f9fafb; border-left:4px solid #10b981; padding:16px; margin:18px 0;">
+                <h4 style="margin:0 0 8px 0; color:#059669; font-size:16px;">📚 About Your Course</h4>
+                <p style="margin:0; color:#4b5563; font-size:14px;">{{courseDescription}}</p>
+              </div>
+              {{/if}}
+
+              <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:12px; padding:20px; margin:18px 0;">
+                <h3 style="margin:0 0 12px 0; color:#0369a1; font-size:16px;">🚀 Access Your Course</h3>
+                <p style="margin:0 0 16px 0; color:#4b5563; font-size:14px;">You now have access to your course through both our platforms:</p>
+
+                <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%; margin:16px 0;">
+                  <tr>
+                    <td style="padding-right:8px;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;">
+                        <tr>
+                          <td align="center" bgcolor="#059669" style="border-radius:8px;">
+                            <a href="{{portalUrl}}" style="display:inline-block; padding:14px 20px; font-weight:600; color:#ffffff; text-decoration:none; font-size:14px;">📊 Portal Dashboard</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td style="padding-left:8px;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;">
+                        <tr>
+                          <td align="center" bgcolor="#7c3aed" style="border-radius:8px;">
+                            <a href="{{courseUrl}}" style="display:inline-block; padding:14px 20px; font-weight:600; color:#ffffff; text-decoration:none; font-size:14px;">🎓 Learning Management System</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+
+                <div style="background:#ffffff; border-radius:8px; padding:12px; margin-top:12px;">
+                  <p style="margin:0 0 8px 0; color:#0369a1; font-size:13px; font-weight:600;">What each platform offers:</p>
+                  <p style="margin:0 0 4px 0; color:#4b5563; font-size:12px;">
+                    <strong>Portal Dashboard:</strong> Track your progress, view certificates, manage your account
+                  </p>
+                  <p style="margin:0; color:#4b5563; font-size:12px;">
+                    <strong>Learning Management System:</strong> Access course materials, complete assignments, participate in discussions
+                  </p>
+                </div>
+              </div>
+
+              <div style="background:#fef3c7; border:1px solid #fbbf24; border-radius:12px; padding:16px; margin:18px 0;">
+                <h4 style="margin:0 0 8px 0; color:#92400e; font-size:14px;">💡 Getting Started Tips</h4>
+                <ul style="margin:0; padding-left:16px; color:#4b5563; font-size:13px;">
+                  <li>Start by accessing the LMS to explore your course materials</li>
+                  <li>Check the Portal Dashboard regularly to track your progress</li>
+                  <li>Complete assignments and participate in discussions for the best learning experience</li>
+                  <li>Contact support if you need any assistance</li>
+                </ul>
+              </div>
+
+              <p style="margin:18px 0 0 0; color:#6b7280;">We're excited to have you on this learning journey! If you have any questions, don't hesitate to reach out to our support team.</p>
+
+              <p style="margin:12px 0 0 0; color:#4b5563;">Best regards,<br>The {{appName}} Team</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px; background:#f9fafb; border-top:1px solid #eef2f7;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="color:#9ca3af; font-size:12px;">© {{currentYear}} {{appName}}. All rights reserved.</td>
+                  <td align="right" style="color:#9ca3af; font-size:12px;">
+                    <a href="mailto:{{supportEmail}}" style="color:#9ca3af; text-decoration:none;">{{supportEmail}}</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

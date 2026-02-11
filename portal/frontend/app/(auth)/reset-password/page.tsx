@@ -7,21 +7,21 @@
 
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { useResetPassword } from '@/hooks/use-password' // Assuming the hooks file is named use-auth-flow or similar
+import { useResetPassword } from '@/hooks/use-password'
 import { Lock, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
-  const { resetPassword, isLoading, error } = useResetPassword()
+  const { resetPassword, isLoading } = useResetPassword()
 
   const token = searchParams.get('token')
 
@@ -31,7 +31,8 @@ export default function ResetPasswordPage() {
   })
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
-  useState(() => {
+  // Use useEffect instead of useState for side effect
+  React.useEffect(() => {
     if (!token) {
       toast({
         title: 'Invalid link',
@@ -40,7 +41,7 @@ export default function ResetPasswordPage() {
       })
       router.push('/forgot-password')
     }
-  })
+  }, [token, router, toast])
 
   const validateForm = () => {
     const errors: Record<string, string> = {}
@@ -108,9 +109,125 @@ export default function ResetPasswordPage() {
   }
 
   return (
+    <Card className="p-10 border-none shadow-xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-center mb-8"
+      >
+        <h1 className="text-2xl font-serif font-bold text-gray-900 dark:text-white mb-2">
+          Reset Password
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Enter your new password
+        </p>
+      </motion.div>
+
+      <form onSubmit={handleSubmit}>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-6"
+        >
+          {/* Password Field */}
+          <motion.div variants={childVariants}>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              New Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="password"
+                name="password"
+                placeholder="********"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={isLoading}
+                className={`pl-10 bg-transparent border-b-2 rounded-none transition-all duration-300 ${formErrors.password
+                    ? 'border-red-500'
+                    : 'border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-400'
+                  } focus:ring-0`}
+              />
+            </div>
+            {formErrors.password && (
+              <p className="text-xs text-red-500 mt-1">{formErrors.password}</p>
+            )}
+          </motion.div>
+
+          {/* Confirm Password Field */}
+          <motion.div variants={childVariants}>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="password"
+                name="passwordConfirm"
+                placeholder="********"
+                value={formData.passwordConfirm}
+                onChange={handleChange}
+                disabled={isLoading}
+                className={`pl-10 bg-transparent border-b-2 rounded-none transition-all duration-300 ${formErrors.passwordConfirm
+                    ? 'border-red-500'
+                    : 'border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-400'
+                  } focus:ring-0`}
+              />
+            </div>
+            {formErrors.passwordConfirm && (
+              <p className="text-xs text-red-500 mt-1">{formErrors.passwordConfirm}</p>
+            )}
+          </motion.div>
+
+          {/* Submit Button */}
+          <motion.div
+            variants={childVariants}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button
+              type="submit"
+              className="w-full h-12 text-base font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Resetting...' : (
+                <span className="flex items-center justify-center gap-2">
+                  Reset Password
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              )}
+            </Button>
+          </motion.div>
+        </motion.div>
+      </form>
+
+      {/* Back to Login */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.4 }}
+        className="mt-6 text-center"
+      >
+        <Button
+          variant="link"
+          onClick={() => router.push('/login')}
+          className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          ← Back to Login
+        </Button>
+      </motion.div>
+    </Card>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
     <main className="relative w-full min-h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Subtle animated gradient background */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 bg-gradient-to-r from-blue-50/20 via-purple-50/20 to-blue-50/20 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-blue-950/20"
         animate={{
           backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
@@ -129,118 +246,9 @@ export default function ResetPasswordPage() {
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="relative z-10 w-full max-w-md mx-4"
       >
-        <Card className="p-10 border-none shadow-xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="text-center mb-8"
-          >
-            <h1 className="text-2xl font-serif font-bold text-gray-900 dark:text-white mb-2">
-              Reset Password
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your new password
-            </p>
-          </motion.div>
-
-          <form onSubmit={handleSubmit}>
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="space-y-6"
-            >
-              {/* Password Field */}
-              <motion.div variants={childVariants}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  New Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    type="password"
-                    name="password"
-                    placeholder="********"
-                    value={formData.password}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    className={`pl-10 bg-transparent border-b-2 rounded-none transition-all duration-300 ${
-                      formErrors.password 
-                        ? 'border-red-500' 
-                        : 'border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-400'
-                    } focus:ring-0`}
-                  />
-                </div>
-                {formErrors.password && (
-                  <p className="text-xs text-red-500 mt-1">{formErrors.password}</p>
-                )}
-              </motion.div>
-
-              {/* Confirm Password Field */}
-              <motion.div variants={childVariants}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    type="password"
-                    name="passwordConfirm"
-                    placeholder="********"
-                    value={formData.passwordConfirm}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    className={`pl-10 bg-transparent border-b-2 rounded-none transition-all duration-300 ${
-                      formErrors.passwordConfirm 
-                        ? 'border-red-500' 
-                        : 'border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-400'
-                    } focus:ring-0`}
-                  />
-                </div>
-                {formErrors.passwordConfirm && (
-                  <p className="text-xs text-red-500 mt-1">{formErrors.passwordConfirm}</p>
-                )}
-              </motion.div>
-
-              {/* Submit Button */}
-              <motion.div 
-                variants={childVariants}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base font-medium bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Resetting...' : (
-                    <span className="flex items-center justify-center gap-2">
-                      Reset Password
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
-                  )}
-                </Button>
-              </motion.div>
-            </motion.div>
-          </form>
-
-          {/* Back to Login */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.4 }}
-            className="mt-6 text-center"
-          >
-            <button
-              onClick={() => router.push('/login')}
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              ← Back to Login
-            </button>
-          </motion.div>
-        </Card>
+        <Suspense fallback={<div>Loading...</div>}>
+          <ResetPasswordForm />
+        </Suspense>
       </motion.div>
     </main>
   )

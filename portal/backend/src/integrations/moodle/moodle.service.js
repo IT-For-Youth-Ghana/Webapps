@@ -1,7 +1,12 @@
 /**
- * Moodle Integration Service
+ * Moodle Integration Service (FIXED VERSION)
  * Handles communication with Moodle LMS API (Moodle 5.0+)
  * Based on official Moodle Web Services REST API documentation
+ * 
+ * FIXES:
+ * - Improved error handling for course completion API
+ * - Proper role extraction from enrolled users
+ * - Better fallback mechanisms
  */
 
 import config from '../../config/index.js';
@@ -182,6 +187,25 @@ class MoodleService {
     }
 
     /**
+     * Get all Moodle users (manual auth accounts)
+     * FIXED: Returns users with proper error handling
+     */
+    async getAllMoodleUsers() {
+        try {
+            // Get users by auth method (manual accounts)
+            const users = await this.call('core_user_get_users', {
+                'criteria[0][key]': 'auth',
+                'criteria[0][value]': 'manual',
+            });
+
+            return users.users || [];
+        } catch (error) {
+            logger.error('Failed to get all Moodle users', { error: error.message });
+            return [];
+        }
+    }
+
+    /**
      * Get user by email
      */
     async getUserByEmail(email) {
@@ -266,6 +290,11 @@ class MoodleService {
 
     /**
      * Get course completion status for a user
+     * FIXED: Added proper error handling and fallback logic
+     * 
+     * Note: This function requires completion tracking to be enabled in Moodle
+     * and the web service function to be available. If not available, returns
+     * default not completed status.
      */
     async getCourseCompletion(courseId, userId) {
         try {
@@ -274,21 +303,56 @@ class MoodleService {
                 'userid': userId,
             });
 
-            return {
-                completed: completion?.completionstatus?.completed || false,
-                timecompleted: completion?.completionstatus?.timecompleted || null,
-            };
-        } catch (error) {
-            logger.error('Failed to fetch Moodle course completion', { 
-                userId, 
-                courseId 
+            // Check different possible response structures
+            if (completion?.completionstatus) {
+                return {
+                    completed: completion.completionstatus.completed || false,
+                    timecompleted: completion.completionstatus.timecompleted || null,
+                };
+            }
+
+            // Alternative structure
+            if (completion?.completed !== undefined) {
+                return {
+                    completed: completion.completed || false,
+                    timecompleted: completion.timecompleted || null,
+                };
+            }
+
+            // If completion tracking is not enabled or not configured
+            logger.warn('Course completion status returned unexpected structure', { 
+                courseId, 
+                userId,
+                response: completion 
             });
-            return { completed: false, timecompleted: null };
+            
+            return { 
+                completed: false, 
+                timecompleted: null,
+                warning: 'Completion tracking may not be enabled for this course'
+            };
+
+        } catch (error) {
+            // Log the error but don't throw - completion tracking might not be enabled
+            logger.warn('Failed to fetch Moodle course completion (may not be enabled)', { 
+                userId, 
+                courseId,
+                error: error.message 
+            });
+            
+            return { 
+                completed: false, 
+                timecompleted: null,
+                error: 'Completion tracking unavailable'
+            };
         }
     }
 
     /**
      * Get enrolled users for a course
+     * FIXED: Properly extracts and returns role information
+     * 
+     * Returns users with their roles in the course
      */
     async getEnrolledUsers(courseId) {
         try {
@@ -296,9 +360,24 @@ class MoodleService {
                 'courseid': courseId,
             });
 
-            return users || [];
+            // The API returns users with a 'roles' array containing their course roles
+            // Each role object has: roleid, name, shortname, sortorder
+            // We'll process this to make it easier to use
+            const processedUsers = (users || []).map(user => ({
+                ...user,
+                // Extract primary role (usually the first one)
+                primaryRole: user.roles && user.roles.length > 0 ? {
+                    id: user.roles[0].roleid,
+                    name: user.roles[0].name,
+                    shortname: user.roles[0].shortname
+                } : null,
+                // Keep all roles for reference
+                allRoles: user.roles || []
+            }));
+
+            return processedUsers;
         } catch (error) {
-            logger.error('Failed to fetch enrolled users', { courseId });
+            logger.error('Failed to fetch enrolled users', { courseId, error: error.message });
             return [];
         }
     }
@@ -369,6 +448,24 @@ class MoodleService {
 
         // Create user
         return await this.createUser({ username, password, firstname, lastname, email });
+    }
+
+    /**
+     * Helper function to map Moodle role shortname to app role
+     * @param {string} roleShortname - Moodle role shortname (student, editingteacher, teacher, etc.)
+     * @returns {string} - App role (student, teacher, admin)
+     */
+    mapMoodleRoleToAppRole(roleShortname) {
+        const roleMap = {
+            'student': 'student',
+            'editingteacher': 'teacher',
+            'teacher': 'teacher',
+            'manager': 'admin',
+            'coursecreator': 'admin',
+            'guest': 'student' // Map guest to student
+        };
+
+        return roleMap[roleShortname] || 'student';
     }
 }
 

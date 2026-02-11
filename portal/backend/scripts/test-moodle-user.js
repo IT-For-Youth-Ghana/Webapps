@@ -31,9 +31,9 @@ async function run() {
     const user = makeTestUser();
     logger.info("Creating Moodle user", { email: user.email, username: user.username });
 
-    const created = await moodleService.createUser(user);
+    const created = await moodleService.getAllMoodleUsers();
 
-    logger.info("Moodle user created", { id: created.id, username: created.username });
+    // logger.info("Moodle user created", { id: created.id, username: created.username });
     console.log(JSON.stringify(created, null, 2));
     process.exit(0);
   } catch (error) {

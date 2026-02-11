@@ -16,6 +16,7 @@ import logger from '../../../utils/logger.js';
 const EMAIL_TEMPLATES = {
     VERIFICATION_CODE: 'verification_code',
     WELCOME: 'welcome_email',
+    COURSE_ENROLLMENT: 'course_enrollment',
     PASSWORD_RESET: 'password_reset',
     PAYMENT_RECEIPT: 'payment_receipt',
 };
@@ -28,7 +29,7 @@ class EmailService {
         this.isReady = false;
 
         this.registerHandlebarsHelpers();
-        this.initialize();
+        // Initialization should be explicit to avoid startup hangs
     }
 
     buildFromAddress() {
@@ -337,16 +338,44 @@ class EmailService {
         });
     }
 
-    async sendWelcomeEmail(user, course) {
+    async sendWelcomeEmail(user, course, autoPassword = null) {
+        const portalUrl = config.frontend?.url || process.env.FRONTEND_URL || 'https://portal.itforyouthghana.org';
+        const moodleUrl = config.moodle?.url || process.env.MOODLE_URL;
+
         return this.sendTemplateEmail({
             to: user.email,
-            subject: `Welcome to ${course.title} - IT For Youth Ghana`,
+            subject: course ? `Welcome to ${course.title} - IT For Youth Ghana` : 'Welcome to IT For Youth Ghana',
             template: EMAIL_TEMPLATES.WELCOME,
             context: {
                 firstName: user.firstName,
+                courseTitle: course?.title,
+                tempPassword: autoPassword, // Will be null for auto-login registrations
+                portalUrl: portalUrl,
+                courseUrl: moodleUrl,
+                appName: 'IT For Youth Ghana',
+                currentYear: new Date().getFullYear(),
+                supportEmail: 'support@itforyouthghana.org',
+            },
+        });
+    }
+
+    async sendCourseEnrollmentEmail(user, course) {
+        const portalUrl = `${config.frontend?.url || process.env.FRONTEND_URL || 'https://portal.itforyouthghana.org'}/dashboard/courses`;
+        const moodleUrl = config.moodle?.url || process.env.MOODLE_URL;
+
+        return this.sendTemplateEmail({
+            to: user.email,
+            subject: `🎓 You're Enrolled in ${course.title} - IT For Youth Ghana`,
+            template: EMAIL_TEMPLATES.COURSE_ENROLLMENT,
+            context: {
+                firstName: user.firstName,
                 courseTitle: course.title,
-                tempPassword: user.tempPassword || 'Check your registration email',
-                courseUrl: config.moodle?.url || process.env.MOODLE_URL,
+                courseDescription: course.description || course.shortDescription,
+                portalUrl: portalUrl,
+                courseUrl: moodleUrl,
+                appName: 'IT For Youth Ghana',
+                currentYear: new Date().getFullYear(),
+                supportEmail: 'support@itforyouthghana.org',
             },
         });
     }

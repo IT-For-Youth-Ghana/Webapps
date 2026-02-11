@@ -111,14 +111,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const registerComplete = async (data: RegisterCompleteRequest) => {
     const response = await apiClient.post<{
       userId: string
-      tempPassword: string
+      accessToken: string
+      refreshToken: string
+      user: User
+      message: string
       paymentUrl?: string
       reference?: string
+      isFree?: boolean
     }>('/auth/register/complete', data)
+
+    // Store tokens for automatic login
+    apiClient.setAuthTokens(response.accessToken, response.refreshToken)
+
+    // Store user in localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(response.user))
+    }
+
+    // Update auth state
+    setUser(response.user)
 
     return {
       paymentUrl: response.paymentUrl,
-      tempPassword: response.tempPassword,
+      reference: response.reference,
+      isFree: response.isFree,
     }
   }
 

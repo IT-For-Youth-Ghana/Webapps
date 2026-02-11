@@ -12,7 +12,7 @@ import type { Enrollment, PaginatedResponse } from '@/lib/types'
 export interface EnrollmentFilters {
   page?: number
   limit?: number
-  status?: 'pending' | 'active' | 'completed' | 'dropped'
+  status?: 'pending' | 'enrolled' | 'active' | 'completed' | 'dropped'
 }
 
 export interface UpdateProgressRequest {

@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card'
 import Sidebar from '@/components/sidebar'
 import TopBar from '@/components/topbar'
 import { useAuth } from '@/hooks/auth-context'
-import { useMyEnrollments, useNotifications, usePayments } from '@/hooks/hooks'
+import { useMyEnrollments, useNotifications, usePayments } from '@/hooks'
 import { useRouter } from 'next/navigation'
 
 export default function Dashboard() {
@@ -270,7 +270,7 @@ export default function Dashboard() {
                               {payment.course?.title || 'N/A'}
                             </td>
                             <td className="px-6 py-4 text-sm text-foreground font-semibold">
-                              {payment.currency} {payment.amount.toFixed(2)}
+                              {payment.currency} {Number(payment.amount || 0).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 text-sm">
                               <span

@@ -176,16 +176,18 @@ class AuthController {
      * Reset password with token
      */
     resetPassword = asyncHandler(async (req, res) => {
-        const { token, newPassword } = req.body;
 
-        if (!token || !newPassword) {
+        console.log(req.body)
+        const { token, password } = req.body;
+
+        if (!token || !password) {
             return errorResponse(res, {
                 statusCode: 400,
                 message: 'Missing required fields',
             });
         }
 
-        const result = await authService.resetPassword(token, newPassword);
+        const result = await authService.resetPassword(token, password);
 
         return successResponse(res, {
             statusCode: 200,

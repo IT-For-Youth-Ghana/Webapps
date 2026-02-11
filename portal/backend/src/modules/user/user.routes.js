@@ -262,7 +262,7 @@ router.put('/notifications/read-all', authenticate, userController.markAllNotifi
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/', authenticate, requireRole(['admin']), userController.getAllUsers);
+router.get('/', authenticate, requireRole('admin'), userController.getAllUsers);
 
 /**
  * @openapi
@@ -296,7 +296,7 @@ router.get('/', authenticate, requireRole(['admin']), userController.getAllUsers
  *                         usersByRole:
  *                           type: object
  */
-router.get('/stats', authenticate, requireRole(['admin']), userController.getUserStats);
+router.get('/stats', authenticate, requireRole('admin'), userController.getUserStats);
 
 /**
  * @openapi

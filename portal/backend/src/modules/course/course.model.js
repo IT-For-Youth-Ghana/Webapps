@@ -156,6 +156,26 @@ Course.init(
             defaultValue: 'draft',
             allowNull: false,
         },
+
+        // Sync metadata
+        lastSyncedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'last_synced_at',
+        },
+
+        syncStatus: {
+            type: DataTypes.ENUM('pending', 'synced', 'error'),
+            defaultValue: 'pending',
+            allowNull: false,
+            field: 'sync_status',
+        },
+
+        lastSyncError: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            field: 'last_sync_error',
+        },
     },
     {
         tableName: 'courses',
@@ -165,7 +185,21 @@ Course.init(
             { fields: ['status'] },
             { fields: ['category'] },
             { fields: ['level'] },
+            { fields: ['sync_status'] },
+            { fields: ['last_synced_at'] },
         ],
+        hooks: {
+            beforeValidate: (course) => {
+                if (!course.slug && course.title) {
+                    course.slug = course.title
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^\w\s-]/g, '')
+                        .replace(/[\s_-]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                }
+            },
+        },
     }
 );
 

@@ -31,6 +31,12 @@ class Payment extends BaseModel {
     toPublicJSON() {
         const json = this.toJSON();
         delete json.paystackAccessCode;
+
+        // Flatten course details if available
+        if (json.enrollment && json.enrollment.course) {
+            json.course = json.enrollment.course;
+        }
+
         return json;
     }
 

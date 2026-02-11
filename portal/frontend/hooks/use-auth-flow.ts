@@ -74,19 +74,25 @@ export function useVerifyEmail() {
 }
 
 /**
- * Hook for completing registration with password (Step 3)
+ * Hook for completing registration (Step 3)
  * POST /auth/register/complete
  */
 export interface CompleteRegistrationRequest {
   tempToken: string
-  password: string
-  passwordConfirm: string
+  phone: string
+  dateOfBirth: string
+  courseId?: string
 }
 
 export interface CompleteRegistrationResponse {
+  userId: string
+  accessToken: string
+  refreshToken: string
   user: any
-  token: string
-  temporaryPassword: string
+  message: string
+  paymentUrl?: string
+  reference?: string
+  isFree?: boolean
 }
 
 export function useCompleteRegistration() {
@@ -101,9 +107,8 @@ export function useCompleteRegistration() {
         '/auth/register/complete',
         data
       )
-      // Store token
-      localStorage.setItem('token', response.token)
-      apiClient.setToken(response.token)
+      // Store tokens for automatic login
+      apiClient.setAuthTokens(response.accessToken, response.refreshToken)
       return response
     } catch (err) {
       setError(err as Error)
