@@ -24,7 +24,7 @@ class Course extends BaseModel {
 
     static async findByMoodleId(moodleId) {
         return await this.findOne({
-            where: { moodleCourseId: moodleId },
+            where: { moodleCourseId: moodleId?.toString() },
         });
     }
 

@@ -321,3 +321,4 @@ export default cacheService;
 
 export const initRedis = () => cacheService.init();
 export const closeRedis = () => cacheService.close();
+export const getRedisClient = () => cacheService.redis;

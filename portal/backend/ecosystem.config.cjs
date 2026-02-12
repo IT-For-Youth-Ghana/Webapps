@@ -3,11 +3,11 @@
  * Process management for production deployment
  */
 
-export default {
+module.exports = {
   apps: [
     {
       name: 'itfy-portal-api',
-      script: 'src/server.js',
+      script: './src/server.js',
       instances: process.env.NODE_ENV === 'production' ? 'max' : 1,
       exec_mode: process.env.NODE_ENV === 'production' ? 'cluster' : 'fork',
       env: {
@@ -64,11 +64,11 @@ export default {
 
   deploy: {
     production: {
-      user: 'node',
-      host: 'your-server.com',
+      user: 'root',
+      host: '64.23.251.35',
       ref: 'origin/main',
-      repo: 'git@github.com:your-org/itfy-portal.git',
-      path: '/var/www/itfy-portal',
+      repo: 'git@github.com:IT-For-Youth-Ghana/Webapps.git',
+      path: '/var/www/Webapps/portal/backend',
       'pre-deploy-local': '',
       'post-deploy': 'npm install && npm run build && pm2 reload ecosystem.config.js --env production',
       'pre-setup': '',
