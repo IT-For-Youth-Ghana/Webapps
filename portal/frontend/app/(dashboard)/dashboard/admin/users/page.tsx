@@ -99,7 +99,7 @@ export default function AdminUsersPage() {
             if (success) {
                 toast({ title: 'Role updated', description: `${selectedUser.firstName}'s role has been updated.` })
                 refetch()
-                setSelectedUser((prev) => (prev ? { ...prev, role } : prev))
+                setSelectedUser((prev) => (prev ? { ...prev, role: role as 'student' | 'teacher' | 'admin' | 'super_admin' } : prev))
             } else {
                 toast({ title: 'Error', description: 'Failed to update role', variant: 'destructive' })
                 setSelectedRole(selectedUser?.role || '')

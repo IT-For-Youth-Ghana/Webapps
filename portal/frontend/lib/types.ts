@@ -3,6 +3,8 @@
  * TypeScript interfaces for API responses and data models
  */
 
+import { UserSettings } from "@/hooks/use-user-settings";
+
 // Base Types
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -44,6 +46,7 @@ export interface User {
   address?: string;
   createdAt: string;
   updatedAt: string;
+  settings?: UserSettings;
 }
 
 // Auth Types

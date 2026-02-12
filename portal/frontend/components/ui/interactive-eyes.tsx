@@ -111,7 +111,14 @@ export default function InteractiveEyes({
     }
 
     const Eye = ({ side }: { side: 'left' | 'right' }) => {
-        // ... (same as your enhanced Eye component)
+        return (
+            <div className="relative">
+                <svg width={currentSize.eye} height={currentSize.eye} viewBox={`0 0 ${currentSize.eye} ${currentSize.eye}`} className="rounded-full" style={{ backgroundColor: eyeColor }}>
+                    <circle cx={currentSize.eye / 2} cy={currentSize.eye / 2} r={currentSize.iris} fill={irisColor} style={{ transform: `translate(${irisPosition.x}px, ${irisPosition.y}px)` }} />
+                    <circle cx={currentSize.eye / 2} cy={currentSize.eye / 2} r={currentSize.pupil} fill="#000000" style={{ transform: `translate(${irisPosition.x}px, ${irisPosition.y}px)` }} />
+                </svg>
+            </div>
+        )
     }
 
     return (

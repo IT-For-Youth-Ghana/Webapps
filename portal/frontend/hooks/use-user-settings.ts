@@ -51,11 +51,11 @@ export function useUserSettings() {
 
   // Update settings in backend
   const updateSettings = async (newSettings: Partial<UserSettings>) => {
-    if (!user) return
+    if (!user || !settings) return
 
     try {
       setError(null)
-      const updatedSettings = { ...settings, ...newSettings }
+      const updatedSettings: UserSettings = { ...settings, ...newSettings }
       setSettings(updatedSettings)
 
       await apiClient.put('/users/profile', {
@@ -76,11 +76,10 @@ export function useUserSettings() {
     if (!settings) return
 
     const keys = path.split('.')
-    const updatedSettings = { ...settings }
+    const updatedSettings = JSON.parse(JSON.stringify(settings)) as UserSettings
 
     let current: any = updatedSettings
     for (let i = 0; i < keys.length - 1; i++) {
-      current[keys[i]] = { ...current[keys[i]] }
       current = current[keys[i]]
     }
     current[keys[keys.length - 1]] = value
