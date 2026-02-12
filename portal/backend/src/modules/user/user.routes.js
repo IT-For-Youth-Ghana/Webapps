@@ -339,6 +339,43 @@ router.get('/:id', authenticate, requireRole(['admin']), userController.getUserB
 
 /**
  * @openapi
+ * /users/{id}:
+ *   put:
+ *     tags:
+ *       - Users
+ *     summary: Update user (Admin)
+ *     description: Update user fields such as role (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [student, teacher, admin, super_admin]
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ */
+router.put('/:id', authenticate, requireRole(['admin']), validate(userValidator.updateUser), userController.updateUser);
+
+/**
+ * @openapi
  * /users/{id}/suspend:
  *   put:
  *     tags:

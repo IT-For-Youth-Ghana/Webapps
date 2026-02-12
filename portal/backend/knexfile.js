@@ -1,4 +1,7 @@
 // Update with your config settings.
+import dotenv, { configDotenv } from 'dotenv';
+
+configDotenv()
 
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
@@ -8,11 +11,14 @@ export default {
   development: {
     client: 'mysql2',
     connection: {
-      filename: './dev.sqlite3'
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || 'password',
+      database: process.env.DB_NAME || 'dev_db'
     }
   },
 
-  staging: {
+   staging: {
     client: 'postgresql',
     connection: {
       database: 'my_db',
@@ -25,11 +31,11 @@ export default {
     },
     migrations: {
       tableName: 'knex_migrations'
-
+      
     }
   },
 
-  production: {
+    staging: {
     client: 'postgresql',
     connection: {
       database: 'my_db',
@@ -42,6 +48,7 @@ export default {
     },
     migrations: {
       tableName: 'knex_migrations'
+      
     }
   }
 

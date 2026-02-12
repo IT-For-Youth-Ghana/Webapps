@@ -805,6 +805,34 @@ class UserService {
     }
 
     /**
+     * Update user role (Admin only)
+     */
+    async updateRole(userId, role, adminId) {
+        const allowed = ['student', 'teacher', 'admin', 'super_admin'];
+
+        if (!role || !allowed.includes(role)) {
+            throw new ValidationError('Invalid role');
+        }
+
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            throw new NotFoundError('User not found');
+        }
+
+        await user.update({ role });
+
+        // Invalidate cache
+        await cacheService.delete(cacheService.buildKey('user', userId));
+
+        logger.info(`User ${userId} role changed to ${role} by admin ${adminId}`);
+
+        // Optionally queue role-change notifications here
+
+        return user.toPublicJSON();
+    }
+
+    /**
      * Get user statistics (Admin)
      * Enhanced with caching
      */

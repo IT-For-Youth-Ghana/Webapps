@@ -136,6 +136,25 @@ class UserController {
     });
 
     /**
+     * PUT /api/users/:id
+     * Update user (admin only) - currently supports updating role
+     */
+    updateUser = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { role } = req.body;
+
+        const user = await userService.updateRole(id, role, req.userId);
+
+        logger.info(`User ${id} updated by admin ${req.userId}`);
+
+        return successResponse(res, {
+            statusCode: 200,
+            message: 'User updated successfully',
+            data: user,
+        });
+    });
+
+    /**
      * PUT /api/users/:id/suspend
      * Suspend a user (admin only)
      */

@@ -5,7 +5,7 @@
 
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,6 +38,7 @@ import {
     useAdminUserStats,
     useSuspendUser,
     useActivateUser,
+    useUpdateUserRole,
 } from '@/hooks/use-admin-users'
 import StatsCard from '@/components/shared/stats-card'
 import StatusBadge from '@/components/shared/status-badge'
@@ -81,10 +82,29 @@ export default function AdminUsersPage() {
     const { activateUser, isLoading: activating } = useActivateUser()
 
     // UI state
-    const [selectedUser, setSelectedUser] = useState<User | null>(null)
-    const [suspendDialog, setSuspendDialog] = useState<User | null>(null)
-    const [suspendReason, setSuspendReason] = useState('')
-    const [activateDialog, setActivateDialog] = useState<User | null>(null)
+        const [selectedUser, setSelectedUser] = useState<User | null>(null)
+        const [suspendDialog, setSuspendDialog] = useState<User | null>(null)
+        const [suspendReason, setSuspendReason] = useState('')
+        const [activateDialog, setActivateDialog] = useState<User | null>(null)
+        const [selectedRole, setSelectedRole] = useState('')
+        const { updateUserRole, isLoading: updatingRole } = useUpdateUserRole()
+    
+        useEffect(() => {
+            setSelectedRole(selectedUser?.role || '')
+        }, [selectedUser])
+    
+        const handleRoleChange = async (role: string) => {
+            if (!selectedUser) return
+            const success = await updateUserRole(selectedUser.id, role)
+            if (success) {
+                toast({ title: 'Role updated', description: `${selectedUser.firstName}'s role has been updated.` })
+                refetch()
+                setSelectedUser((prev) => (prev ? { ...prev, role } : prev))
+            } else {
+                toast({ title: 'Error', description: 'Failed to update role', variant: 'destructive' })
+                setSelectedRole(selectedUser?.role || '')
+            }
+        }
 
     const handleSuspend = async () => {
         if (!suspendDialog) return
@@ -117,7 +137,7 @@ export default function AdminUsersPage() {
             <div>
                 <h1 className="text-3xl font-bold text-foreground tracking-tight">User Management</h1>
                 <p className="text-muted-foreground mt-1">View and manage all platform users</p>
-            </div>
+    </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -143,7 +163,7 @@ export default function AdminUsersPage() {
                     value={stats?.usersByRole ? Object.keys(stats.usersByRole).length : 0}
                     icon={Shield}
                 />
-            </div>
+    </div>
 
             {/* Filters */}
             <Card>
@@ -318,7 +338,19 @@ export default function AdminUsersPage() {
                                     <Shield className="w-4 h-4 text-muted-foreground" />
                                     <div>
                                         <p className="text-xs text-muted-foreground">Role</p>
-                                        <Badge variant="secondary" className="capitalize text-xs">{selectedUser.role}</Badge>
+                                        <div className="mt-1">
+                                            <Select value={selectedRole} onValueChange={(v) => { setSelectedRole(v); handleRoleChange(v) }}>
+                                                <SelectTrigger className="w-full sm:w-44">
+                                                    <SelectValue placeholder="Select role" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="student">Student</SelectItem>
+                                                    <SelectItem value="teacher">Teacher</SelectItem>
+                                                    <SelectItem value="admin">Admin</SelectItem>
+                                                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">

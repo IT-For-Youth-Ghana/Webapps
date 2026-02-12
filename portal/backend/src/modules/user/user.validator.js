@@ -97,13 +97,24 @@ const userValidator = {
 
         query('role')
             .optional()
-            .isIn(['student', 'teacher', 'admin'])
+            .isIn(['student', 'teacher', 'admin', 'super_admin'])
             .withMessage('Invalid role'),
 
         query('status')
             .optional()
             .isIn(['active', 'suspended', 'pending'])
             .withMessage('Invalid status'),
+    ],
+
+    updateUser: [
+        param('id')
+            .isUUID()
+            .withMessage('Invalid user ID'),
+
+        body('role')
+            .optional()
+            .isIn(['student', 'teacher', 'admin', 'super_admin'])
+            .withMessage('Invalid role'),
     ],
 };
 

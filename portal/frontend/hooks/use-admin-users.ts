@@ -152,3 +152,24 @@ export function useActivateUser() {
 
   return { activateUser, isLoading, error };
 }
+
+export function useUpdateUserRole() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateUserRole = useCallback(async (userId: string, role: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await apiClient.put(`/users/${userId}`, { role });
+      return true;
+    } catch (err: any) {
+      setError(err.message || 'Failed to update user role');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return { updateUserRole, isLoading, error };
+}
