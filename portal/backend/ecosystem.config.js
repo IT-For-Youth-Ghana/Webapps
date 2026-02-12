@@ -3,7 +3,7 @@
  * Process management for production deployment
  */
 
-module.exports = {
+export default {
   apps: [
     {
       name: 'itfy-portal-api',
