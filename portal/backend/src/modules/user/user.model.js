@@ -198,6 +198,26 @@ User.init(
             allowNull: true,
             field: 'last_sync_error',
         },
+
+        // User Settings/Preferences
+        settings: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: {
+                theme: 'system',
+                notifications: {
+                    emailNotifications: true,
+                    smsAlerts: false,
+                    courseUpdates: true,
+                    paymentAlerts: true,
+                },
+                privacy: {
+                    profileVisibility: 'public',
+                    showEmail: false,
+                    showPhone: false,
+                },
+            },
+        },
     },
     {
         tableName: 'users',

@@ -107,6 +107,7 @@ export default function ProfilePage() {
     const success = await changePassword({
       currentPassword: pwForm.currentPassword,
       newPassword: pwForm.newPassword,
+      newPasswordConfirm: pwForm.confirmPassword,
     })
     if (success) {
       toast({ title: 'Password changed', description: 'Your password has been updated successfully.' })

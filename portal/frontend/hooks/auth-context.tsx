@@ -19,7 +19,7 @@ interface AuthContextValue {
   register: {
     start: (data: RegisterStartRequest) => Promise<void>
     verify: (data: RegisterVerifyRequest) => Promise<{ tempToken: string }>
-    complete: (data: RegisterCompleteRequest) => Promise<{ paymentUrl?: string; tempPassword: string }>
+    complete: (data: RegisterCompleteRequest) => Promise<{ paymentUrl?: string; reference?: string; isFree?: boolean }>
   }
   refreshUser: () => Promise<void>
 }

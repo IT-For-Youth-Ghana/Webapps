@@ -14,6 +14,23 @@ import { useAuth } from '@/hooks/auth-context'
 import { useMyEnrollments, useNotifications, usePayments } from '@/hooks'
 import { useRouter } from 'next/navigation'
 
+interface MenuItem {
+  id: string
+  label: string
+  icon: string
+  path?: string
+}
+
+const menuItems: MenuItem[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
+  { id: 'browse', label: 'Browse Courses', icon: '🔍', path: '/dashboard/browse' },
+  { id: 'courses', label: 'My Courses', icon: '📚', path: '/dashboard/courses' },
+  { id: 'notifications', label: 'Notifications', icon: '🔔', path: '/dashboard/notifications' },
+  { id: 'payments', label: 'Payments', icon: '💳', path: '/dashboard/payments' },
+  { id: 'profile', label: 'Profile', icon: '👤', path: '/dashboard/profile' },
+  { id: 'settings', label: 'Settings', icon: '⚙️', path: '/dashboard/settings' },
+]
+
 export default function Dashboard() {
   const router = useRouter()
   const { user, logout } = useAuth()
@@ -46,6 +63,7 @@ export default function Dashboard() {
         activePage={activePage}
         onPageChange={setActivePage}
         isOpen={sidebarOpen}
+        menuItems={menuItems}
       />
 
       {/* Main Content */}

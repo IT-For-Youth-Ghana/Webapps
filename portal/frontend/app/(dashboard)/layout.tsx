@@ -5,11 +5,12 @@
 
 'use client'
 
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 import Sidebar from '@/components/sidebar'
 import TopBar from '@/components/topbar'
 import { useAuth } from '@/hooks/auth-context'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 
 const studentMenuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
@@ -42,10 +43,25 @@ const adminMenuItems = [
   { id: 'settings', label: 'Settings', icon: '⚙️', path: '/dashboard/settings' },
 ]
 
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const { user, logout, isAuthenticated } = useAuth()
+  const { user, logout, isAuthenticated, isLoading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login')
+    }
+  }, [isLoading, isAuthenticated, router])
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   // Redirect if not authenticated
   if (!isAuthenticated || !user) {

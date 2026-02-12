@@ -29,6 +29,41 @@ const userValidator = {
             .optional()
             .isISO8601()
             .withMessage('Please enter a valid date'),
+
+        body('settings')
+            .optional()
+            .isObject()
+            .withMessage('Settings must be an object'),
+
+        body('settings.theme')
+            .optional()
+            .isIn(['light', 'dark', 'itfy', 'system'])
+            .withMessage('Invalid theme'),
+
+        body('settings.notifications')
+            .optional()
+            .isObject()
+            .withMessage('Notifications must be an object'),
+
+        body('settings.notifications.emailNotifications')
+            .optional()
+            .isBoolean()
+            .withMessage('Email notifications must be boolean'),
+
+        body('settings.notifications.smsAlerts')
+            .optional()
+            .isBoolean()
+            .withMessage('SMS alerts must be boolean'),
+
+        body('settings.notifications.courseUpdates')
+            .optional()
+            .isBoolean()
+            .withMessage('Course updates must be boolean'),
+
+        body('settings.notifications.paymentAlerts')
+            .optional()
+            .isBoolean()
+            .withMessage('Payment alerts must be boolean'),
     ],
 
     suspendUser: [

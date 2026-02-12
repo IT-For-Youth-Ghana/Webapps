@@ -82,6 +82,76 @@ body {
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .itfy {
+    --background: 210 40% 98%;
+    --foreground: 210 40% 8%;
+    --card: 210 40% 98%;
+    --card-foreground: 210 40% 8%;
+    --popover: 210 40% 98%;
+    --popover-foreground: 210 40% 8%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 30% 92%;
+    --secondary-foreground: 210 40% 8%;
+    --muted: 210 30% 92%;
+    --muted-foreground: 210 20% 40%;
+    --accent: 210 30% 92%;
+    --accent-foreground: 210 40% 8%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 20% 85%;
+    --input: 210 20% 85%;
+    --ring: 210 100% 50%;
+    --chart-1: 210 100% 50%;
+    --chart-2: 210 80% 60%;
+    --chart-3: 210 60% 70%;
+    --chart-4: 210 40% 80%;
+    --chart-5: 210 20% 90%;
+    --sidebar-background: 210 40% 96%;
+    --sidebar-foreground: 210 40% 15%;
+    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 30% 90%;
+    --sidebar-accent-foreground: 210 40% 15%;
+    --sidebar-border: 210 20% 85%;
+    --sidebar-ring: 210 100% 50%;
+  }
+
+  .dark.itfy {
+    --background: 210 50% 6%;
+    --foreground: 210 40% 95%;
+    --card: 210 50% 6%;
+    --card-foreground: 210 40% 95%;
+    --popover: 210 50% 6%;
+    --popover-foreground: 210 40% 95%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 210 50% 6%;
+    --secondary: 210 40% 12%;
+    --secondary-foreground: 210 40% 95%;
+    --muted: 210 40% 12%;
+    --muted-foreground: 210 30% 65%;
+    --accent: 210 40% 12%;
+    --accent-foreground: 210 40% 95%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 40% 15%;
+    --input: 210 40% 15%;
+    --ring: 210 100% 60%;
+    --chart-1: 210 100% 60%;
+    --chart-2: 210 80% 65%;
+    --chart-3: 210 60% 70%;
+    --chart-4: 210 40% 75%;
+    --chart-5: 210 20% 80%;
+    --sidebar-background: 210 50% 8%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 210 50% 6%;
+    --sidebar-accent: 210 40% 12%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 210 40% 15%;
+    --sidebar-ring: 210 100% 60%;
+  }
 }
 
 @layer base {
@@ -90,5 +160,68 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .topbar-glass {
+    @apply backdrop-blur-md bg-background/80 border-border/50;
+  }
+
+  .dark .topbar-glass {
+    @apply bg-background/90;
+  }
+
+  .itfy .topbar-glass {
+    @apply bg-gradient-to-r from-background/85 via-primary/5 to-background/85 border-primary/20;
+  }
+
+  .dark.itfy .topbar-glass {
+    @apply bg-gradient-to-r from-background/90 via-primary/10 to-background/90 border-primary/30;
+  }
+
+  /* Dropdown enhancements for themes */
+  .dropdown-glass {
+    @apply backdrop-blur-md bg-background/95 border-border/50 shadow-xl;
+  }
+
+  .dark .dropdown-glass {
+    @apply bg-background/98;
+  }
+
+  .itfy .dropdown-glass {
+    @apply bg-background/90 border-primary/20 shadow-primary/10;
+  }
+
+  .dark.itfy .dropdown-glass {
+    @apply bg-background/95 border-primary/30 shadow-primary/20;
+  }
+
+  /* Theme-aware hover effects */
+  .theme-hover {
+    @apply transition-all duration-200;
+  }
+
+  .theme-hover:hover {
+    @apply bg-muted/50;
+  }
+
+  .itfy .theme-hover:hover {
+    @apply bg-primary/10;
+  }
+
+  .dark .theme-hover:hover {
+    @apply bg-muted/30;
+  }
+
+  .dark.itfy .theme-hover:hover {
+    @apply bg-primary/20;
+  }
+
+  /* Smooth theme transitions */
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
   }
 }

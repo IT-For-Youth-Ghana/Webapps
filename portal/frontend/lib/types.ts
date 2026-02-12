@@ -38,6 +38,10 @@ export interface User {
   profilePicture?: string;
   moodleUserId?: number;
   incubatorUserId?: string;
+  // Location information
+  city?: string;
+  country?: string;
+  address?: string;
   createdAt: string;
   updatedAt: string;
 }

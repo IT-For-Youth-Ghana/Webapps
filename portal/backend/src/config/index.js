@@ -63,7 +63,7 @@ const config = {
     rateLimit: {
         enabled: process.env.RATE_LIMIT_ENABLED !== 'false',
         windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-        max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
+        max: parseInt(process.env.RATE_LIMIT_MAX) || 500,
     },
 
     // CORS Configuration

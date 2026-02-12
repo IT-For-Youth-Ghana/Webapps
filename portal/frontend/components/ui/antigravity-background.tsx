@@ -32,7 +32,7 @@ export default function AntigravityBackground({
   blurAmount = 2,
 }: AntigravityBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | null>(null)
   const particlesRef = useRef<RingParticle[]>([])
   const mouseRef = useRef({ x: 0, y: 0 })
   const [isClient, setIsClient] = useState(false)

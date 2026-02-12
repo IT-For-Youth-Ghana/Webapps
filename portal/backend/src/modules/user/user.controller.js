@@ -28,13 +28,14 @@ class UserController {
      * Update current user's profile
      */
     updateProfile = asyncHandler(async (req, res) => {
-        const { firstName, lastName, phone, dateOfBirth } = req.body;
+        const { firstName, lastName, phone, dateOfBirth, settings } = req.body;
 
         const user = await userService.updateProfile(req.userId, {
             firstName,
             lastName,
             phone,
             dateOfBirth,
+            settings,
         });
 
         return successResponse(res, {

@@ -473,7 +473,7 @@ class UserService {
         }
 
         // Validate allowed fields
-        const allowedFields = ['firstName', 'lastName', 'phone', 'dateOfBirth'];
+        const allowedFields = ['firstName', 'lastName', 'phone', 'dateOfBirth', 'settings'];
         const updateData = {};
 
         for (const field of allowedFields) {
@@ -493,7 +493,14 @@ class UserService {
                     }
                 }
 
-                updateData[field] = data[field];
+                // Validate settings if provided
+                if (field === 'settings' && data[field]) {
+                    // Merge with existing settings to preserve defaults
+                    const currentSettings = user.settings || {};
+                    updateData[field] = { ...currentSettings, ...data[field] };
+                } else {
+                    updateData[field] = data[field];
+                }
             }
         }
 

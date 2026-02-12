@@ -123,14 +123,12 @@ export function useRefreshToken() {
       setError(null)
       const response = await apiClient.post<RefreshTokenResponse>('/auth/refresh')
       // Update stored token
-      localStorage.setItem('token', response.token)
-      apiClient.setToken(response.token)
+      localStorage.setItem('accessToken', response.token)
       return response.token
     } catch (err) {
       setError(err as Error)
       // Token refresh failed, user should login again
-      localStorage.removeItem('token')
-      apiClient.setToken(null)
+      localStorage.removeItem('accessToken')
       throw err
     } finally {
       setIsLoading(false)

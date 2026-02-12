@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
-        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error as Error).message,
       },
       { status: 500 }
     )
@@ -36,7 +36,10 @@ export async function GET(request: NextRequest) {
 
 // Check external services connectivity
 async function checkExternalServices() {
-  const services = {
+  const services: {
+    api: { status: 'healthy' | 'unhealthy' | 'unknown', responseTime: number | null },
+    moodle: { status: 'healthy' | 'unhealthy' | 'degraded' | 'unknown', responseTime: number | null },
+  } = {
     api: { status: 'unknown', responseTime: null },
     moodle: { status: 'unknown', responseTime: null },
   }
@@ -46,12 +49,16 @@ async function checkExternalServices() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL
     if (apiUrl) {
       const startTime = Date.now()
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
       const response = await fetch(`${apiUrl}/health`, {
-        timeout: 5000,
+        signal: controller.signal,
         headers: {
           'User-Agent': 'ITFY-Portal-Health-Check/1.0',
         },
       })
+      clearTimeout(timeoutId)
       const responseTime = Date.now() - startTime
 
       services.api = {
@@ -71,12 +78,16 @@ async function checkExternalServices() {
     const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL
     if (moodleUrl) {
       const startTime = Date.now()
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
       const response = await fetch(moodleUrl, {
-        timeout: 5000,
+        signal: controller.signal,
         headers: {
           'User-Agent': 'ITFY-Portal-Health-Check/1.0',
         },
       })
+      clearTimeout(timeoutId)
       const responseTime = Date.now() - startTime
 
       services.moodle = {
@@ -134,7 +145,7 @@ export async function POST(request: NextRequest) {
       {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
-        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error as Error).message,
       },
       { status: 500 }
     )
@@ -143,7 +154,18 @@ export async function POST(request: NextRequest) {
 
 // Detailed external services check
 async function checkExternalServicesDetailed() {
-  const services = {
+  const services: {
+    api: {
+      status: 'healthy' | 'unhealthy' | 'unknown',
+      responseTime: number | null,
+      endpoints: Record<string, { status: 'healthy' | 'unhealthy' | 'unknown', responseTime: number | null }>
+    },
+    moodle: {
+      status: 'healthy' | 'unhealthy' | 'degraded' | 'unknown',
+      responseTime: number | null,
+      endpoints: Record<string, { status: 'healthy' | 'unhealthy' | 'degraded' | 'unknown', responseTime: number | null }>
+    },
+  } = {
     api: {
       status: 'unknown',
       responseTime: null,
@@ -163,23 +185,29 @@ async function checkExternalServicesDetailed() {
       const startTime = Date.now()
 
       // Check main health endpoint
+      const healthController = new AbortController()
+      const healthTimeoutId = setTimeout(() => healthController.abort(), 5000)
       const healthResponse = await fetch(`${apiUrl}/health`, {
-        timeout: 5000,
+        signal: healthController.signal,
       })
+      clearTimeout(healthTimeoutId)
 
       // Check detailed health endpoint
+      const detailedController = new AbortController()
+      const detailedTimeoutId = setTimeout(() => detailedController.abort(), 5000)
       const detailedResponse = await fetch(`${apiUrl}/health/detailed`, {
-        timeout: 5000,
+        signal: detailedController.signal,
       })
+      clearTimeout(detailedTimeoutId)
 
       const responseTime = Date.now() - startTime
 
       services.api = {
-        status: healthResponse.ok && detailedResponse.ok ? 'healthy' : 'degraded',
+        status: healthResponse.ok && detailedResponse.ok ? 'healthy' : 'unhealthy',
         responseTime,
         endpoints: {
-          health: healthResponse.ok,
-          detailed: detailedResponse.ok,
+          health: { status: healthResponse.ok ? 'healthy' : 'unhealthy', responseTime: null },
+          detailed: { status: detailedResponse.ok ? 'healthy' : 'unhealthy', responseTime: null },
         },
       }
     }
@@ -196,16 +224,19 @@ async function checkExternalServicesDetailed() {
     const moodleUrl = process.env.NEXT_PUBLIC_MOODLE_URL
     if (moodleUrl) {
       const startTime = Date.now()
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
       const response = await fetch(moodleUrl, {
-        timeout: 5000,
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       const responseTime = Date.now() - startTime
 
       services.moodle = {
         status: response.ok ? 'healthy' : 'degraded',
         responseTime,
         endpoints: {
-          main: response.ok,
+          main: { status: response.ok ? 'healthy' : 'degraded', responseTime: null },
         },
       }
     }

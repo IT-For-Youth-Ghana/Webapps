@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useNotifications } from '@/hooks/use-user'
 import { useRouter } from 'next/navigation'
 
@@ -38,13 +39,13 @@ export default function TopBar({ userName, onLogout, onMenuToggle }: TopBarProps
   }
 
   return (
-    <div className="h-16 bg-white border-b border-border flex items-center justify-between px-4 md:px-8 shadow-sm">
+    <div className="h-16 topbar-glass border-b flex items-center justify-between px-4 md:px-8 shadow-sm">
       {/* Left side */}
       <div className="flex items-center gap-4">
         {/* Mobile menu button */}
         <button
           onClick={onMenuToggle}
-          className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+          className="md:hidden p-2 theme-hover rounded-lg"
         >
           <span className="text-xl">☰</span>
         </button>
@@ -57,23 +58,26 @@ export default function TopBar({ userName, onLogout, onMenuToggle }: TopBarProps
 
       {/* Right side */}
       <div className="flex items-center gap-4">
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
         {/* Notifications */}
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="p-2 hover:bg-muted rounded-lg transition-colors relative"
+            className="p-2 theme-hover rounded-lg relative"
             aria-label="Notifications"
           >
             <span className="text-xl">🔔</span>
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-white text-xs rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-border z-50 overflow-hidden">
+            <div className="absolute right-0 mt-2 w-80 dropdown-glass rounded-lg border z-50 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <p className="text-sm font-semibold text-foreground">Notifications</p>
                 {unreadCount > 0 && (
@@ -105,8 +109,8 @@ export default function TopBar({ userName, onLogout, onMenuToggle }: TopBarProps
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification.id, notification.link)}
-                        className={`w-full text-left px-4 py-3 hover:bg-muted transition-colors ${
-                          notification.isRead ? 'bg-white' : 'bg-secondary/10'
+                        className={`w-full text-left px-4 py-3 theme-hover ${
+                          notification.isRead ? 'bg-background' : 'bg-secondary/10'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -150,9 +154,9 @@ export default function TopBar({ userName, onLogout, onMenuToggle }: TopBarProps
         <div className="relative">
           <button
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 p-2 hover:bg-muted rounded-lg transition-colors"
+            className="flex items-center gap-2 p-2 theme-hover rounded-lg"
           >
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-bold">
               {userName[0].toUpperCase()}
             </div>
             <span className="text-sm font-medium text-foreground hidden sm:inline">
@@ -163,14 +167,14 @@ export default function TopBar({ userName, onLogout, onMenuToggle }: TopBarProps
 
           {/* Dropdown Menu */}
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-border z-50">
+            <div className="absolute right-0 mt-2 w-48 dropdown-glass rounded-lg border z-50">
               <div className="p-4 border-b border-border">
                 <p className="text-sm font-semibold text-foreground">{userName}</p>
                 <p className="text-xs text-muted-foreground">Student</p>
               </div>
               <button
                 onClick={onLogout}
-                className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors rounded-b-lg"
+                className="w-full text-left px-4 py-2 text-sm text-foreground theme-hover rounded-b-lg"
               >
                 Sign Out
               </button>

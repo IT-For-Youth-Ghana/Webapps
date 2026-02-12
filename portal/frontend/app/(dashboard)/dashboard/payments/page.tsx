@@ -151,7 +151,7 @@ export default function PaymentsPage() {
                 {filteredPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4 text-sm text-foreground font-medium">
-                      {payment.metadata.course_title || 'N/A'}
+                      {payment.course?.title || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground font-mono text-xs">
                       {payment.paystackReference || 'N/A'}
@@ -204,7 +204,7 @@ export default function PaymentsPage() {
                 <div className="space-y-4">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Course</span>
-                <span className="text-sm font-medium">{selectedPayment.metadata.course_title || 'N/A'}</span>
+                <span className="text-sm font-medium">{selectedPayment.course?.title || 'N/A'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Amount</span>

@@ -34,8 +34,7 @@ export function useMoodleSSOLogin() {
       const response = await apiClient.post<SSOResponse>('/sso/moodle/login', data || {})
 
       // Store token
-      localStorage.setItem('token', response.token)
-      apiClient.setToken(response.token)
+      localStorage.setItem('accessToken', response.token)
 
       return response
     } catch (err) {
@@ -64,14 +63,12 @@ export function useSSOLogout() {
       await apiClient.post('/sso/logout')
 
       // Clear stored credentials
-      localStorage.removeItem('token')
-      apiClient.setToken(null)
+      localStorage.removeItem('accessToken')
 
       return true
     } catch (err) {
       // Even if logout request fails, clear local storage
-      localStorage.removeItem('token')
-      apiClient.setToken(null)
+      localStorage.removeItem('accessToken')
       setError(err as Error)
     } finally {
       setIsLoading(false)
@@ -101,8 +98,7 @@ export function useSSOCallback() {
       const response = await apiClient.get<SSOResponse>(`/sso/moodle/callback?${params}`)
 
       // Store token
-      localStorage.setItem('token', response.token)
-      apiClient.setToken(response.token)
+      localStorage.setItem('accessToken', response.token)
 
       return response
     } catch (err) {

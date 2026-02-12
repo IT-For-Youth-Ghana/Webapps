@@ -14,8 +14,10 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/auth-context'
 import { useChangePassword } from '@/hooks/use-password'
-import { useTheme } from 'next-themes'
+import { useTheme } from '@/hooks/use-theme'
+import { useUserSettings } from '@/hooks/use-user-settings'
 import { useToast } from '@/components/ui/use-toast'
+import { ThemeShowcase } from '@/components/ui/theme-showcase'
 import {
   Key,
   Bell,
@@ -31,6 +33,7 @@ export default function SettingsPage() {
   const { user } = useAuth()
   const { changePassword, isLoading: changingPw } = useChangePassword()
   const { theme, setTheme } = useTheme()
+  const { settings, updateSetting, isLoading: settingsLoading } = useUserSettings()
   const { toast } = useToast()
 
   // Password form
@@ -40,28 +43,31 @@ export default function SettingsPage() {
     confirmPassword: '',
   })
 
-  // Notification preferences (localStorage)
-  const [notifPrefs, setNotifPrefs] = useState({
-    emailNotifications: true,
-    smsAlerts: false,
-    courseUpdates: true,
-    paymentAlerts: true,
-  })
-
-  useEffect(() => {
-    const saved = localStorage.getItem('notificationPrefs')
-    if (saved) {
-      try {
-        setNotifPrefs(JSON.parse(saved))
-      } catch { }
+  const updateNotifPref = async (key: string, value: boolean) => {
+    try {
+      await updateSetting(`notifications.${key}`, value)
+      toast({ title: 'Preferences saved' })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save preferences',
+        variant: 'destructive'
+      })
     }
-  }, [])
+  }
 
-  const updateNotifPref = (key: keyof typeof notifPrefs, value: boolean) => {
-    const updated = { ...notifPrefs, [key]: value }
-    setNotifPrefs(updated)
-    localStorage.setItem('notificationPrefs', JSON.stringify(updated))
-    toast({ title: 'Preferences saved' })
+  const handleThemeChange = async (newTheme: string) => {
+    try {
+      setTheme(newTheme as any)
+      await updateSetting('theme', newTheme)
+      toast({ title: 'Theme updated' })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save theme preference',
+        variant: 'destructive'
+      })
+    }
   }
 
   if (!user) return null
@@ -79,6 +85,7 @@ export default function SettingsPage() {
     const success = await changePassword({
       currentPassword: pwForm.currentPassword,
       newPassword: pwForm.newPassword,
+      newPasswordConfirm: pwForm.confirmPassword,
     })
     if (success) {
       toast({ title: 'Password changed', description: 'Your password has been updated.' })
@@ -104,37 +111,12 @@ export default function SettingsPage() {
             </div>
             <div>
               <CardTitle className="text-lg">Appearance</CardTitle>
-              <CardDescription>Choose your preferred theme</CardDescription>
+              <CardDescription>Choose your preferred theme and customize your experience</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3">
-            <Button
-              variant={theme === 'light' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTheme('light')}
-              className="flex items-center gap-2"
-            >
-              <Sun className="w-4 h-4" /> Light
-            </Button>
-            <Button
-              variant={theme === 'dark' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTheme('dark')}
-              className="flex items-center gap-2"
-            >
-              <Moon className="w-4 h-4" /> Dark
-            </Button>
-            <Button
-              variant={theme === 'system' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTheme('system')}
-              className="flex items-center gap-2"
-            >
-              <Monitor className="w-4 h-4" /> System
-            </Button>
-          </div>
+          <ThemeShowcase onThemeChange={handleThemeChange} />
         </CardContent>
       </Card>
 
@@ -158,7 +140,7 @@ export default function SettingsPage() {
               <p className="text-xs text-muted-foreground">Receive updates via email</p>
             </div>
             <Switch
-              checked={notifPrefs.emailNotifications}
+              checked={settings?.notifications?.emailNotifications ?? true}
               onCheckedChange={(v) => updateNotifPref('emailNotifications', v)}
             />
           </div>
@@ -169,7 +151,7 @@ export default function SettingsPage() {
               <p className="text-xs text-muted-foreground">Receive important alerts via SMS</p>
             </div>
             <Switch
-              checked={notifPrefs.smsAlerts}
+              checked={settings?.notifications?.smsAlerts ?? false}
               onCheckedChange={(v) => updateNotifPref('smsAlerts', v)}
             />
           </div>
@@ -180,7 +162,7 @@ export default function SettingsPage() {
               <p className="text-xs text-muted-foreground">Notifications about course progress</p>
             </div>
             <Switch
-              checked={notifPrefs.courseUpdates}
+              checked={settings?.notifications?.courseUpdates ?? true}
               onCheckedChange={(v) => updateNotifPref('courseUpdates', v)}
             />
           </div>
@@ -191,7 +173,7 @@ export default function SettingsPage() {
               <p className="text-xs text-muted-foreground">Notifications about payment status</p>
             </div>
             <Switch
-              checked={notifPrefs.paymentAlerts}
+              checked={settings?.notifications?.paymentAlerts ?? true}
               onCheckedChange={(v) => updateNotifPref('paymentAlerts', v)}
             />
           </div>

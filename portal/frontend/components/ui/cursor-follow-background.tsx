@@ -44,7 +44,7 @@ export default function CursorFollowBackground({
     intensity = 'medium',
 }: CursorFollowBackgroundProps) {
     const containerRef = useRef<HTMLDivElement>(null)
-    const animationRef = useRef<number>()
+    const animationRef = useRef<number | null>(null)
     const mouseRef = useRef({ x: 0, y: 0 })
 
     const [orbs, setOrbs] = useState<Orb[]>([])
